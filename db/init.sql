@@ -2,16 +2,18 @@ CREATE DATABASE IF NOT EXISTS raindream_database
     DEFAULT CHARACTER SET utf8mb4
     COLLATE utf8mb4_0900_ai_ci;
 
-GRANT ALL PRIVILEGES ON raindream_database.* TO 'user'@'%';
-FLUSH PRIVILEGES;
+# GRANT ALL PRIVILEGES ON raindream_database.* TO 'user'@'%';
+# FLUSH PRIVILEGES;
 
-SHOW DATABASES;
+
 
 USE raindream_database;
 
 -- 临时命令
 # DROP DATABASE raindream_database;
 # DROP TABLE user;
+
+# SHOW DATABASES;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS user (
@@ -67,6 +69,8 @@ CREATE TABLE IF NOT EXISTS item
 
     UNIQUE KEY uk_item_user_source (user_id, source_url(255)),
 
+    INDEX idx_item_user (user_id) COMMENT '用户id索引',
+    INDEX idx_item_user_id (user_id, id) COMMENT '用户id和项目id联合索引',
     INDEX idx_item_media_type (media_type),
     INDEX idx_item_content_type (content_type),
     INDEX idx_item_author (author),
@@ -82,6 +86,9 @@ CREATE TABLE IF NOT EXISTS tag
     user_id  BIGINT       NOT NULL,
     tag_name VARCHAR(100) NOT NULL,
 
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
     CONSTRAINT fk_tag_user FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
 
     UNIQUE KEY uk_tag_user_name (user_id, tag_name)
@@ -94,6 +101,9 @@ CREATE TABLE IF NOT EXISTS plt
     id       BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id  BIGINT       NOT NULL,
     plt_name VARCHAR(100) NOT NULL,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
     CONSTRAINT fk_plt_user FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
 
