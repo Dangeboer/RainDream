@@ -1,4 +1,10 @@
-package com.dangeboer.raindream.security;
+package com.dangeboer.raindream.service;
+
+
+import com.dangeboer.raindream.model.dto.LoginResponse;
+import com.dangeboer.raindream.model.entity.User;
 
 public interface AuthenticationService {
+    Integer register(String username, String password, String phone);
+    LoginResponse login(String username, String password);
 }

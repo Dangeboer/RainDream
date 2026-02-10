@@ -1,9 +1,12 @@
-package com.dangeboer.raindream.security;
+package com.dangeboer.raindream.controller;
 
+import com.dangeboer.raindream.model.dto.LoginRequest;
+import com.dangeboer.raindream.model.dto.LoginResponse;
+import com.dangeboer.raindream.model.dto.RegisterRequest;
+import com.dangeboer.raindream.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -11,11 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
-    public void register(String username, String password) {
-        authenticationService.register(username, password);
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Integer register(@RequestBody RegisterRequest registerRequest) {
+        return authenticationService.register(registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getPhone());
     }
 
-    public void login(String username, String password) {
-
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody LoginRequest loginRequest) {
+        return authenticationService.login(loginRequest.getUsername(), loginRequest.getPassword());
     }
 }

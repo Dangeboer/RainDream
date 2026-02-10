@@ -1,6 +1,7 @@
 package com.dangeboer.raindream.model.entity;
 
 import com.dangeboer.raindream.base.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class User extends BaseEntity implements UserDetails {
     private String username;
     private String password;
