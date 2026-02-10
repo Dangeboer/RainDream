@@ -2,18 +2,35 @@ CREATE DATABASE IF NOT EXISTS raindream_database
     DEFAULT CHARACTER SET utf8mb4
     COLLATE utf8mb4_0900_ai_ci;
 
+GRANT ALL PRIVILEGES ON raindream_database.* TO 'user'@'%';
+FLUSH PRIVILEGES;
+
+SHOW DATABASES;
+
 USE raindream_database;
 
+-- 临时命令
+# DROP DATABASE raindream_database;
+# DROP TABLE user;
+
 -- 用户表
-CREATE TABLE IF NOT EXISTS user
-(
-    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
-    username   VARCHAR(100) NOT NULL UNIQUE,
-    password   VARCHAR(255) NOT NULL,
-    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+CREATE TABLE IF NOT EXISTS user (
+                      id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+
+                      username VARCHAR(100) NOT NULL UNIQUE COMMENT '用户名',
+                      password VARCHAR(255) NOT NULL COMMENT '密码',
+
+                      phone VARCHAR(20) NOT NULL COMMENT '手机号',
+                      email VARCHAR(255) DEFAULT NULL COMMENT '邮箱',
+
+                      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+                      UNIQUE KEY uk_user_phone (phone),
+                      UNIQUE KEY uk_user_email (email)
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
+
 
 -- 项目表
 CREATE TABLE IF NOT EXISTS item
