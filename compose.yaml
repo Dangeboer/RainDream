@@ -1,14 +1,24 @@
 services:
   mysql:
-    image: 'mysql:latest'
+    image: mysql:8.0
+    container_name: raindream-mysql
+    restart: unless-stopped
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      MYSQL_DATABASE: raindream_database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: verysecret
+      TZ: America/New_York
     ports:
-      - '3306'
-  redis:
-    image: 'redis:latest'
-    ports:
-      - '6379'
+      - "3306:3306"
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+      --default-time-zone=-05:00
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # 如果想“启动时自动建表”，再打开下面这一行并准备好 init.sql
+      # - ./db/init:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data:
