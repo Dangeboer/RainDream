@@ -1,16 +1,14 @@
-package com.dangeboer.raindream.model.entity;
+package com.dangeboer.raindream.model.vo;
 
-import com.dangeboer.raindream.base.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class Item extends BaseEntity {
-    private Long userId;
-
+public class ItemDetailVO implements Serializable {
     private Integer mediaType;
     private Integer contentType;
 

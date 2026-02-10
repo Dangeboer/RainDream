@@ -5,8 +5,7 @@
 
 <mapper namespace="com.dangeboer.raindream.mapper.ItemMapper">
 
-    <!-- 通用字段（适配 VO） -->
-    <select id="getItem" resultType="com.dangeboer.raindream.model.entity.ItemEntity">
+    <select id="getItemList" resultType="com.dangeboer.raindream.model.vo.ItemListVO">
         SELECT *
         FROM item
     </select>
