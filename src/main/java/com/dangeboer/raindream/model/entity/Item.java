@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class ItemEntity extends BaseEntity {
+public class Item extends BaseEntity {
     private Long userId;
 
     private Integer mediaType;
