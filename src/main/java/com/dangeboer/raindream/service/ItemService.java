@@ -1,7 +1,10 @@
-package com.dangeboer.raindream.service.impl;
+package com.dangeboer.raindream.service;
 
+import com.dangeboer.raindream.model.entity.ItemEntity;
 import com.dangeboer.raindream.model.vo.ItemVO;
 
+import java.util.List;
+
 public interface ItemService {
-    ItemVO getItem();
+    List<ItemEntity> getItem();
 }

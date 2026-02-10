@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dangeboer.raindream.mapper.ItemMapper">
+
+    <!-- 通用字段（适配 VO） -->
+    <select id="getItem" resultType="com.dangeboer.raindream.model.entity.ItemEntity">
+        SELECT *
+        FROM item
+    </select>
+
+</mapper>
