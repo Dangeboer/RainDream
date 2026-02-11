@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dangeboer.raindream.mapper.TagMapper">
+
+    <select id="selectByItemId" resultType="com.dangeboer.raindream.model.entity.Tag">
+        SELECT t.*
+        FROM tag t
+                 JOIN item_tag it ON it.tag_id = t.id
+                 JOIN item i ON i.id = it.item_id
+        WHERE it.item_id = #{itemId}
+          AND i.user_id = #{userId}
+          AND t.user_id = #{userId}
+    </select>
+
+</mapper>

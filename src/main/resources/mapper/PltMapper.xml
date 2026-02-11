@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dangeboer.raindream.mapper.PltMapper">
+
+    <select id="selectByItemId" resultType="com.dangeboer.raindream.model.entity.Plt">
+        SELECT p.*
+        FROM plt p
+                 JOIN item_plt ip ON ip.plt_id = p.id
+                 JOIN item i ON i.id = ip.item_id
+        WHERE ip.item_id = #{itemId}
+          AND i.user_id = #{userId}
+          AND p.user_id = #{userId}
+    </select>
+
+</mapper>
