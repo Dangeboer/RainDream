@@ -3,24 +3,22 @@ package com.dangeboer.raindream.serviceimpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dangeboer.raindream.converter.ItemConverter;
-import com.dangeboer.raindream.mapper.FanficMapper;
-import com.dangeboer.raindream.mapper.ItemMapper;
-import com.dangeboer.raindream.mapper.MediaMapper;
-import com.dangeboer.raindream.model.entity.Fanfic;
-import com.dangeboer.raindream.model.entity.Item;
-import com.dangeboer.raindream.model.entity.Media;
+import com.dangeboer.raindream.mapper.*;
+import com.dangeboer.raindream.model.entity.*;
 import com.dangeboer.raindream.model.form.ItemForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
 import com.dangeboer.raindream.model.vo.FanficListVO;
 import com.dangeboer.raindream.model.vo.ItemDetailVO;
 import com.dangeboer.raindream.model.vo.ItemListVO;
-import com.dangeboer.raindream.service.ItemService;
+import com.dangeboer.raindream.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +27,13 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     private final ItemConverter itemConverter;
     private final FanficMapper fanficMapper;
     private final MediaMapper mediaMapper;
+    private final TagMapper tagMapper;
+    private final PltMapper pltMapper;
+
+    private final TagService tagService;
+    private final PltService pltService;
+    private final ItemTagService itemTagService;
+    private final ItemPltService itemPltService;
 
     @Override
     public List<ItemListVO> getItemList(Long userId) {
@@ -113,25 +118,142 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         Item item = itemConverter.toItem(itemForm);
         item.setUserId(userId);
 
-        // 1) 先插 item，拿到自增 id
+        // 1. 先插 item，拿到自增 id
         itemMapper.insert(item);
         Long itemId = item.getId();
 
-        // 2) 如果是 fanfic 插 fanfic 表
+        // 2. 如果是 fanfic 插 fanfic 表
         if (isFanfic) {
             Fanfic fanfic = itemConverter.toFanfic(itemForm.getFanficForm());
             fanfic.setItemId(itemId);
             fanficMapper.insert(fanfic);
         }
-
-        // 3) 如果是 media 插 media 表
-        if (isMedia) {
+        // 3. 如果是 media 插 media 表
+        else if (isMedia) {
             // TODO: 存封面url，以及live图需要存视频url
             Media media = new Media(itemId, null, null);
             mediaMapper.insert(media);
         }
 
+        // 4. 处理 tags
+        handleTags(userId, itemId, itemForm.getTags());
+
+        // 5. 处理 plts
+        handlePlts(userId, itemId, itemForm.getPlts());
+
         return Math.toIntExact(itemId);
     }
 
+    // 辅助函数：处理标签信息
+    private void handleTags(Long userId, Long itemId, List<String> tagsRaw) {
+        if (tagsRaw == null || tagsRaw.isEmpty()) {
+            return;
+        }
+
+        // 1. 清洗：trim、过滤空、去重（保持用户输入顺序）
+        List<String> tagNames = tagsRaw.stream()
+                .filter(s -> s != null)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .toList();
+
+        if (tagNames.isEmpty()) {
+            return;
+        }
+
+        // 2. 查已有 tag（当前用户范围内）
+        List<Tag> existing = tagMapper.selectList(new LambdaQueryWrapper<Tag>()
+                .eq(Tag::getUserId, userId)
+                .in(Tag::getTagName, tagNames)
+        );
+
+        // name -> id
+        Map<String, Long> nameToId = existing.stream()
+                .collect(Collectors.toMap(Tag::getTagName, Tag::getId, (a, b) -> a));
+
+        // 3. 找出缺失的 tag
+        List<Tag> toInsert = tagNames.stream()
+                .filter(name -> !nameToId.containsKey(name))
+                .map(name -> new Tag(userId, name))
+                .toList();
+
+        // 批量插入
+        if (!toInsert.isEmpty()) {
+            tagService.saveBatch(toInsert);
+        }
+
+        // 重新查找出所有 tag
+        List<Tag> all = tagService.list(new LambdaQueryWrapper<Tag>()
+                .eq(Tag::getUserId, userId)
+                .in(Tag::getTagName, tagNames)
+        );
+        Map<String, Long> nameToId2 = all.stream()
+                .collect(Collectors.toMap(Tag::getTagName, Tag::getId, (a, b) -> a));
+
+
+        // 4. 绑定 item_tag
+        List<ItemTag> relations = tagNames.stream()
+                .map(name -> new ItemTag(itemId, nameToId2.get(name)))
+                .toList();
+
+        itemTagService.saveBatch(relations);
+    }
+
+    // 辅助函数：处理平台信息
+    private void handlePlts(Long userId, Long itemId, List<String> pltsRows) {
+
+        if (pltsRows == null || pltsRows.isEmpty()) {
+            return;
+        }
+
+        // 1. 清洗：trim、过滤空、去重（保持用户输入顺序）
+        List<String> pltNames = pltsRows.stream()
+                .filter(s -> s != null)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .toList();
+
+        if (pltNames.isEmpty()) {
+            return;
+        }
+
+        // 2. 查已有 plt（当前用户范围内）
+        List<Plt> existing = pltMapper.selectList(new LambdaQueryWrapper<Plt>()
+                .eq(Plt::getUserId, userId)
+                .in(Plt::getPltName, pltNames)
+        );
+
+        // name -> id
+        Map<String, Long> nameToId = existing.stream()
+                .collect(Collectors.toMap(Plt::getPltName, Plt::getId, (a, b) -> a));
+
+        // 3. 找出缺失的 plt
+        List<Plt> toInsert = pltNames.stream()
+                .filter(name -> !nameToId.containsKey(name))
+                .map(name -> new Plt(userId, name))
+                .toList();
+
+        // 批量插入
+        if (!toInsert.isEmpty()) {
+            pltService.saveBatch(toInsert);
+        }
+
+        // 重新查找出所有 plt
+        List<Plt> all = pltService.list(new LambdaQueryWrapper<Plt>()
+                .eq(Plt::getUserId, userId)
+                .in(Plt::getPltName, pltNames)
+        );
+        Map<String, Long> nameToId2 = all.stream()
+                .collect(Collectors.toMap(Plt::getPltName, Plt::getId, (a, b) -> a));
+
+
+        // 4. 绑定 item_plt
+        List<ItemPlt> relations = pltNames.stream()
+                .map(name -> new ItemPlt(itemId, nameToId2.get(name)))
+                .toList();
+
+        itemPltService.saveBatch(relations);
+    }
 }
