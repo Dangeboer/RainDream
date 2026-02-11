@@ -41,9 +41,19 @@ public class ItemController {
         return itemService.getFanficDetail(user.getId(), itemId);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public Integer createItem(@AuthenticationPrincipal User user, @RequestBody ItemForm itemForm) throws IllegalAccessException {
+    public Long createItem(@AuthenticationPrincipal User user, @RequestBody ItemForm itemForm) {
         return itemService.createItem(user.getId(), itemForm);
+    }
+
+    @DeleteMapping("/delete/{itemId}")
+    public Long deleteItem(@PathVariable Long itemId) throws NotFoundException {
+        return itemService.deleteItem(itemId);
+    }
+
+    @PutMapping("/update/{itemId}")
+    public Long updateItem(@AuthenticationPrincipal User user, @PathVariable Long itemId, @RequestBody ItemForm itemForm) {
+        return itemService.updateItem(user.getId(), itemId, itemForm);
     }
 }

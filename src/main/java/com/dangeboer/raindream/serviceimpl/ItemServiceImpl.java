@@ -52,7 +52,9 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         // new LambdaQueryWrapper<Item>()：MyBatis-Plus 提供的条件构造器（构造查询条件），用 Java 方式构造 SQL WHERE 条件。
 
         List<Item> items = itemMapper.selectList(
-                new LambdaQueryWrapper<Item>().eq(Item::getUserId, userId)
+                new LambdaQueryWrapper<Item>()
+                        .eq(Item::getUserId, userId)
+                        .ne(Item::getContentType, 1)
         );
 
         return items.stream().map(itemConverter::toItemListVO).toList();
@@ -60,12 +62,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
     @Override
     public ItemDetailVO getItemDetail(Long userId, Long itemId) throws NotFoundException {
-        Item item = itemMapper.selectOne(
-                new LambdaQueryWrapper<Item>()
-                        .eq(Item::getUserId, userId)
-                        .eq(Item::getId, itemId)
-        );
-
+        Item item = itemMapper.selectById(itemId);
         if (item == null) {
             throw new NotFoundException("未找到此项目");
         }
@@ -104,12 +101,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
     @Override
     public FanficDetailVO getFanficDetail(Long userId, Long itemId) throws NotFoundException {
-        Item item = itemMapper.selectOne(
-                new LambdaQueryWrapper<Item>()
-                        .eq(Item::getUserId, userId)
-                        .eq(Item::getId, itemId)
-        );
-
+        Item item = itemMapper.selectById(itemId);
         if (item == null) {
             throw new NotFoundException("未找到此项目");
         }
@@ -134,7 +126,10 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Integer createItem(Long userId, ItemForm itemForm) {
+    public Long createItem(Long userId, ItemForm itemForm) {
+        if (itemForm == null) {
+            throw new IllegalArgumentException("请提供合法信息");
+        }
         boolean isFanfic = false;
         boolean isMedia = false;
 
@@ -145,7 +140,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         if (isFanfic && itemForm.getFanficForm() == null) {
-            throw new IllegalArgumentException("需要文章详细信息");
+            throw new IllegalArgumentException("请提供文章详细信息");
         }
 
         Item item = itemConverter.toItem(itemForm);
@@ -174,7 +169,101 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         // 5. 处理 plts
         handlePlts(userId, itemId, itemForm.getPlts());
 
-        return Math.toIntExact(itemId);
+        return itemId;
+    }
+
+    @Override
+    public Long deleteItem(Long itemId) throws NotFoundException {
+        Item item = itemMapper.selectById(itemId);
+        if (item == null) {
+            throw new NotFoundException("未找到此项目");
+        }
+
+        return (long) itemMapper.deleteById(itemId);
+    }
+
+    @Override
+    public Long updateItem(Long userId, Long itemId, ItemForm itemForm) {
+        // 0. 校验归属：只能更新自己的 item
+        Item dbItem = itemMapper.selectById(itemId);
+        if (dbItem == null || !Objects.equals(dbItem.getUserId(), userId)) {
+            throw new IllegalArgumentException("item 不存在或无权限");
+        }
+
+        // 1. 重新判断类型（用新表单决定最终形态）
+        boolean isFanfic = false;
+        boolean isMedia = false;
+
+        if (Integer.valueOf(1).equals(itemForm.getContentType())) {
+            isFanfic = true;
+        } else if (!Integer.valueOf(1).equals(itemForm.getMediaType())
+                && !Integer.valueOf(6).equals(itemForm.getMediaType())) {
+            isMedia = true;
+        }
+
+        if (isFanfic && itemForm.getFanficForm() == null) {
+            throw new IllegalArgumentException("需要文章详细信息");
+        }
+
+        // 2. 更新 item 主表（注意：要 setId，否则 MP 不知道更新哪条）
+        Item toUpdate = itemConverter.toItem(itemForm);
+        toUpdate.setId(itemId);
+        toUpdate.setUserId(userId); // 防止被前端篡改
+        itemMapper.updateById(toUpdate);
+
+        // 3. 处理 fanfic / media 切换
+        // 你现在设计：fanfic/media 都以 itemId 为主键（或唯一）
+        // 规则：以新表单为准 -> 该有的 upsert，不该有的 delete
+
+        if (isFanfic) {
+            // fanfic：upsert（存在就更新，不存在就插入）
+            Fanfic existingFanfic = fanficMapper.selectById(itemId); // 前提：fanfic 的主键= item_id
+            Fanfic fanfic = itemConverter.toFanfic(itemForm.getFanficForm());
+            fanfic.setItemId(itemId);
+
+            if (existingFanfic == null) {
+                fanficMapper.insert(fanfic);
+            } else {
+                fanficMapper.updateById(fanfic);
+            }
+
+            // fanfic 形态下，不该有 media
+            mediaMapper.deleteById(itemId);
+
+        } else if (isMedia) {
+            // media：upsert
+            Media existingMedia = mediaMapper.selectById(itemId); // 前提：media 主键= item_id
+            Media media = new Media(itemId, null, null); // TODO 你后续补字段
+            if (existingMedia == null) {
+                mediaMapper.insert(media);
+            } else {
+                mediaMapper.updateById(media);
+            }
+
+            // media 形态下，不该有 fanfic
+            fanficMapper.deleteById(itemId);
+
+        } else {
+            // 既不是 fanfic 也不是 media：两个扩展表都不该有
+            fanficMapper.deleteById(itemId);
+            mediaMapper.deleteById(itemId);
+        }
+
+        // 这里没有处理 tag 和 plt 表的变化，用户体验可能变差：“我只是暂时没给任何 item 用这个 tag，但我还想以后继续用”——结果它被自动删了。
+        // 4. tags：重建关系（以这次传参为准）
+        // null=不修改，空数组=清空
+        if (itemForm.getTags() != null) {
+            itemTagService.remove(new LambdaQueryWrapper<ItemTag>().eq(ItemTag::getItemId, itemId));
+            handleTags(userId, itemId, itemForm.getTags());
+        }
+
+        // 5. plts：同理
+        if (itemForm.getPlts() != null) {
+            itemPltService.remove(new LambdaQueryWrapper<ItemPlt>().eq(ItemPlt::getItemId, itemId));
+            handlePlts(userId, itemId, itemForm.getPlts());
+        }
+
+        return itemId;
     }
 
     private void handleTags(Long userId, Long itemId, List<String> tagsRaw) {

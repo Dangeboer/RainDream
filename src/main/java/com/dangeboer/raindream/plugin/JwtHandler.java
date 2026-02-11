@@ -1,4 +1,4 @@
-package com.dangeboer.raindream.security;
+package com.dangeboer.raindream.plugin;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

@@ -18,5 +18,8 @@ public interface ItemService extends IService<Item> {
     List<FanficListVO> getFanficList(Long userId);
     FanficDetailVO getFanficDetail(Long userId, Long itemId) throws NotFoundException;
 
-    Integer createItem(Long id, ItemForm itemForm) throws IllegalAccessException;
+    Long createItem(Long userId, ItemForm itemForm);
+
+    Long deleteItem(Long itemId) throws NotFoundException;
+    Long updateItem(Long userId, Long itemId, ItemForm itemForm);
 }

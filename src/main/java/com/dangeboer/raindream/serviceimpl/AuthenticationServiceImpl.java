@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dangeboer.raindream.mapper.UserMapper;
 import com.dangeboer.raindream.model.dto.LoginResponse;
 import com.dangeboer.raindream.model.entity.User;
-import com.dangeboer.raindream.security.JwtHandler;
+import com.dangeboer.raindream.plugin.JwtHandler;
 import com.dangeboer.raindream.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;

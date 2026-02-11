@@ -1,4 +1,4 @@
-package com.dangeboer.raindream.plugin.mybatis;
+package com.dangeboer.raindream.plugin;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
