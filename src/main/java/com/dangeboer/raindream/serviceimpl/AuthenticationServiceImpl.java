@@ -1,6 +1,7 @@
 package com.dangeboer.raindream.serviceimpl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dangeboer.raindream.exception.DuplicateKeyException;
 import com.dangeboer.raindream.mapper.UserMapper;
 import com.dangeboer.raindream.model.dto.LoginResponse;
 import com.dangeboer.raindream.model.entity.User;
@@ -22,12 +23,12 @@ public class AuthenticationServiceImpl extends ServiceImpl<UserMapper, User> imp
     private final JwtHandler jwtHandler;
 
     @Override
-    public Integer register(String username, String password, String phone) {
+    public Long register(String username, String password, String phone) {
         if (userMapper.findUserByUsername(username) != null) {
-            throw new RuntimeException("用户名已存在");
+            throw new DuplicateKeyException("用户名已存在");
         }
         User user = new User(username, passwordEncoder.encode(password), phone, null);
-        return userMapper.insert(user);
+        return (long) userMapper.insert(user);
     }
 
     @Override

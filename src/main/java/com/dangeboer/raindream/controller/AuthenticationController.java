@@ -16,7 +16,7 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public Integer register(@RequestBody RegisterRequest registerRequest) {
+    public Long register(@RequestBody RegisterRequest registerRequest) {
         return authenticationService.register(registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getPhone());
     }
 

@@ -8,7 +8,6 @@ import com.dangeboer.raindream.model.vo.ItemDetailVO;
 import com.dangeboer.raindream.model.vo.ItemListVO;
 import com.dangeboer.raindream.service.ItemService;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +26,7 @@ public class ItemController {
     }
 
     @GetMapping("/detail/{itemId}")
-    public ItemDetailVO getItemDetail(@AuthenticationPrincipal User user, @PathVariable Long itemId) throws NotFoundException {
+    public ItemDetailVO getItemDetail(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
         return itemService.getItemDetail(user.getId(), itemId);
     }
 
@@ -37,7 +36,7 @@ public class ItemController {
     }
 
     @GetMapping("/fanfic/detail/{itemId}")
-    public FanficDetailVO getFanficDetail(@AuthenticationPrincipal User user, @PathVariable Long itemId) throws NotFoundException {
+    public FanficDetailVO getFanficDetail(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
         return itemService.getFanficDetail(user.getId(), itemId);
     }
 
@@ -48,8 +47,8 @@ public class ItemController {
     }
 
     @DeleteMapping("/delete/{itemId}")
-    public Long deleteItem(@PathVariable Long itemId) throws NotFoundException {
-        return itemService.deleteItem(itemId);
+    public Long deleteItem(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
+        return itemService.deleteItem(user.getId(), itemId);
     }
 
     @PutMapping("/update/{itemId}")

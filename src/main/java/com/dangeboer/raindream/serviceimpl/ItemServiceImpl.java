@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dangeboer.raindream.converter.ItemConverter;
 import com.dangeboer.raindream.converter.PltConverter;
 import com.dangeboer.raindream.converter.TagConverter;
+import com.dangeboer.raindream.exception.BadRequestException;
+import com.dangeboer.raindream.exception.CanNotFoundException;
+import com.dangeboer.raindream.exception.ForbiddenException;
 import com.dangeboer.raindream.mapper.*;
 import com.dangeboer.raindream.model.entity.*;
 import com.dangeboer.raindream.model.form.ItemForm;
@@ -14,7 +17,6 @@ import com.dangeboer.raindream.model.vo.ItemDetailVO;
 import com.dangeboer.raindream.model.vo.ItemListVO;
 import com.dangeboer.raindream.service.*;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,10 +63,10 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     }
 
     @Override
-    public ItemDetailVO getItemDetail(Long userId, Long itemId) throws NotFoundException {
+    public ItemDetailVO getItemDetail(Long userId, Long itemId) {
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
-            throw new NotFoundException("未找到此项目");
+            throw new CanNotFoundException();
         }
 
         ItemDetailVO itemDetailVO = itemConverter.toItemDetailVO(item);
@@ -100,10 +102,10 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     }
 
     @Override
-    public FanficDetailVO getFanficDetail(Long userId, Long itemId) throws NotFoundException {
+    public FanficDetailVO getFanficDetail(Long userId, Long itemId) {
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
-            throw new NotFoundException("未找到此项目");
+            throw new CanNotFoundException();
         }
 
         FanficDetailVO fanficDetailVO = itemConverter.toFanficDetailVO(item, fanficMapper.selectById(itemId));
@@ -128,7 +130,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     @Override
     public Long createItem(Long userId, ItemForm itemForm) {
         if (itemForm == null) {
-            throw new IllegalArgumentException("请提供合法信息");
+            throw new BadRequestException();
         }
         boolean isFanfic = false;
         boolean isMedia = false;
@@ -140,7 +142,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         if (isFanfic && itemForm.getFanficForm() == null) {
-            throw new IllegalArgumentException("请提供文章详细信息");
+            throw new BadRequestException("请提供文章详细信息");
         }
 
         Item item = itemConverter.toItem(itemForm);
@@ -173,12 +175,15 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     }
 
     @Override
-    public Long deleteItem(Long itemId) throws NotFoundException {
+    public Long deleteItem(Long userId, Long itemId) {
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
-            throw new NotFoundException("未找到此项目");
+            throw new CanNotFoundException();
+        } else if (!Objects.equals(item.getUserId(), userId)) {
+            throw new ForbiddenException();
         }
 
+        // 返回的是受影响的行数
         return (long) itemMapper.deleteById(itemId);
     }
 
@@ -187,7 +192,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         // 0. 校验归属：只能更新自己的 item
         Item dbItem = itemMapper.selectById(itemId);
         if (dbItem == null || !Objects.equals(dbItem.getUserId(), userId)) {
-            throw new IllegalArgumentException("item 不存在或无权限");
+            throw new CanNotFoundException();
         }
 
         // 1. 重新判断类型（用新表单决定最终形态）
@@ -202,7 +207,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         if (isFanfic && itemForm.getFanficForm() == null) {
-            throw new IllegalArgumentException("需要文章详细信息");
+            throw new BadRequestException("需要文章详细信息");
         }
 
         // 2. 更新 item 主表（注意：要 setId，否则 MP 不知道更新哪条）
