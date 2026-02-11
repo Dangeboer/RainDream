@@ -1,5 +1,6 @@
 package com.dangeboer.raindream.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.dangeboer.raindream.model.entity.Item;
 import com.dangeboer.raindream.model.form.ItemForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
@@ -9,7 +10,7 @@ import com.dangeboer.raindream.model.vo.ItemListVO;
 
 import java.util.List;
 
-public interface ItemService {
+public interface ItemService extends IService<Item> {
     List<ItemListVO> getItemList(Long userId);
     ItemDetailVO getItemDetail(Long userId, Long itemId);
 
