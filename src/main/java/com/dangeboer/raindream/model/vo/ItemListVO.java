@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class ItemListVO implements Serializable {
+    private Long id;
+
     private String storeUrl;
     private String content;
 

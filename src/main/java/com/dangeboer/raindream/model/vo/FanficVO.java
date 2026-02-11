@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class FanficVO implements Serializable {
-
+    private Long itemId;
     private Integer era;
     private String eraLabel; // label
 

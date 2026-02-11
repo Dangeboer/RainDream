@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class ItemDetailVO implements Serializable {
+    private Long id;
+
     private Integer mediaType;
     private String mediaTypeLabel; // label
 
