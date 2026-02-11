@@ -1,17 +1,12 @@
 package com.dangeboer.raindream.model.vo;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * 除同人文以外所有 item 的 list
+ * 同人文 list
  */
-@Getter
-@Setter
-public class ItemListVO implements Serializable {
+public class FanficListVO implements Serializable {
     private String storeUrl;
     private String content;
 
@@ -24,4 +19,7 @@ public class ItemListVO implements Serializable {
     private String trackingTypeLabel; // label
 
     private BigDecimal rating;
+
+    // 补充上同人文信息
+    private FanficVO fanficVO;
 }
