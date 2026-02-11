@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 public enum TrackingTypeEnum implements IBaseEnum<Integer> {
 
-    TODO(1, "想看"),
+    TODO(1, "未看"),
     DOING(2, "在看"),
     UPTODATE(3, "追平"),
     DONE(4, "看过"),
