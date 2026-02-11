@@ -6,7 +6,6 @@ CREATE DATABASE IF NOT EXISTS raindream_database
 # FLUSH PRIVILEGES;
 
 
-
 USE raindream_database;
 
 -- 临时命令
@@ -16,22 +15,24 @@ USE raindream_database;
 # SHOW DATABASES;
 
 -- 用户表
-CREATE TABLE IF NOT EXISTS user (
-                      id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+CREATE TABLE IF NOT EXISTS user
+(
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
 
-                      username VARCHAR(100) NOT NULL UNIQUE COMMENT '用户名',
-                      password VARCHAR(255) NOT NULL COMMENT '密码',
+    username   VARCHAR(100) NOT NULL UNIQUE COMMENT '用户名',
+    password   VARCHAR(255) NOT NULL COMMENT '密码',
 
-                      phone VARCHAR(20) NOT NULL COMMENT '手机号',
-                      email VARCHAR(255) DEFAULT NULL COMMENT '邮箱',
+    phone      VARCHAR(20)  NOT NULL COMMENT '手机号',
+    email      VARCHAR(255)          DEFAULT NULL COMMENT '邮箱',
 
-                      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
-                      UNIQUE KEY uk_user_phone (phone),
-                      UNIQUE KEY uk_user_email (email)
+    UNIQUE KEY uk_user_phone (phone),
+    UNIQUE KEY uk_user_email (email)
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
 
 
 -- 项目表
@@ -82,12 +83,12 @@ CREATE TABLE IF NOT EXISTS item
 -- 标签表
 CREATE TABLE IF NOT EXISTS tag
 (
-    id       BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id  BIGINT       NOT NULL,
-    tag_name VARCHAR(100) NOT NULL,
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id    BIGINT       NOT NULL,
+    tag_name   VARCHAR(100) NOT NULL,
 
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
     CONSTRAINT fk_tag_user FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
 
@@ -98,12 +99,12 @@ CREATE TABLE IF NOT EXISTS tag
 -- 平台表
 CREATE TABLE IF NOT EXISTS plt
 (
-    id       BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id  BIGINT       NOT NULL,
-    plt_name VARCHAR(100) NOT NULL,
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id    BIGINT       NOT NULL,
+    plt_name   VARCHAR(100) NOT NULL,
 
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
     CONSTRAINT fk_plt_user FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
 
@@ -112,7 +113,7 @@ CREATE TABLE IF NOT EXISTS plt
   DEFAULT CHARSET = utf8mb4;
 
 -- 同人文信息补充表
-CREATE TABLE IF NOT EXISTS fanfic_info
+CREATE TABLE IF NOT EXISTS fanfic
 (
     item_id      BIGINT PRIMARY KEY,
 
@@ -134,7 +135,7 @@ CREATE TABLE IF NOT EXISTS fanfic_info
   DEFAULT CHARSET = utf8mb4;
 
 -- 媒体信息补充表
-CREATE TABLE IF NOT EXISTS media_info
+CREATE TABLE IF NOT EXISTS media
 (
     item_id   BIGINT PRIMARY KEY,
 
