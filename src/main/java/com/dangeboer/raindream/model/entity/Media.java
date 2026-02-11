@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MediaInfo {
+public class Media {
     private Long itemId;
     private String thumbUrl;
     private String liveUrl;

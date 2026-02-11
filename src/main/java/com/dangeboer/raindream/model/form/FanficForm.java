@@ -1,14 +1,14 @@
-package com.dangeboer.raindream.model.entity;
+package com.dangeboer.raindream.model.form;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Getter
 @Setter
-public class FanficInfo {
-    private Long itemId;
+public class FanficForm implements Serializable {
     private Integer era;
     private String charSetting;
     private Integer lengthType;

@@ -29,9 +29,12 @@ public class ItemForm implements Serializable {
     private Integer releaseYear;
 
     private Integer trackingType;
+
     @DecimalMin("0.0")
     @DecimalMax("10.0")
     private BigDecimal rating;
     private String notes;
     private String summary;
+
+    private FanficForm fanficForm;
 }
