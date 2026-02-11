@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 除同人文以外所有 item 的 detail
@@ -37,5 +38,9 @@ public class ItemDetailVO implements Serializable {
     private BigDecimal rating;
     private String notes;
     private String summary;
+
+    // 标签和平台信息
+    private List<TagVO> tagVOS;
+    private List<PltVO> pltVOS;
 }
 

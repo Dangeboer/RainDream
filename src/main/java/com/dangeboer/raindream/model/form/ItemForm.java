@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,4 +38,8 @@ public class ItemForm implements Serializable {
     private String summary;
 
     private FanficForm fanficForm;
+
+    // 标签和平台补充信息
+    private List<String> tags;
+    private List<String> plts;
 }
