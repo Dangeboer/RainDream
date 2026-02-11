@@ -7,15 +7,16 @@ import com.dangeboer.raindream.model.vo.FanficDetailVO;
 import com.dangeboer.raindream.model.vo.FanficListVO;
 import com.dangeboer.raindream.model.vo.ItemDetailVO;
 import com.dangeboer.raindream.model.vo.ItemListVO;
+import org.apache.ibatis.javassist.NotFoundException;
 
 import java.util.List;
 
 public interface ItemService extends IService<Item> {
     List<ItemListVO> getItemList(Long userId);
-    ItemDetailVO getItemDetail(Long userId, Long itemId);
+    ItemDetailVO getItemDetail(Long userId, Long itemId) throws NotFoundException;
 
     List<FanficListVO> getFanficList(Long userId);
-    FanficDetailVO getFanficDetail(Long userId, Long itemId);
+    FanficDetailVO getFanficDetail(Long userId, Long itemId) throws NotFoundException;
 
     Integer createItem(Long id, ItemForm itemForm) throws IllegalAccessException;
 }
