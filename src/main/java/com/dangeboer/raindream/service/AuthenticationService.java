@@ -8,4 +8,8 @@ import com.dangeboer.raindream.model.entity.User;
 public interface AuthenticationService extends IService<User> {
     Long register(String username, String password, String phone);
     LoginResponse login(String username, String password);
+
+    // TODO：登出和注销
+    void logout();
+    void deleteUser();
 }

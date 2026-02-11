@@ -36,4 +36,14 @@ public class AuthenticationServiceImpl extends ServiceImpl<UserMapper, User> imp
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         return new LoginResponse(jwtHandler.generateToken(username));
     }
+
+    @Override
+    public void logout() {
+        // TODO: 用 redis 存黑名单
+    }
+
+    @Override
+    public void deleteUser() {
+        // TODO: 注销
+    }
 }

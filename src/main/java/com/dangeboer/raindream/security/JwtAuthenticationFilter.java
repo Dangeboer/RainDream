@@ -10,7 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -39,17 +38,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+
         final String jwt = getJwtFromRequest(request); // 从请求头中提取 JWT。如果请求头中没有 JWT 或格式不正确，则直接继续过滤链的下一步
+
         if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
-        final String username = jwtHandler.parsedUsername(jwt); // 解析 JWT，从中提取用户名
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(username); // 根据提取到的用户名从 UserDetailsService 加载用户详细信息
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()); // 这个对象是 Spring Security 用来表示用户认证信息的标准方式
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); // 设置认证详情。会构建一些请求级别的细节信息（如 IP 地址、session 等），并把它们设置到认证对象中
-        SecurityContextHolder.getContext().setAuthentication(authentication); // 将认证信息存储到 SecurityContext 中，Spring Security 会使用这个上下文来进行后续的权限验证
+
+        try {
+            String username = jwtHandler.parsedUsername(jwt);
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        } catch (Exception e) {
+            // token 非法或过期
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
         filterChain.doFilter(request, response); // 继续执行过滤链中的下一个过滤器或目标资源。
     }
 
