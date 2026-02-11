@@ -1,5 +1,6 @@
 package com.dangeboer.raindream.serviceimpl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dangeboer.raindream.mapper.UserMapper;
 import com.dangeboer.raindream.model.dto.LoginResponse;
 import com.dangeboer.raindream.model.entity.User;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AuthenticationServiceImpl implements AuthenticationService {
+public class AuthenticationServiceImpl extends ServiceImpl<UserMapper, User> implements AuthenticationService {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
