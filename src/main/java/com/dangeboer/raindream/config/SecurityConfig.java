@@ -1,5 +1,6 @@
-package com.dangeboer.raindream.security;
+package com.dangeboer.raindream.config;
 
+import com.dangeboer.raindream.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

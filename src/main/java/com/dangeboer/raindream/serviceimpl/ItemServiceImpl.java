@@ -1,7 +1,10 @@
 package com.dangeboer.raindream.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dangeboer.raindream.base.PageResult;
 import com.dangeboer.raindream.converter.ItemConverter;
 import com.dangeboer.raindream.converter.PltConverter;
 import com.dangeboer.raindream.converter.TagConverter;
@@ -20,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,19 +49,36 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     private final ItemPltService itemPltService;
 
     @Override
-    public List<ItemListVO> getItemList(Long userId) {
+    public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size) {
+        // 参数兜底，防止前端乱传
+        page = page == null ? 1 : page;
+        size = size == null ? 20 : Math.min(size, 100);
 
-        // 等价于 SELECT * FROM item WHERE user_id = ?
-        // selectList() 是 BaseMapper 自带的方法，查询符合条件的多条记录
-        // new LambdaQueryWrapper<Item>()：MyBatis-Plus 提供的条件构造器（构造查询条件），用 Java 方式构造 SQL WHERE 条件。
+        // 查询条件
+        LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
+                .eq(Item::getUserId, userId)
+                .ne(Item::getContentType, 1)
+                .orderByDesc(Item::getCreatedAt);
 
-        List<Item> items = itemMapper.selectList(
-                new LambdaQueryWrapper<Item>()
-                        .eq(Item::getUserId, userId)
-                        .ne(Item::getContentType, 1)
-        );
+        // MyBatis-Plus 分页对象
+        Page<Item> mpPage = new Page<>(page, size);
+        IPage<Item> itemPage = itemMapper.selectPage(mpPage, wrapper);
 
-        return items.stream().map(itemConverter::toItemListVO).toList();
+        // records -> VO
+        List<ItemListVO> voList = itemPage.getRecords()
+                .stream()
+                .map(itemConverter::toItemListVO)
+                .toList();
+
+        // 组装返回
+        PageResult<ItemListVO> result = new PageResult<>();
+        result.setTotal(itemPage.getTotal());
+        result.setPage(itemPage.getCurrent());
+        result.setSize(itemPage.getSize());
+        // 不是 PageResult<List<ItemListVO>> 的原因是泛型设定的是 private List<T> data
+        result.setData(voList);
+
+        return result;
     }
 
     @Override
@@ -67,6 +86,8 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
             throw new CanNotFoundException();
+        } else if (!Objects.equals(item.getUserId(), userId)) {
+            throw new ForbiddenException();
         }
 
         ItemDetailVO itemDetailVO = itemConverter.toItemDetailVO(item);
@@ -81,24 +102,56 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     }
 
     @Override
-    public List<FanficListVO> getFanficList(Long userId) {
+    public PageResult<FanficListVO> getFanficList(Long userId, Long page, Long size) {
+        // 等价于 SELECT * FROM item WHERE user_id = ?
+        // selectList() 是 BaseMapper 自带的方法，查询符合条件的多条记录
+        // new LambdaQueryWrapper<Item>()：MyBatis-Plus 提供的条件构造器（构造查询条件），用 Java 方式构造 SQL WHERE 条件。
 
-        // 1. 找出当前用户所有同人文
-        List<Item> items = itemMapper.selectList(
-                new LambdaQueryWrapper<Item>()
-                        .eq(Item::getUserId, userId)
-                        .eq(Item::getContentType, 1)
-        );
+//        List<Item> items = itemMapper.selectList(
+//                new LambdaQueryWrapper<Item>()
+//                        .eq(Item::getUserId, userId)
+//                        .eq(Item::getContentType, 1)
+//        );
 
-        List<FanficListVO> fanficListVOS = new ArrayList<>();
-        for (Item item : items) {
-            Long itemId = item.getId();
-            // 2. 把 entity 转化成 fanficListVO，转化内部会自动匹配上 fanficVO
-            FanficListVO fanficListVO = itemConverter.toFanficListVO(item, fanficMapper.selectById(itemId));
-            fanficListVOS.add(fanficListVO);
-        }
+        page = (page == null || page < 1) ? 1 : page;
+        size = (size == null || size < 1) ? 20 : Math.min(size, 100);
 
-        return fanficListVOS;
+        // 1) 分页查当前用户的 fanfic item
+        Page<Item> mpPage = new Page<>(page, size);
+
+        LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
+                .eq(Item::getUserId, userId)
+                .eq(Item::getContentType, 1)
+                .orderByDesc(Item::getCreatedAt);
+
+        IPage<Item> itemPage = itemMapper.selectPage(mpPage, wrapper);
+        List<Item> items = itemPage.getRecords();
+
+        // 2) 批量查 fanfic（避免 N+1）
+        List<Long> itemIds = items.stream().map(Item::getId).toList();
+
+        // itemIds 为空时避免 in()
+        List<Fanfic> fanfics = itemIds.isEmpty()
+                ? List.of()
+                : fanficMapper.selectList(new LambdaQueryWrapper<Fanfic>()
+                .in(Fanfic::getItemId, itemIds));
+
+        // 3) fanfic 按 itemId 建索引，方便组装
+        Map<Long, Fanfic> idToFanfic = fanfics.stream()
+                .collect(java.util.stream.Collectors.toMap(Fanfic::getItemId, f -> f));
+
+        // 4) 组装 VO（item + fanfic），内部会自动匹配上 fanficVO
+        List<FanficListVO> voList = items.stream()
+                .map(item -> itemConverter.toFanficListVO(item, idToFanfic.get(item.getId())))
+                .toList();
+
+        // 5) 返回 PageResult
+        PageResult<FanficListVO> result = new PageResult<>();
+        result.setTotal(itemPage.getTotal());
+        result.setPage(itemPage.getCurrent());
+        result.setSize(itemPage.getSize());
+        result.setData(voList);
+        return result;
     }
 
     @Override
@@ -106,6 +159,8 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
             throw new CanNotFoundException();
+        } else if (!Objects.equals(item.getUserId(), userId)) {
+            throw new ForbiddenException();
         }
 
         FanficDetailVO fanficDetailVO = itemConverter.toFanficDetailVO(item, fanficMapper.selectById(itemId));
@@ -191,8 +246,10 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     public Long updateItem(Long userId, Long itemId, ItemForm itemForm) {
         // 0. 校验归属：只能更新自己的 item
         Item dbItem = itemMapper.selectById(itemId);
-        if (dbItem == null || !Objects.equals(dbItem.getUserId(), userId)) {
+        if (dbItem == null) {
             throw new CanNotFoundException();
+        } else if (!Objects.equals(dbItem.getUserId(), userId)) {
+            throw new ForbiddenException();
         }
 
         // 1. 重新判断类型（用新表单决定最终形态）

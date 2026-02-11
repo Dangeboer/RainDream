@@ -1,5 +1,6 @@
 package com.dangeboer.raindream.controller;
 
+import com.dangeboer.raindream.base.PageResult;
 import com.dangeboer.raindream.model.entity.User;
 import com.dangeboer.raindream.model.form.ItemForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
@@ -12,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("api/item")
 @RequiredArgsConstructor
@@ -21,8 +20,11 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping("/list")
-    public List<ItemListVO> getItemList(@AuthenticationPrincipal User user) {
-        return itemService.getItemList(user.getId());
+    public PageResult<ItemListVO> getItemList(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "20") Long size) {
+        return itemService.getItemList(user.getId(), page, size);
     }
 
     @GetMapping("/detail/{itemId}")
@@ -31,8 +33,11 @@ public class ItemController {
     }
 
     @GetMapping("/fanfic/list")
-    public List<FanficListVO> getFanficList(@AuthenticationPrincipal User user) {
-        return itemService.getFanficList(user.getId());
+    public PageResult<FanficListVO> getFanficList(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "20") Long size) {
+        return itemService.getFanficList(user.getId(), page, size);
     }
 
     @GetMapping("/fanfic/detail/{itemId}")
