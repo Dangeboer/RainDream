@@ -1,6 +1,6 @@
 <template>
   <section class="card-panel panel">
-    <h2>Fanfic 列表</h2>
+    <h2>文章列表</h2>
     <el-table :data="rows" stripe>
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="title" label="标题" min-width="180" />

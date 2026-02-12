@@ -1,7 +1,7 @@
 <template>
   <el-scrollbar class="sidebar-scroll">
     <div class="sidebar-inner">
-      <div class="logo">无数</div>
+      <div class="logo">李宁玉没死</div>
       <el-button
         type="primary"
         class="new-btn"
@@ -57,7 +57,7 @@ import { useAuthStore } from "../stores/auth";
 const contentMenu = [
   {
     label: "文章",
-    to: { path: "/items", query: { contentType: 1 } },
+    to: { path: "/fanfic" },
     group: "content",
     value: 1,
   },
@@ -144,6 +144,9 @@ const route = useRoute();
 
 const isEntryActive = (entry) => {
   if (entry.group === "content") {
+    if (entry.value === 1) {
+      return route.path === "/fanfic";
+    }
     return (
       route.path === "/items" && route.query.contentType === String(entry.value)
     );

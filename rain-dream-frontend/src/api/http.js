@@ -6,10 +6,20 @@ const http = axios.create({
   timeout: 10000
 })
 
+const isApiDebug = import.meta.env.VITE_API_DEBUG === 'true'
+
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('rd_token')
   if (token && token !== 'undefined' && token !== 'null') {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  if (isApiDebug) {
+    console.debug('[API][REQ]', {
+      method: config.method,
+      url: `${config.baseURL || ''}${config.url || ''}`,
+      params: config.params,
+      data: config.data
+    })
   }
   return config
 })
@@ -17,6 +27,13 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => {
     const payload = response.data
+    if (isApiDebug) {
+      console.debug('[API][RES]', {
+        status: response.status,
+        url: `${response.config?.baseURL || ''}${response.config?.url || ''}`,
+        data: payload
+      })
+    }
 
     // Backend wraps all controller responses as: { code, message, data }
     if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
