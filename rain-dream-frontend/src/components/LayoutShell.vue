@@ -1,51 +1,55 @@
 <template>
   <div class="layout page-shell">
     <aside class="sidebar">
-      <div class="logo">无数</div>
-      <el-button
-        type="primary"
-        class="new-btn"
-        @click="$router.push('/items/new')"
-        >+ 上传新资源</el-button
-      >
-      <nav class="menu home-menu">
-        <router-link
-          to="/dashboard"
-          class="menu-item"
-          :class="{ 'is-active': route.path === '/dashboard' }"
-          >首页</router-link
-        >
-      </nav>
-      <section class="menu-group">
-        <div class="menu-title">内容</div>
-        <nav class="menu">
-          <router-link
-            v-for="entry in contentMenu"
-            :key="entry.label"
-            :to="entry.to"
-            class="menu-item"
-            :class="{ 'is-active': isEntryActive(entry) }"
-            >{{ entry.label }}</router-link
+      <el-scrollbar class="sidebar-scroll">
+        <div class="sidebar-inner">
+          <div class="logo">无数</div>
+          <el-button
+            type="primary"
+            class="new-btn"
+            @click="$router.push('/items/new')"
+            >+ 上传新资源</el-button
           >
-        </nav>
-      </section>
-      <section class="menu-group">
-        <div class="menu-title">格式</div>
-        <nav class="menu">
-          <router-link
-            v-for="entry in mediaMenu"
-            :key="entry.label"
-            :to="entry.to"
-            class="menu-item"
-            :class="{ 'is-active': isEntryActive(entry) }"
-            >{{ entry.label }}</router-link
-          >
-        </nav>
-      </section>
-      <div class="user card-panel">
-        <div>{{ auth.username || "Archivist" }}</div>
-        <el-button text @click="onLogout">退出登录</el-button>
-      </div>
+          <nav class="menu home-menu">
+            <router-link
+              to="/dashboard"
+              class="menu-item"
+              :class="{ 'is-active': route.path === '/dashboard' }"
+              >首页</router-link
+            >
+          </nav>
+          <section class="menu-group">
+            <div class="menu-title">内容</div>
+            <nav class="menu">
+              <router-link
+                v-for="entry in contentMenu"
+                :key="entry.label"
+                :to="entry.to"
+                class="menu-item"
+                :class="{ 'is-active': isEntryActive(entry) }"
+                >{{ entry.label }}</router-link
+              >
+            </nav>
+          </section>
+          <section class="menu-group">
+            <div class="menu-title">格式</div>
+            <nav class="menu">
+              <router-link
+                v-for="entry in mediaMenu"
+                :key="entry.label"
+                :to="entry.to"
+                class="menu-item"
+                :class="{ 'is-active': isEntryActive(entry) }"
+                >{{ entry.label }}</router-link
+              >
+            </nav>
+          </section>
+          <div class="user card-panel">
+            <div>{{ auth.username || "Archivist" }}</div>
+            <el-button text @click="onLogout">退出登录</el-button>
+          </div>
+        </div>
+      </el-scrollbar>
     </aside>
     <main class="content">
       <header class="topbar card-panel">
@@ -178,33 +182,30 @@ const onLogout = () => {
   overflow: hidden;
 }
 .sidebar {
-  --sb-size: 6px;
-  --sb-thumb: rgba(38, 38, 38, 0.38);
-  --sb-track: var(--bg-main);
-  padding: 24px 16px;
   border-right: 1px solid var(--line);
-  overflow-y: auto;
   min-height: 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--sb-thumb) var(--sb-track);
 }
-.sidebar::-webkit-scrollbar {
-  width: var(--sb-size);
+.sidebar-scroll {
+  height: 100%;
 }
-.sidebar::-webkit-scrollbar-track {
-  background: var(--sb-track);
+.sidebar-inner {
+  padding: 24px 16px;
+}
+:deep(.sidebar-scroll .el-scrollbar__wrap) {
+  overflow-x: hidden;
+}
+:deep(.sidebar-scroll .el-scrollbar__bar.is-vertical) {
+  width: 6px;
+  right: 2px;
+}
+:deep(.sidebar-scroll .el-scrollbar__thumb) {
+  background: rgba(38, 38, 38, 0.38) !important;
   border-radius: 999px;
 }
-.sidebar::-webkit-scrollbar-thumb {
-  background: var(--sb-thumb);
-  border-radius: 999px;
-}
-.sidebar:hover::-webkit-scrollbar-thumb {
-  background: rgba(38, 38, 38, 0.56);
-}
-.sidebar::-webkit-scrollbar-thumb:hover,
-.sidebar::-webkit-scrollbar-thumb:active {
-  background: rgba(38, 38, 38, 0.56);
+:deep(.sidebar-scroll .el-scrollbar__bar.is-vertical:hover .el-scrollbar__thumb),
+:deep(.sidebar-scroll .el-scrollbar__thumb:hover),
+:deep(.sidebar-scroll .el-scrollbar__thumb:active) {
+  background: rgba(38, 38, 38, 0.56) !important;
 }
 
 .logo {
