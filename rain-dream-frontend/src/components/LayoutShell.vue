@@ -49,8 +49,37 @@ const onLogout = () => {
 .logo { font-size: 28px; font-weight: 700; margin: 10px 8px 24px; }
 .new-btn { width: 100%; margin-bottom: 18px; }
 .menu { display: flex; flex-direction: column; gap: 8px; }
-.menu-item { padding: 12px 14px; border-radius: 10px; color: var(--text-secondary); }
-.menu-item.router-link-active { background: #2b1a49; color: #fff; }
+.menu-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+/* hover */
+.menu-item:hover {
+  background: rgba(38, 38, 38, 0.06);
+  color: var(--text-main);
+}
+
+/* 选中态：深色 #262626 + 左侧黄色高亮条 */
+.menu-item.router-link-active {
+  background: #262626;
+  color: #fff;
+}
+
+.menu-item.router-link-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--highlight); /* 你 root 里是 #F7D44C */
+}
+
+
 .user { margin-top: 24px; padding: 14px; display: flex; justify-content: space-between; align-items: center; }
 .content { padding: 24px; }
 .topbar { padding: 12px 16px; margin-bottom: 16px; }
