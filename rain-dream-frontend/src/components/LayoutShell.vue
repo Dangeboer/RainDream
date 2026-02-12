@@ -1,7 +1,7 @@
 <template>
   <div class="layout page-shell">
     <aside class="sidebar">
-      <div class="logo">小雨蒙蒙</div>
+      <div class="logo">无数</div>
       <el-button
         type="primary"
         class="new-btn"
@@ -65,13 +65,15 @@ const onLogout = () => {
   border-right: 1px solid var(--line);
 }
 .logo {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   margin: 10px 8px 24px;
 }
 .new-btn {
   width: 100%;
-  margin-bottom: 18px;
+  height: 44px;
+  font-size: 20px;
+  margin-bottom: 32px;
 }
 .menu {
   display: flex;
