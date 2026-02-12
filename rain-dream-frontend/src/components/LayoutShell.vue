@@ -24,11 +24,7 @@
     </aside>
     <main class="content">
       <header class="topbar card-panel">
-        <el-input
-          v-model="keyword"
-          placeholder="Search title, author, tags..."
-          clearable
-        />
+        <el-input v-model="keyword" placeholder="搜索……" clearable />
       </header>
       <router-view />
     </main>

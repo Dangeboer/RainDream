@@ -33,19 +33,43 @@ body {
 
 /* 快速试字体：在 main.js 里改 document.body.className */
 body.font-sans {
+  --el-font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 body.font-serif {
+  --el-font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
   font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
 }
 
 body.font-xiaowei {
+  --el-font-family: "ZCOOL XiaoWei", "Kaiti SC", "STKaiti", serif;
   font-family: "ZCOOL XiaoWei", "Kaiti SC", "STKaiti", serif;
 }
 
 body.font-hand {
+  --el-font-family: "Ma Shan Zheng", "Kaiti SC", "STKaiti", cursive;
   font-family: "Ma Shan Zheng", "Kaiti SC", "STKaiti", cursive;
+}
+
+/* 兜底：强制 Element Plus 常见文本组件跟随当前字体 */
+body.font-sans .el-button,
+body.font-sans .el-button *,
+body.font-sans .el-input__inner,
+body.font-sans .el-input__inner::placeholder,
+body.font-serif .el-button,
+body.font-serif .el-button *,
+body.font-serif .el-input__inner,
+body.font-serif .el-input__inner::placeholder,
+body.font-xiaowei .el-button,
+body.font-xiaowei .el-button *,
+body.font-xiaowei .el-input__inner,
+body.font-xiaowei .el-input__inner::placeholder,
+body.font-hand .el-button,
+body.font-hand .el-button *,
+body.font-hand .el-input__inner,
+body.font-hand .el-input__inner::placeholder {
+  font-family: inherit !important;
 }
 
 a {
