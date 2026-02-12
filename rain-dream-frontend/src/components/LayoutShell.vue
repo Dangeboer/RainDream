@@ -8,6 +8,14 @@
         @click="$router.push('/items/new')"
         >+ 上传新资源</el-button
       >
+      <nav class="menu home-menu">
+        <router-link
+          to="/dashboard"
+          class="menu-item"
+          :class="{ 'is-active': route.path === '/dashboard' }"
+          >首页</router-link
+        >
+      </nav>
       <section class="menu-group">
         <div class="menu-title">内容</div>
         <nav class="menu">
@@ -54,7 +62,6 @@ import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 
 const contentMenu = [
-  { label: "首页", to: "/dashboard", group: "home" },
   {
     label: "文章",
     to: { path: "/items", query: { contentType: 1 } },
@@ -144,7 +151,6 @@ const router = useRouter();
 const route = useRoute();
 
 const isEntryActive = (entry) => {
-  if (entry.group === "home") return route.path === "/dashboard";
   if (entry.group === "content") {
     return (
       route.path === "/items" && route.query.contentType === String(entry.value)
@@ -192,6 +198,20 @@ const onLogout = () => {
   flex-direction: column;
   gap: 2px;
 }
+.home-menu {
+  margin-bottom: 14px;
+}
+.home-menu .menu-item {
+  padding: 12px 8px;
+  margin-bottom: 6px;
+  color: var(--dark);
+  font-size: 18px;
+  font-weight: 700;
+}
+.home-menu .menu-item:hover:not(.is-active) {
+  background: transparent;
+  color: var(--dark);
+}
 .menu-group + .menu-group {
   margin-top: 16px;
 }
@@ -220,17 +240,6 @@ const onLogout = () => {
   background: var(--highlight);
   color: var(--dark);
   font-weight: 700;
-}
-
-.menu-item.is-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 4px;
-  border-radius: 4px;
-  background: var(--highlight); /* 你 root 里是 #F7D44C */
 }
 
 .user {
