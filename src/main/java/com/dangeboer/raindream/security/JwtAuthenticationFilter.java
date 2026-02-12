@@ -39,6 +39,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+//        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+
         final String jwt = getJwtFromRequest(request); // 从请求头中提取 JWT。如果请求头中没有 JWT 或格式不正确，则直接继续过滤链的下一步
 
         if (jwt == null) {
