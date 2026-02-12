@@ -1,18 +1,54 @@
-# 前端目录说明
+# 前端目录说明（完全分离版）
 
-前端已独立放在仓库根目录下的 `rain-dream-frontend/`，是一个单独的 Vue 3 项目。
+你现在有两种方式把前端从后端仓库里彻底分出去：
 
-- 后端：当前目录其余 Java/Spring 文件（`src/`、`pom.xml`）
-- 前端：`rain-dream-frontend/`
+## 方式 A：分成两个本地文件夹（你说的 Desktop/Project）
 
-## 在 VSCode 里单独打开前端
-1. 打开 VSCode
-2. `File -> Open Folder`
-3. 选择 `rain-dream-frontend`
+假设你本地路径是：
+- 后端：`~/Desktop/Project/RainDream`
+- 前端（目标）：`~/Desktop/Project/rain-dream-frontend`
+
+在后端目录执行：
+
+```bash
+cd ~/Desktop/Project/RainDream
+./scripts_export_frontend.sh ~/Desktop/Project/rain-dream-frontend
+```
+
+然后你就能在 VSCode 分别打开两个目录：
+- `~/Desktop/Project/RainDream`（后端）
+- `~/Desktop/Project/rain-dream-frontend`（前端）
+
+---
+
+## 方式 B：前端推到单独 GitHub 仓库（你可以直接 clone）
+
+1) 先执行方式 A 导出前端。
+2) 在 GitHub 新建空仓库（例如 `rain-dream-frontend`）。
+3) 在本地前端目录执行：
+
+```bash
+cd ~/Desktop/Project/rain-dream-frontend
+git init
+git add .
+git commit -m "feat: init standalone frontend"
+git branch -M main
+git remote add origin <你的前端仓库URL>
+git push -u origin main
+```
+
+之后你就可以在任何地方直接：
+
+```bash
+git clone <你的前端仓库URL>
+```
+
+---
 
 ## 前端运行
+
 ```bash
-cd rain-dream-frontend
+cd ~/Desktop/Project/rain-dream-frontend
 npm install
 cp .env.example .env
 npm run dev
