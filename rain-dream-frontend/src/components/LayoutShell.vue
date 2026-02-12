@@ -194,15 +194,22 @@ const onLogout = () => {
 :deep(.sidebar-scroll .el-scrollbar__wrap) {
   overflow-x: hidden;
 }
+
+/* 自定义滚动条样式 */
+/* 宽度 */
 :deep(.sidebar-scroll .el-scrollbar__bar.is-vertical) {
   width: 6px;
   right: 2px;
 }
+/* 颜色 */
 :deep(.sidebar-scroll .el-scrollbar__thumb) {
   background: rgba(38, 38, 38, 0.38) !important;
   border-radius: 999px;
 }
-:deep(.sidebar-scroll .el-scrollbar__bar.is-vertical:hover .el-scrollbar__thumb),
+/* hover 和 active （拖动）状态 */
+:deep(
+  .sidebar-scroll .el-scrollbar__bar.is-vertical:hover .el-scrollbar__thumb
+),
 :deep(.sidebar-scroll .el-scrollbar__thumb:hover),
 :deep(.sidebar-scroll .el-scrollbar__thumb:active) {
   background: rgba(38, 38, 38, 0.56) !important;
