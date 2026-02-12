@@ -1,11 +1,73 @@
 package com.dangeboer.raindream.serviceimpl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dangeboer.raindream.converter.TagConverter;
+import com.dangeboer.raindream.exception.BadRequestException;
+import com.dangeboer.raindream.exception.CanNotFoundException;
+import com.dangeboer.raindream.exception.ForbiddenException;
 import com.dangeboer.raindream.mapper.TagMapper;
 import com.dangeboer.raindream.model.entity.Tag;
+import com.dangeboer.raindream.model.form.TagForm;
+import com.dangeboer.raindream.model.vo.TagVO;
 import com.dangeboer.raindream.service.TagService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Objects;
+
 @Service
+@RequiredArgsConstructor
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {
+    private final TagMapper tagMapper;
+    private final TagConverter tagConverter;
+
+    @Override
+    public List<TagVO> getTag(Long userId) {
+        List<Tag> tags = tagMapper.selectList(new LambdaQueryWrapper<Tag>()
+                .eq(Tag::getUserId, userId));
+
+        if (tags == null || tags.isEmpty()) {
+            throw new CanNotFoundException();
+        }
+        return tags.stream().map(tagConverter::toVO).toList();
+    }
+
+    @Override
+    public Long createTag(Long userId, TagForm tagForm) {
+        if (tagForm == null || tagForm.getName() == null) {
+            throw new BadRequestException();
+        }
+        Tag tag = new Tag(userId, tagForm.getName());
+        return (long) tagMapper.insert(tag);
+    }
+
+    @Override
+    public Long updateTag(Long userId, Long tagId, TagForm tagForm) {
+        Tag tag = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().eq(Tag::getId, tagId));
+
+        if (tag == null) {
+            throw new CanNotFoundException();
+        } else if (!Objects.equals(tag.getUserId(), userId)) {
+            throw new ForbiddenException();
+        }
+
+        Tag toUpdate = new Tag(tagId, tagForm.getName());
+
+        tagMapper.updateById(toUpdate);
+        return tagId;
+    }
+
+    @Override
+    public Long deleteTag(Long userId, Long tagId) {
+        Tag tag = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().eq(Tag::getId, tagId));
+        if (tag == null) {
+            throw new CanNotFoundException();
+        } else if (!Objects.equals(tag.getUserId(), userId)) {
+            throw new ForbiddenException();
+        }
+
+        return (long) tagMapper.deleteById(tagId);
+    }
 }

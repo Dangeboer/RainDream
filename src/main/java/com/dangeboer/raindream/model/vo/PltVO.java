@@ -9,6 +9,5 @@ import java.io.Serializable;
 @Setter
 public class PltVO implements Serializable {
     private Long id;
-    private Long userId;
     private String pltName;
 }

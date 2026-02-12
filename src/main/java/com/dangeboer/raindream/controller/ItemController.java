@@ -22,8 +22,9 @@ public class ItemController {
     @GetMapping("/list")
     public PageResult<ItemListVO> getItemList(
             @AuthenticationPrincipal User user,
-            @RequestParam(defaultValue = "1") Long page,
-            @RequestParam(defaultValue = "20") Long size) {
+            @RequestParam(required = false) Long page,
+            @RequestParam(required = false) Long size
+    ) {
         return itemService.getItemList(user.getId(), page, size);
     }
 
@@ -35,8 +36,9 @@ public class ItemController {
     @GetMapping("/fanfic/list")
     public PageResult<FanficListVO> getFanficList(
             @AuthenticationPrincipal User user,
-            @RequestParam(defaultValue = "1") Long page,
-            @RequestParam(defaultValue = "20") Long size) {
+            @RequestParam(required = false) Long page,
+            @RequestParam(required = false) Long size
+    ) {
         return itemService.getFanficList(user.getId(), page, size);
     }
 
@@ -46,7 +48,6 @@ public class ItemController {
     }
 
     @PostMapping("/create")
-    @ResponseStatus(HttpStatus.CREATED)
     public Long createItem(@AuthenticationPrincipal User user, @RequestBody ItemForm itemForm) {
         return itemService.createItem(user.getId(), itemForm);
     }

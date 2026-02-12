@@ -50,9 +50,6 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
     @Override
     public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size) {
-        // 参数兜底，防止前端乱传
-        page = page == null ? 1 : page;
-        size = size == null ? 20 : Math.min(size, 100);
 
         // 查询条件
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
@@ -60,24 +57,39 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                 .ne(Item::getContentType, 1)
                 .orderByDesc(Item::getCreatedAt);
 
-        // MyBatis-Plus 分页对象
-        Page<Item> mpPage = new Page<>(page, size);
+        // 1) 不分页：两个参数都没传才走全量
+        if (page == null && size == null) {
+            List<Item> items = itemMapper.selectList(wrapper);
+
+            List<ItemListVO> voList = items.stream()
+                    .map(itemConverter::toItemListVO)
+                    .toList();
+
+            PageResult<ItemListVO> result = new PageResult<>();
+            result.setTotal((long) items.size());
+            result.setPage(1L);
+            result.setSize((long) items.size());
+            result.setData(voList);
+            return result;
+        }
+
+        // 2) 分页：只要传了其中一个，就分页（另一个用默认值兜底）
+        long safePage = (page == null || page < 1) ? 1 : page;
+        long safeSize = (size == null || size < 1) ? 20 : Math.min(size, 100);
+
+        Page<Item> mpPage = new Page<>(safePage, safeSize);
         IPage<Item> itemPage = itemMapper.selectPage(mpPage, wrapper);
 
-        // records -> VO
         List<ItemListVO> voList = itemPage.getRecords()
                 .stream()
                 .map(itemConverter::toItemListVO)
                 .toList();
 
-        // 组装返回
         PageResult<ItemListVO> result = new PageResult<>();
         result.setTotal(itemPage.getTotal());
         result.setPage(itemPage.getCurrent());
         result.setSize(itemPage.getSize());
-        // 不是 PageResult<List<ItemListVO>> 的原因是泛型设定的是 private List<T> data
         result.setData(voList);
-
         return result;
     }
 
@@ -113,16 +125,47 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 //                        .eq(Item::getContentType, 1)
 //        );
 
+        LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
+                .eq(Item::getUserId, userId)
+                .eq(Item::getContentType, 1)
+                .orderByDesc(Item::getCreatedAt);
+
+        // 不分页：两个参数都没传才走全量
+        if (page == null && size == null) {
+            List<Item> items = itemMapper.selectList(wrapper);
+
+            // 2) 批量查 fanfic（避免 N+1）
+            List<Long> itemIds = items.stream().map(Item::getId).toList();
+
+            // itemIds 为空时避免 in()
+            List<Fanfic> fanfics = itemIds.isEmpty()
+                    ? List.of()
+                    : fanficMapper.selectList(new LambdaQueryWrapper<Fanfic>()
+                    .in(Fanfic::getItemId, itemIds));
+
+            // 3) fanfic 按 itemId 建索引，方便组装
+            Map<Long, Fanfic> idToFanfic = fanfics.stream()
+                    .collect(java.util.stream.Collectors.toMap(Fanfic::getItemId, f -> f));
+
+            // 4) 组装 VO（item + fanfic），内部会自动匹配上 fanficVO
+            List<FanficListVO> voList = items.stream()
+                    .map(item -> itemConverter.toFanficListVO(item, idToFanfic.get(item.getId())))
+                    .toList();
+
+            // 5) 返回 PageResult
+            PageResult<FanficListVO> result = new PageResult<>();
+            result.setTotal((long) items.size());
+            result.setPage(1L);
+            result.setSize((long) items.size());
+            result.setData(voList);
+            return result;
+        }
+
         page = (page == null || page < 1) ? 1 : page;
         size = (size == null || size < 1) ? 20 : Math.min(size, 100);
 
         // 1) 分页查当前用户的 fanfic item
         Page<Item> mpPage = new Page<>(page, size);
-
-        LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
-                .eq(Item::getUserId, userId)
-                .eq(Item::getContentType, 1)
-                .orderByDesc(Item::getCreatedAt);
 
         IPage<Item> itemPage = itemMapper.selectPage(mpPage, wrapper);
         List<Item> items = itemPage.getRecords();
