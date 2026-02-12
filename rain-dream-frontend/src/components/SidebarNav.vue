@@ -218,10 +218,11 @@ const onLogout = () => {
   color: var(--dark);
   font-size: 18px;
   font-weight: 700;
+  border-radius: 10px;
 }
 .home-menu .menu-item:hover:not(.is-active) {
-  background: transparent;
-  color: var(--dark);
+  background: rgba(38, 38, 38, 0.06);
+  color: var(--text-main);
 }
 .menu-group + .menu-group {
   margin-top: 16px;
