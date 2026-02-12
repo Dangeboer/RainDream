@@ -12,6 +12,10 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(payload) {
       const result = await loginApi(payload)
+      if (!result?.token) {
+        throw new Error('登录返回缺少 token，请检查后端响应结构')
+      }
+
       this.token = result.token
       this.username = payload.username
       localStorage.setItem('rd_token', this.token)
