@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap");
+
 :root {
   /* ===== 主配色（参考图） ===== */
   --bg-main: #F6ECC9;     /* 奶油底 */
@@ -24,9 +26,26 @@
 
 body {
   margin: 0;
-  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   background: radial-gradient(circle at top, var(--bg-top) 0%, var(--bg-main) 60%);
   color: var(--text-main);
+}
+
+/* 快速试字体：在 main.js 里改 document.body.className */
+body.font-sans {
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+}
+
+body.font-serif {
+  font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+}
+
+body.font-xiaowei {
+  font-family: "ZCOOL XiaoWei", "Kaiti SC", "STKaiti", serif;
+}
+
+body.font-hand {
+  font-family: "Ma Shan Zheng", "Kaiti SC", "STKaiti", cursive;
 }
 
 a {

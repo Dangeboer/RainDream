@@ -6,6 +6,8 @@ import App from './App.vue'
 import router from './router'
 import './assets/theme.css'
 
+document.body.className = 'font-serif'
+
 const app = createApp(App)
 const pinia = createPinia()
 
