@@ -1,0 +1,81 @@
+:root {
+  --bg-main: #120825;
+  --bg-panel: #1a0f33;
+  --bg-soft: #241445;
+  --text-main: #f8f3ff;
+  --text-secondary: #a89cc3;
+  --accent: #ff8b58;
+  --accent-2: #6a53ff;
+  --line: #362056;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: radial-gradient(circle at top, #20103f 0%, var(--bg-main) 45%);
+  color: var(--text-main);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.card-panel {
+  background: rgba(35, 20, 63, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--accent);
+  --el-button-border-color: var(--accent);
+  --el-button-hover-bg-color: #ff9c71;
+  --el-button-hover-border-color: #ff9c71;
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner,
+.el-card,
+.el-dialog,
+.el-pagination button,
+.el-pagination .el-pager li {
+  background: #1b1033 !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: var(--text-main) !important;
+}
+
+.el-input__inner,
+.el-textarea__inner,
+.el-select__placeholder,
+.el-form-item__label,
+.el-radio__label,
+.el-checkbox__label {
+  color: var(--text-main) !important;
+}
+
+.el-table,
+.el-table tr,
+.el-table th.el-table__cell,
+.el-table td.el-table__cell {
+  background: transparent !important;
+  color: var(--text-main) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.el-message-box,
+.el-notification {
+  background: #1b1033 !important;
+  color: var(--text-main) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
