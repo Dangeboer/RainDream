@@ -174,18 +174,45 @@ const onLogout = () => {
 .layout {
   display: grid;
   grid-template-columns: 260px 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 .sidebar {
+  --sb-size: 6px;
+  --sb-thumb: rgba(38, 38, 38, 0.38);
+  --sb-track: var(--bg-main);
   padding: 24px 16px;
   border-right: 1px solid var(--line);
-  /* background: var(--highlight); */
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
 }
+.sidebar::-webkit-scrollbar {
+  width: var(--sb-size);
+}
+.sidebar::-webkit-scrollbar-track {
+  background: var(--sb-track);
+  border-radius: 999px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border-radius: 999px;
+}
+.sidebar:hover::-webkit-scrollbar-thumb {
+  background: rgba(38, 38, 38, 0.56);
+}
+.sidebar::-webkit-scrollbar-thumb:hover,
+.sidebar::-webkit-scrollbar-thumb:active {
+  background: rgba(38, 38, 38, 0.56);
+}
+
 .logo {
   font-size: 32px;
   font-weight: 700;
   margin: 10px 8px 24px;
 }
+
 .new-btn {
   width: 100%;
   height: 44px;
@@ -193,6 +220,7 @@ const onLogout = () => {
   margin-bottom: 32px;
   font-weight: 700;
 }
+
 .menu {
   display: flex;
   flex-direction: column;
@@ -223,7 +251,7 @@ const onLogout = () => {
   font-weight: 700;
 }
 .menu-item {
-  padding: 12px 14px;
+  padding: 12px 24px;
   border-radius: 10px;
   color: var(--text-secondary);
   position: relative;
@@ -251,6 +279,8 @@ const onLogout = () => {
 }
 .content {
   padding: 24px;
+  min-height: 0;
+  overflow-y: auto;
 }
 .topbar {
   padding: 12px 16px;
