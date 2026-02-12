@@ -95,7 +95,7 @@ a {
   --el-button-border-color: var(--accent);
   --el-button-hover-bg-color: var(--accent-hover);
   --el-button-hover-border-color: var(--accent-hover);
-  color: #fff !important;
+  color: var(--dark) !important;
   border-radius: 10px !important;
 }
 

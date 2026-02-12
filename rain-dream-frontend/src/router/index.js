@@ -7,15 +7,15 @@ const routes = [
     component: () => import('../components/LayoutShell.vue'),
     children: [
       { path: '', redirect: '/dashboard' },
-      { path: 'dashboard', component: () => import('../views/DashboardView.vue') },
-      { path: 'items', component: () => import('../views/ItemListView.vue') },
-      { path: 'items/new', component: () => import('../views/ItemFormView.vue') },
-      { path: 'items/edit/:id', component: () => import('../views/ItemFormView.vue') },
-      { path: 'items/:id', component: () => import('../views/ItemDetailView.vue') },
-      { path: 'fanfic', component: () => import('../views/FanficListView.vue') },
-      { path: 'fanfic/:id', component: () => import('../views/FanficDetailView.vue') },
-      { path: 'tags', component: () => import('../views/TagManageView.vue') },
-      { path: 'plts', component: () => import('../views/PltManageView.vue') }
+      { path: 'dashboard', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
+      { path: 'items', name: 'items', component: () => import('../views/ItemListView.vue') },
+      { path: 'items/new', name: 'item-new', component: () => import('../views/ItemFormView.vue') },
+      { path: 'items/edit/:id', name: 'item-edit', component: () => import('../views/ItemFormView.vue') },
+      { path: 'items/:id', name: 'item-detail', component: () => import('../views/ItemDetailView.vue') },
+      { path: 'fanfic', name: 'fanfic-list', component: () => import('../views/FanficListView.vue') },
+      { path: 'fanfic/:id', name: 'fanfic-detail', component: () => import('../views/FanficDetailView.vue') },
+      { path: 'tags', name: 'tags', component: () => import('../views/TagManageView.vue') },
+      { path: 'plts', name: 'plts', component: () => import('../views/PltManageView.vue') }
     ]
   }
 ]
