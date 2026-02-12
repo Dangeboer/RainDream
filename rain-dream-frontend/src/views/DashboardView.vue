@@ -1,10 +1,10 @@
 <template>
   <section>
-    <h1>Dashboard</h1>
+    <h1>首页</h1>
     <p class="sub">最近新增 Fanfic + 视觉素材预览</p>
 
     <div class="card-panel block">
-      <h2>Recent Fanfic</h2>
+      <h2>最近添加</h2>
       <el-empty v-if="fanfics.length === 0" description="暂无数据" />
       <div v-for="item in fanfics" :key="item.id" class="fanfic-row">
         <div>
@@ -16,7 +16,7 @@
     </div>
 
     <div class="card-panel block">
-      <h2>Visual Archives</h2>
+      <h2>最近添加</h2>
       <div class="grid">
         <div v-for="(item, idx) in visuals" :key="idx" class="visual">
           <div class="cover">{{ item.title || 'Visual Item' }}</div>
