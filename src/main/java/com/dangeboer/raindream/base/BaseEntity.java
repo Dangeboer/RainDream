@@ -22,7 +22,7 @@ public class BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // 主键id
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     // 创建时间

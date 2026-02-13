@@ -17,7 +17,7 @@ USE raindream_database;
 -- 用户表
 CREATE TABLE IF NOT EXISTS user
 (
-    id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+    id         BIGINT PRIMARY KEY COMMENT '用户ID',
 
     username   VARCHAR(100) NOT NULL UNIQUE COMMENT '用户名',
     password   VARCHAR(255) NOT NULL COMMENT '密码',
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS user
 -- 项目表
 CREATE TABLE IF NOT EXISTS item
 (
-    id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id            BIGINT PRIMARY KEY,
     user_id       BIGINT       NOT NULL,
 
     media_type    TINYINT      NOT NULL COMMENT '格式类型',
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS item
 -- 标签表
 CREATE TABLE IF NOT EXISTS tag
 (
-    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id         BIGINT PRIMARY KEY,
     user_id    BIGINT       NOT NULL,
     tag_name   VARCHAR(100) NOT NULL,
 
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS tag
 -- 平台表
 CREATE TABLE IF NOT EXISTS plt
 (
-    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id         BIGINT PRIMARY KEY,
     user_id    BIGINT       NOT NULL,
     plt_name   VARCHAR(100) NOT NULL,
 
