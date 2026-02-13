@@ -10,4 +10,24 @@
         FROM item
     </select>
 
+    <insert id="insertBatch">
+        INSERT INTO item (
+            id, user_id,
+            media_type, content_type,
+            store_url, content,
+            title, fandom, cp, author, source_url, release_year, size_bytes,
+            tracking_type, rating, notes, summary
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.id}, #{item.userId},
+                #{item.mediaType}, #{item.contentType},
+                #{item.storeUrl}, #{item.content},
+                #{item.title}, #{item.fandom}, #{item.cp}, #{item.author}, #{item.sourceUrl}, #{item.releaseYear}, #{item.sizeBytes},
+                #{item.trackingType}, #{item.rating}, #{item.notes}, #{item.summary}
+            )
+        </foreach>
+    </insert>
+
 </mapper>
