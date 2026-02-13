@@ -74,7 +74,7 @@ const fetchData = async () => {
     charSetting: item.fanfic_vo?.char_setting ?? "",
     lengthTypeLabel: item.fanfic_vo?.length_type_label ?? "",
     workTypeLabel: item.fanfic_vo?.work_type_label ?? "",
-    updateDate: item.fanfic_vo?.update_date ?? "/",
+    updateDate: item.fanfic_vo?.update_date ?? "-",
     endingTypeLabel: item.fanfic_vo?.ending_type_label ?? "",
     readCount: item.fanfic_vo?.read_count ?? 0,
   }));

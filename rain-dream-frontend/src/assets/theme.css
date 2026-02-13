@@ -2,19 +2,19 @@
 
 :root {
   /* ===== 主配色（参考图） ===== */
-  --bg-main: #F6ECC9;     /* 奶油底 */
-  --bg-top: #F2E4B8;      /* 顶部渐变 */
-  --bg-panel: #FFF8E6;    /* 卡片底色 */
-  --bg-panel-strong: #FFFFFF;
+  --bg-main: #f6ecc9; /* 奶油底 */
+  --bg-top: #f2e4b8; /* 顶部渐变 */
+  --bg-panel: #fff8e6; /* 卡片底色 */
+  --bg-panel-strong: #ffffff;
 
-  --dark: #262626;        /* 深色对比 */
+  --dark: #262626; /* 深色对比 */
 
   --text-main: #262626;
   --text-secondary: rgba(38, 38, 38, 0.6);
 
-  --accent: #EB7A53;      /* 橙 */
-  --accent-hover: #F08C69;
-  --highlight: #F7D44C;   /* 黄 */
+  --accent: #eb7a53; /* 橙 */
+  --accent-hover: #f08c69;
+  --highlight: #f7d44c; /* 黄 */
 
   --line: rgba(38, 38, 38, 0.1);
   --shadow: 0 8px 25px rgba(38, 38, 38, 0.08);
@@ -26,15 +26,25 @@
 
 body {
   margin: 0;
-  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-  background: radial-gradient(circle at top, var(--bg-top) 0%, var(--bg-main) 60%);
+  font-family:
+    "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial,
+    sans-serif;
+  background: radial-gradient(
+    circle at top,
+    var(--bg-top) 0%,
+    var(--bg-main) 60%
+  );
   color: var(--text-main);
 }
 
 /* 快速试字体：在 main.js 里改 document.body.className */
 body.font-sans {
-  --el-font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --el-font-family:
+    "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial,
+    sans-serif;
+  font-family:
+    "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial,
+    sans-serif;
 }
 
 body.font-serif {
@@ -91,12 +101,11 @@ a {
 
 /* ===== 主按钮 ===== */
 .el-button--primary {
-  --el-button-bg-color: var(--accent);
-  --el-button-border-color: var(--accent);
-  --el-button-hover-bg-color: var(--accent-hover);
-  --el-button-hover-border-color: var(--accent-hover);
+  --el-button-bg-color: var(--accent) !important;
+  --el-button-border-color: var(--accent) !important;
+  --el-button-hover-bg-color: var(--accent-hover) !important;
+  --el-button-hover-border-color: var(--accent-hover) !important;
   color: var(--dark) !important;
-  border-radius: 10px !important;
 }
 
 /* ===== 表单 / Dialog / Card ===== */
@@ -137,6 +146,67 @@ a {
   border-color: var(--line) !important;
 }
 
+/* ===== 按钮体系：Primary / Secondary / Text ===== */
+:root {
+  --btn-secondary-bg: var(--bg-panel-strong);
+  --btn-secondary-border: var(--line);
+  --btn-secondary-text: var(--text-main);
+  --btn-secondary-hover-bg: var(--bg-main);
+  --btn-secondary-hover-border: var(--bg-main);
+  --btn-secondary-hover-text: var(--dark);
+
+  --btn-text-color: var(--text-secondary);
+  --btn-text-hover-color: var(--text-main);
+}
+
+/* Secondary：默认按钮 */
+.el-button:not(.el-button--primary):not(.is-text):not(.el-button--link) {
+  --el-button-bg-color: var(--btn-secondary-bg);
+  --el-button-border-color: var(--btn-secondary-border);
+  --el-button-text-color: var(--btn-secondary-text);
+  --el-button-hover-bg-color: var(--btn-secondary-hover-bg);
+  --el-button-hover-border-color: var(--btn-secondary-hover-border);
+  --el-button-hover-text-color: var(--btn-secondary-hover-text);
+  box-shadow: none !important;
+}
+
+/* Text：弱操作按钮 */
+.el-button.is-text:not(.el-button--primary),
+.el-button--link:not(.el-button--primary) {
+  --el-button-text-color: var(--btn-text-color);
+  --el-button-hover-text-color: var(--btn-text-hover-color);
+  --el-button-hover-bg-color: transparent;
+  --el-button-hover-border-color: transparent;
+  box-shadow: none !important;
+}
+
+/* Segmented：radio-button 跟 Secondary/Active 统一 */
+.el-radio-button__inner {
+  background: var(--btn-secondary-bg) !important;
+  border-color: var(--btn-secondary-border) !important;
+  color: var(--btn-secondary-text) !important;
+  box-shadow: none !important;
+}
+
+.el-radio-button__inner:hover {
+  background: var(--btn-secondary-hover-bg) !important;
+  border-color: var(--btn-secondary-hover-border) !important;
+  color: var(--btn-secondary-hover-text) !important;
+}
+
+.el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background: var(--btn-secondary-hover-bg) !important;
+  border-color: var(--btn-secondary-hover-border) !important;
+  color: var(--btn-secondary-hover-text) !important;
+  box-shadow: none !important;
+}
+
+/* 下拉项选中态 */
+.el-select-dropdown__item.is-selected {
+  color: var(--accent) !important; /* 选中文字色 */
+  font-weight: 700;
+}
+
 /* =====================================================
    侧边栏：深色 #262626（不紫）
    ===================================================== */
@@ -153,18 +223,18 @@ a {
 
 .app-sidebar .el-menu-item,
 .app-sidebar .el-sub-menu__title {
-  color: rgba(255,255,255,0.65) !important;
+  color: rgba(255, 255, 255, 0.65) !important;
 }
 
 .app-sidebar .el-menu-item:hover,
 .app-sidebar .el-sub-menu__title:hover {
-  background: rgba(255,255,255,0.08) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #fff !important;
 }
 
 /* 选中态 */
 .app-sidebar .el-menu-item.is-active {
-  background: rgba(255,255,255,0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
   color: #fff !important;
   position: relative;
 }
@@ -177,5 +247,5 @@ a {
   bottom: 10px;
   width: 4px;
   border-radius: 4px;
-  background: var(--highlight);  /* 黄色高亮 */
+  background: var(--highlight); /* 黄色高亮 */
 }

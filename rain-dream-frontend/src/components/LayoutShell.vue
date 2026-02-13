@@ -4,10 +4,14 @@
       <SidebarNav />
     </aside>
     <main class="content">
-      <header class="topbar card-panel">
-        <el-input v-model="keyword" placeholder="搜索……" clearable />
-      </header>
-      <router-view />
+      <el-scrollbar class="content-scroll">
+        <div class="content-inner">
+          <header class="topbar card-panel">
+            <el-input v-model="keyword" placeholder="搜索……" clearable />
+          </header>
+          <router-view />
+        </div>
+      </el-scrollbar>
     </main>
   </div>
 </template>
@@ -31,13 +35,35 @@ const keyword = ref("");
   min-height: 0;
 }
 .content {
-  padding: 24px;
   min-height: 0;
-  overflow-y: auto;
+}
+.content-scroll {
+  height: 100%;
+}
+.content-inner {
+  padding: 24px;
 }
 .topbar {
   padding: 12px 16px;
   margin-bottom: 16px;
+}
+:deep(.content-scroll .el-scrollbar__wrap) {
+  overflow-x: hidden;
+}
+:deep(.content-scroll .el-scrollbar__bar.is-vertical) {
+  width: 6px;
+  right: 2px;
+}
+:deep(.content-scroll .el-scrollbar__thumb) {
+  background: rgba(38, 38, 38, 0.38) !important;
+  border-radius: 999px;
+}
+:deep(
+  .content-scroll .el-scrollbar__bar.is-vertical:hover .el-scrollbar__thumb
+),
+:deep(.content-scroll .el-scrollbar__thumb:hover),
+:deep(.content-scroll .el-scrollbar__thumb:active) {
+  background: rgba(38, 38, 38, 0.56) !important;
 }
 @media (max-width: 900px) {
   .layout {
