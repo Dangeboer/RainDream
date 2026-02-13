@@ -2,6 +2,7 @@ package com.dangeboer.raindream.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dangeboer.raindream.base.PageResult;
@@ -13,6 +14,8 @@ import com.dangeboer.raindream.exception.CanNotFoundException;
 import com.dangeboer.raindream.exception.ForbiddenException;
 import com.dangeboer.raindream.mapper.*;
 import com.dangeboer.raindream.model.entity.*;
+import com.dangeboer.raindream.model.form.FanficForm;
+import com.dangeboer.raindream.model.form.ItemBatchForm;
 import com.dangeboer.raindream.model.form.ItemForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
 import com.dangeboer.raindream.model.vo.FanficListVO;
@@ -23,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -369,6 +373,109 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         return itemId;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<Long> createBatchItem(Long userId, ItemBatchForm form) {
+        if (form == null) throw new BadRequestException();
+
+        boolean isFanfic = Integer.valueOf(1).equals(form.getContentType()); // 你自己定义的 FANFIC=1
+        boolean isMedia = !Integer.valueOf(1).equals(form.getMediaType())
+                && !Integer.valueOf(6).equals(form.getMediaType()); // 你自己的规则：非 TEXT(1) 且非 LINK(6) 认为是 media
+
+        if (isFanfic && form.getFanficForm() == null) {
+            throw new BadRequestException("需要文章详细信息");
+        }
+
+        // 如果是 media 批量，storeUrls 必须给；非 media（比如 fanfic/text/link）通常没必要 batch
+        if (isMedia) {
+            if (form.getStoreUrls() == null || form.getStoreUrls().isEmpty()) {
+                throw new BadRequestException("需要 storeUrls（批量媒体链接）");
+            }
+        }
+
+        // 1) 清洗 storeUrls（trim、去空、去重但保持顺序）
+        List<String> storeUrls = (form.getStoreUrls() == null) ? List.of() :
+                form.getStoreUrls().stream()
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .distinct()
+                        .toList();
+
+        // 2) 决定本次要创建多少条 item
+        // - media：每个 storeUrl 一条
+        // - 非 media：通常只创建 1 条（如果你也想支持 fanfic 批量，那就自己定义 batch 规则）
+        int count = isMedia ? storeUrls.size() : 1;
+        if (count == 0) throw new BadRequestException("需要 storeUrls（批量媒体链接）");
+
+        List<Item> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            Item item = new Item();
+            item.setId(IdWorker.getId());
+            item.setUserId(userId);
+            item.setMediaType(form.getMediaType());
+            item.setContentType(form.getContentType());
+
+            item.setTitle(form.getTitle());
+            item.setFandom(form.getFandom());
+            item.setCp(form.getCp());
+            item.setAuthor(form.getAuthor());
+            item.setSourceUrl(form.getSourceUrl());
+            item.setReleaseYear(form.getReleaseYear());
+
+            item.setTrackingType(form.getTrackingType());
+            item.setRating(form.getRating());
+            item.setNotes(form.getNotes());
+            item.setSummary(form.getSummary());
+            item.setContent(form.getContent()); // TEXT 类型会用到
+
+            // ===== 每条 item 的差异字段：storeUrl =====
+            if (isMedia) {
+                item.setStoreUrl(storeUrls.get(i));
+            } else {
+                item.setStoreUrl(null);
+            }
+            items.add(item);
+        }
+
+        int insertRows = itemMapper.insertBatch(items);
+        if (insertRows != count) {
+            throw new BadRequestException("批量创建项目失败");
+        }
+
+        List<Long> createdIds = items.stream().map(Item::getId).toList();
+
+        if (isFanfic) {
+            FanficForm ff = form.getFanficForm();
+            List<Fanfic> fanfics = createdIds.stream().map(itemId -> {
+                Fanfic fanfic = new Fanfic();
+                fanfic.setItemId(itemId);
+                fanfic.setEra(ff.getEra());
+                fanfic.setCharSetting(ff.getCharSetting());
+                fanfic.setLengthType(ff.getLengthType());
+                fanfic.setWorkType(ff.getWorkType());
+                fanfic.setUpdateDate(ff.getUpdateDate());
+                fanfic.setEndingType(ff.getEndingType());
+                fanfic.setReadCount(ff.getReadCount());
+                return fanfic;
+            }).toList();
+            fanficMapper.insertBatch(fanfics);
+        } else if (isMedia) {
+            List<Media> medias = createdIds.stream()
+                    .map(itemId -> new Media(itemId, null, null))
+                    .toList();
+            mediaMapper.insertBatch(medias);
+        }
+
+        for (Long itemId : createdIds) {
+            // 3. tags / plts（批量里一般对每条 item 都一样）
+            handleTags(userId, itemId, form.getTags());
+            handlePlts(userId, itemId, form.getPlts());
+        }
+
+        return createdIds;
     }
 
     private void handleTags(Long userId, Long itemId, List<String> tagsRaw) {

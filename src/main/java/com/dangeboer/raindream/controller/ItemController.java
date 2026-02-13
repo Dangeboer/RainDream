@@ -2,6 +2,7 @@ package com.dangeboer.raindream.controller;
 
 import com.dangeboer.raindream.base.PageResult;
 import com.dangeboer.raindream.model.entity.User;
+import com.dangeboer.raindream.model.form.ItemBatchForm;
 import com.dangeboer.raindream.model.form.ItemForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
 import com.dangeboer.raindream.model.vo.FanficListVO;
@@ -9,9 +10,10 @@ import com.dangeboer.raindream.model.vo.ItemDetailVO;
 import com.dangeboer.raindream.model.vo.ItemListVO;
 import com.dangeboer.raindream.service.ItemService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/item")
@@ -60,5 +62,10 @@ public class ItemController {
     @PutMapping("/update/{itemId}")
     public Long updateItem(@AuthenticationPrincipal User user, @PathVariable Long itemId, @RequestBody ItemForm itemForm) {
         return itemService.updateItem(user.getId(), itemId, itemForm);
+    }
+
+    @PostMapping("/create/batch")
+    public List<Long> createBatchItem(@AuthenticationPrincipal User user, ItemBatchForm itemBatchForm) {
+        return itemService.createBatchItem(user.getId(), itemBatchForm);
     }
 }
