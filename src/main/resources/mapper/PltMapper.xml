@@ -15,4 +15,16 @@
           AND p.user_id = #{userId}
     </select>
 
+    <insert id="insertBatch">
+        INSERT INTO plt (
+            id, user_id, plt_name
+        )
+        VALUES
+        <foreach collection="list" item="plt" separator=",">
+            (
+                #{plt.id}, #{plt.userId}, #{plt.pltName}
+            )
+        </foreach>
+    </insert>
+
 </mapper>

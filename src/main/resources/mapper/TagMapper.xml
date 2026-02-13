@@ -15,4 +15,16 @@
           AND t.user_id = #{userId}
     </select>
 
+    <insert id="insertBatch">
+        INSERT INTO tag (
+            id, user_id, tag_name
+        )
+        VALUES
+        <foreach collection="list" item="tag" separator=",">
+            (
+                #{tag.id}, #{tag.userId}, #{tag.tagName}
+            )
+        </foreach>
+    </insert>
+
 </mapper>

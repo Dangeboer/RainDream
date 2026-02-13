@@ -12,5 +12,6 @@ import java.util.List;
 public interface ItemMapper extends BaseMapper<Item> {
     List<ItemListVO> getItemList();
 
+    // int 是受影响的行数，就是插入了几条
     int insertBatch(@Param("list") List<Item> list);
 }

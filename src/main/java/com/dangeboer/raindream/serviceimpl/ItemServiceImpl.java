@@ -46,9 +46,9 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     private final MediaMapper mediaMapper;
     private final TagMapper tagMapper;
     private final PltMapper pltMapper;
+    private final ItemTagMapper itemTagMapper;
+    private final ItemPltMapper itemPltMapper;
 
-    private final TagService tagService;
-    private final PltService pltService;
     private final ItemTagService itemTagService;
     private final ItemPltService itemPltService;
 
@@ -491,9 +491,16 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                         .eq(Tag::getUserId, userId)
                         .in(Tag::getTagName, names)),
 
-                tagService::saveBatch,
+                list -> {
+                    list.forEach(tag -> {
+                        if (tag.getId() == null) {
+                            tag.setId(IdWorker.getId());
+                        }
+                    });
+                    tagMapper.insertBatch(list);
+                },
 
-                names -> tagService.list(new LambdaQueryWrapper<Tag>()
+                names -> tagMapper.selectList(new LambdaQueryWrapper<Tag>()
                         .eq(Tag::getUserId, userId)
                         .in(Tag::getTagName, names)),
 
@@ -504,7 +511,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
                 tagId -> new ItemTag(itemId, tagId),
 
-                itemTagService::saveBatch
+                itemTagMapper::insertBatch
         );
     }
 
@@ -516,9 +523,16 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                         .eq(Plt::getUserId, userId)
                         .in(Plt::getPltName, names)),
 
-                pltService::saveBatch,
+                list -> {
+                    list.forEach(plt -> {
+                        if (plt.getId() == null) {
+                            plt.setId(IdWorker.getId());
+                        }
+                    });
+                    pltMapper.insertBatch(list);
+                },
 
-                names -> pltService.list(new LambdaQueryWrapper<Plt>()
+                names -> pltMapper.selectList(new LambdaQueryWrapper<Plt>()
                         .eq(Plt::getUserId, userId)
                         .in(Plt::getPltName, names)),
 
@@ -529,7 +543,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
                 pltId -> new ItemPlt(itemId, pltId),
 
-                itemPltService::saveBatch
+                itemPltMapper::insertBatch
         );
     }
 
