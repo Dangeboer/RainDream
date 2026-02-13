@@ -1,11 +1,14 @@
 package com.dangeboer.raindream.security;
 
+import com.dangeboer.raindream.base.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.dangeboer.raindream.plugin.JwtHandler;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtHandler jwtHandler;
     private final UserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper;
 
     // 这里重写了 OncePerRequestFilter 里的 doFilterInternal() 方法，其实能算模板方法模式
     // OncePerRequestFilter 本身是 Spring 提供的抽象类，它已经实现了 doFilter 方法，并且在里面写好了整个过滤器的“算法流程”（比如保证每个请求只调用一次过滤逻辑、异常处理、调用链的传递）。
@@ -68,6 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             // token 非法或过期
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write(objectMapper.writeValueAsString(
+                    ApiResponse.fail(401, "token无效或已过期")
+            ));
             return;
         }
 
@@ -83,4 +92,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return bearerToken.substring(7);
     }
 }
-
