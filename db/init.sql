@@ -134,12 +134,15 @@ CREATE TABLE IF NOT EXISTS fanfic
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
+# ALTER TABLE media
+#     DROP COLUMN thumb_url;
+
 -- 媒体信息补充表
 CREATE TABLE IF NOT EXISTS media
 (
     item_id   BIGINT PRIMARY KEY,
 
-    thumb_url VARCHAR(2048),
+#     thumb_url VARCHAR(2048),
     live_url  VARCHAR(2048),
 
     CONSTRAINT fk_media_item FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE

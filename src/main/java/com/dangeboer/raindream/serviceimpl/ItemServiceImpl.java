@@ -14,14 +14,15 @@ import com.dangeboer.raindream.exception.CanNotFoundException;
 import com.dangeboer.raindream.exception.ForbiddenException;
 import com.dangeboer.raindream.mapper.*;
 import com.dangeboer.raindream.model.entity.*;
-import com.dangeboer.raindream.model.form.FanficForm;
 import com.dangeboer.raindream.model.form.ItemBatchForm;
 import com.dangeboer.raindream.model.form.ItemForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
 import com.dangeboer.raindream.model.vo.FanficListVO;
 import com.dangeboer.raindream.model.vo.ItemDetailVO;
 import com.dangeboer.raindream.model.vo.ItemListVO;
-import com.dangeboer.raindream.service.*;
+import com.dangeboer.raindream.service.ItemPltService;
+import com.dangeboer.raindream.service.ItemService;
+import com.dangeboer.raindream.service.ItemTagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -234,17 +235,13 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         if (itemForm == null) {
             throw new BadRequestException();
         }
-        boolean isFanfic = false;
-        boolean isMedia = false;
-
-        if (Integer.valueOf(1).equals(itemForm.getContentType())) {
-            isFanfic = true;
-        } else if (!Integer.valueOf(1).equals(itemForm.getMediaType()) && !Integer.valueOf(6).equals(itemForm.getMediaType())) {
-            isMedia = true;
-        }
+        boolean isFanfic = Integer.valueOf(1).equals(itemForm.getContentType());
+        boolean isMedia = Integer.valueOf(4).equals(itemForm.getMediaType());
 
         if (isFanfic && itemForm.getFanficForm() == null) {
             throw new BadRequestException("请提供文章详细信息");
+        } else if (isMedia && itemForm.getMediaForm() == null) {
+            throw new BadRequestException("请提供实况照片视频文件");
         }
 
         Item item = itemConverter.toItem(itemForm);
@@ -262,8 +259,9 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
         // 3. 如果是 media 插 media 表
         else if (isMedia) {
-            // TODO: 存封面url，以及live图需要存视频url
-            Media media = new Media(itemId, null, null);
+            // live 图需要存视频文件 url
+            Media media = itemConverter.toMedia(itemForm.getMediaForm());
+            media.setItemId(itemId);
             mediaMapper.insert(media);
         }
 
@@ -300,18 +298,16 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         // 1. 重新判断类型（用新表单决定最终形态）
-        boolean isFanfic = false;
-        boolean isMedia = false;
-
-        if (Integer.valueOf(1).equals(itemForm.getContentType())) {
-            isFanfic = true;
-        } else if (!Integer.valueOf(1).equals(itemForm.getMediaType())
-                && !Integer.valueOf(6).equals(itemForm.getMediaType())) {
-            isMedia = true;
+        if (itemForm == null) {
+            throw new BadRequestException();
         }
+        boolean isFanfic = Integer.valueOf(1).equals(itemForm.getContentType());
+        boolean isMedia = Integer.valueOf(4).equals(itemForm.getMediaType());
 
         if (isFanfic && itemForm.getFanficForm() == null) {
-            throw new BadRequestException("需要文章详细信息");
+            throw new BadRequestException("请提供文章详细信息");
+        } else if (isMedia && itemForm.getMediaForm() == null) {
+            throw new BadRequestException("请提供实况照片视频文件");
         }
 
         // 2. 更新 item 主表（注意：要 setId，否则 MP 不知道更新哪条）
@@ -326,7 +322,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         if (isFanfic) {
             // fanfic：upsert（存在就更新，不存在就插入）
-            Fanfic existingFanfic = fanficMapper.selectById(itemId); // 前提：fanfic 的主键= item_id
+            Fanfic existingFanfic = fanficMapper.selectById(itemId); // 前提：fanfic 的主键 = item_id
             Fanfic fanfic = itemConverter.toFanfic(itemForm.getFanficForm());
             fanfic.setItemId(itemId);
 
@@ -341,8 +337,9 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         } else if (isMedia) {
             // media：upsert
-            Media existingMedia = mediaMapper.selectById(itemId); // 前提：media 主键= item_id
-            Media media = new Media(itemId, null, null); // TODO 你后续补字段
+            Media existingMedia = mediaMapper.selectById(itemId); // 前提：media 主键 = item_id
+            Media media = itemConverter.toMedia(itemForm.getMediaForm());
+            media.setItemId(itemId);
             if (existingMedia == null) {
                 mediaMapper.insert(media);
             } else {
@@ -380,34 +377,34 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     public List<Long> createBatchItem(Long userId, ItemBatchForm form) {
         if (form == null) throw new BadRequestException();
 
-        boolean isFanfic = Integer.valueOf(1).equals(form.getContentType()); // 你自己定义的 FANFIC=1
-        boolean isMedia = !Integer.valueOf(1).equals(form.getMediaType())
-                && !Integer.valueOf(6).equals(form.getMediaType()); // 你自己的规则：非 TEXT(1) 且非 LINK(6) 认为是 media
-
-        if (isFanfic && form.getFanficForm() == null) {
-            throw new BadRequestException("需要文章详细信息");
+        boolean isFanfic = !Integer.valueOf(1).equals(form.getContentType());
+        if (isFanfic) {
+            throw new BadRequestException("不允许批量上传文章");
         }
 
-        // 如果是 media 批量，storeUrls 必须给；非 media（比如 fanfic/text/link）通常没必要 batch
-        if (isMedia) {
+        // 只允许批量上传 静图/动图/视频
+        boolean isValid = !Integer.valueOf(1).equals(form.getMediaType())
+                && !Integer.valueOf(4).equals(form.getMediaType())
+                && !Integer.valueOf(6).equals(form.getMediaType());
+
+        if (isValid) {
             if (form.getStoreUrls() == null || form.getStoreUrls().isEmpty()) {
                 throw new BadRequestException("需要 storeUrls（批量媒体链接）");
             }
+        } else {
+            throw new BadRequestException("只允许批量上传静图/动图/视频");
         }
 
         // 1) 清洗 storeUrls（trim、去空、去重但保持顺序）
-        List<String> storeUrls = (form.getStoreUrls() == null) ? List.of() :
-                form.getStoreUrls().stream()
-                        .filter(Objects::nonNull)
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .distinct()
-                        .toList();
+        List<String> storeUrls = form.getStoreUrls().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .toList();
 
-        // 2) 决定本次要创建多少条 item
-        // - media：每个 storeUrl 一条
-        // - 非 media：通常只创建 1 条（如果你也想支持 fanfic 批量，那就自己定义 batch 规则）
-        int count = isMedia ? storeUrls.size() : 1;
+        // 2) 决定本次要创建多少条 item - media：每个 storeUrl 一条
+        int count = storeUrls.size();
         if (count == 0) throw new BadRequestException("需要 storeUrls（批量媒体链接）");
 
         List<Item> items = new ArrayList<>(count);
@@ -432,11 +429,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             item.setContent(form.getContent()); // TEXT 类型会用到
 
             // ===== 每条 item 的差异字段：storeUrl =====
-            if (isMedia) {
-                item.setStoreUrl(storeUrls.get(i));
-            } else {
-                item.setStoreUrl(null);
-            }
+            item.setStoreUrl(storeUrls.get(i));
             items.add(item);
         }
 
@@ -448,31 +441,13 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         // 因为有上面的 IdWorker，所以这里不是从数据库拿的，只是把“早就生成好的 ID”收集出来
         List<Long> createdIds = items.stream().map(Item::getId).toList();
 
-        if (isFanfic) {
-            FanficForm ff = form.getFanficForm();
-            List<Fanfic> fanfics = createdIds.stream().map(itemId -> {
-                Fanfic fanfic = new Fanfic();
-                fanfic.setItemId(itemId);
-                fanfic.setEra(ff.getEra());
-                fanfic.setCharSetting(ff.getCharSetting());
-                fanfic.setLengthType(ff.getLengthType());
-                fanfic.setWorkType(ff.getWorkType());
-                fanfic.setUpdateDate(ff.getUpdateDate());
-                fanfic.setEndingType(ff.getEndingType());
-                fanfic.setReadCount(ff.getReadCount());
-                return fanfic;
-            }).toList();
-
-            // 自己写的 mapper 的 insertBatch 和 service 自带的 saveBatch 的区别：
-            // saveBatch 本质还是循环调用单条 insert，只是用 batch executor 减少交互次数
-            // insertBatch 是一条 SQL 插入多行
-            fanficMapper.insertBatch(fanfics);
-        } else if (isMedia) {
-            List<Media> medias = createdIds.stream()
-                    .map(itemId -> new Media(itemId, null, null))
-                    .toList();
-            mediaMapper.insertBatch(medias);
-        }
+        List<Media> medias = createdIds.stream()
+                .map(itemId -> new Media(itemId, null))
+                .toList();
+        // 自己写的 mapper 的 insertBatch 和 service 自带的 saveBatch 的区别：
+        // saveBatch 本质还是循环调用单条 insert，只是用 batch executor 减少交互次数
+        // insertBatch 是一条 SQL 插入多行
+        mediaMapper.insertBatch(medias);
 
         for (Long itemId : createdIds) {
             // 3. tags / plts（批量里一般对每条 item 都一样）

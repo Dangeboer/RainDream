@@ -12,7 +12,7 @@
         VALUES
         <foreach collection="list" item="media" separator=",">
             (
-            #{media.itemId}, #{media.thumbUrl}, #{media.liveUrl}
+            #{media.itemId}, #{media.liveUrl}
             )
         </foreach>
     </insert>

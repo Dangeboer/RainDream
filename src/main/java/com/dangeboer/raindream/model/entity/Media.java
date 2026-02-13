@@ -13,6 +13,6 @@ public class Media {
     @TableId(value = "item_id", type = IdType.INPUT)
     private Long itemId;
 
-    private String thumbUrl;
+//    private String thumbUrl;
     private String liveUrl;
 }

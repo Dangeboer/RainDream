@@ -18,6 +18,7 @@ public class ItemForm implements Serializable {
     @NotNull
     private Integer contentType;
 
+    private String storeUrl;
     private String content;
 
     private String title;
@@ -28,6 +29,7 @@ public class ItemForm implements Serializable {
     private String author;
     private String sourceUrl;
     private Integer releaseYear;
+    private Long sizeBytes;
 
     private Integer trackingType;
 
@@ -37,7 +39,11 @@ public class ItemForm implements Serializable {
     private String notes;
     private String summary;
 
+    // 文章补充信息
     private FanficForm fanficForm;
+
+    // 媒体补充信息
+    private MediaForm mediaForm;
 
     // 标签和平台补充信息
     private List<String> tags;

@@ -2,8 +2,10 @@ package com.dangeboer.raindream.converter;
 
 import com.dangeboer.raindream.model.entity.Fanfic;
 import com.dangeboer.raindream.model.entity.Item;
+import com.dangeboer.raindream.model.entity.Media;
 import com.dangeboer.raindream.model.form.FanficForm;
 import com.dangeboer.raindream.model.form.ItemForm;
+import com.dangeboer.raindream.model.form.MediaForm;
 import com.dangeboer.raindream.model.vo.*;
 import org.mapstruct.InheritConfiguration;
 import org.mapstruct.Mapper;
@@ -77,4 +79,7 @@ public interface ItemConverter {
 
     // FanficForm -> FanficEntity
     Fanfic toFanfic(FanficForm fanficForm);
+
+    // MediaForm -> MediaEntity
+    Media toMedia(MediaForm mediaForm);
 }
