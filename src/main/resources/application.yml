@@ -18,3 +18,10 @@ mybatis-plus:
 raindream:
   jwt:
     secret-key: hYW3L6I3gPpEUbtU+17FEHRYJuc8uLYHaLLsuzzyKn4=
+  oss:
+    endpoint: ${OSS_ENDPOINT:oss-cn-shanghai.aliyuncs.com}
+    bucket: ${OSS_BUCKET:raindream}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    expires-seconds: ${OSS_PRESIGN_EXPIRES_SECONDS:300}
+    public-domain: ${OSS_PUBLIC_DOMAIN:}
