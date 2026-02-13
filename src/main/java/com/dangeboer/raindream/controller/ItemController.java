@@ -65,7 +65,7 @@ public class ItemController {
     }
 
     @PostMapping("/create/batch")
-    public List<Long> createBatchItem(@AuthenticationPrincipal User user, ItemBatchForm itemBatchForm) {
+    public List<Long> createBatchItem(@AuthenticationPrincipal User user, @RequestBody ItemBatchForm itemBatchForm) {
         return itemService.createBatchItem(user.getId(), itemBatchForm);
     }
 }
