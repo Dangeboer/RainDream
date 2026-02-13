@@ -2,6 +2,7 @@ import { computed, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { createItemApi, getItemDetailApi, updateItemApi } from "../api/item";
 import { createPltApi, createTagApi, getPltApi, getTagApi } from "../api/meta";
+import { presignOssUploadApi } from "../api/oss";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -132,6 +133,34 @@ const toNullableString = (value) => {
   return text === "" ? null : text;
 };
 
+const isMediaUploadType = (mediaType) => [2, 3, 4, 5].includes(Number(mediaType));
+
+const uploadFileToOss = async (file, mediaType) => {
+  const contentType = file?.type || "application/octet-stream";
+  const presign = await presignOssUploadApi({
+    file_name: file?.name || "file.bin",
+    content_type: contentType,
+    size: file?.size || 0,
+    media_type: mediaType,
+  });
+  const uploadUrl = presign?.uploadUrl ?? presign?.upload_url;
+  const fileUrl = presign?.fileUrl ?? presign?.file_url;
+  if (!uploadUrl || !fileUrl) {
+    throw new Error("签名返回值不完整");
+  }
+  await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  }).then(async (res) => {
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(detail || `OSS 上传失败(${res.status})`);
+    }
+  });
+  return fileUrl;
+};
+
 export const useItemForm = ({ route, router }) => {
   const tags = ref([]);
   const plts = ref([]);
@@ -165,17 +194,27 @@ export const useItemForm = ({ route, router }) => {
   const onContentFileChange = async (uploadFile) => {
     const file = uploadFile?.raw;
     if (!file) return;
-    const asText = looksLikeTextFile(file);
-    form.content = await readFileAsTextOrDataUrl(file, asText);
-    contentFileName.value = file.name || "";
-    if (!asText) {
-      ElMessage.info("已读取为 Base64 Data URL");
+    try {
+      if (isMediaUploadType(form.mediaType)) {
+        const fileUrl = await uploadFileToOss(file, form.mediaType);
+        form.storeUrl = fileUrl;
+        form.content = fileUrl;
+        contentFileName.value = file.name || "";
+        ElMessage.success("文件已上传到 OSS");
+        return;
+      }
+      const asText = looksLikeTextFile(file);
+      form.content = await readFileAsTextOrDataUrl(file, asText);
+      contentFileName.value = file.name || "";
+    } catch (error) {
+      ElMessage.error(error?.message || "上传失败，请稍后重试");
     }
   };
 
   const clearContentFile = () => {
     contentFileName.value = "";
     form.content = null;
+    form.storeUrl = null;
   };
 
   const loadDetail = async () => {
@@ -257,8 +296,8 @@ export const useItemForm = ({ route, router }) => {
   const buildPayload = () => ({
     media_type: form.mediaType,
     content_type: form.contentType,
-    store_url: [2, 3, 4, 5].includes(Number(form.mediaType))
-      ? toNullableString(form.content)
+    store_url: isMediaUploadType(form.mediaType)
+      ? toNullableString(form.storeUrl ?? form.content)
       : null,
     content:
       Number(form.mediaType) === 1 ? toNullableString(form.content) : null,

@@ -1,0 +1,1 @@
+import{h as e}from"./http-DCShZfjV.js";const s=()=>e.get("/api/tag"),i=t=>e.post("/api/tag/create",t),l=(t,a)=>e.put(`/api/tag/update/${t}`,a),c=t=>e.delete(`/api/tag/delete/${t}`),g=()=>e.get("/api/plt"),o=t=>e.post("/api/plt/create",t),d=(t,a)=>e.put(`/api/plt/update/${t}`,a),n=t=>e.delete(`/api/plt/delete/${t}`);export{g as a,o as b,i as c,c as d,d as e,n as f,s as g,l as u};
