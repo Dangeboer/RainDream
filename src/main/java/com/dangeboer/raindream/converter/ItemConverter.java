@@ -21,6 +21,8 @@ public interface ItemConverter {
 
     // itemEntity -> fanficListVO
     @InheritConfiguration(name = "toItemListVO")
+    @Mapping(target = "trackingTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getTrackingType(), com.dangeboer.raindream.enums.TrackingTypeEnum.class))")
     @Mapping(target = "fanficVO", source = "fanfic") // 会自动调用下面的 toFanficVO
     FanficListVO toFanficListVO(Item item, Fanfic fanfic);
 
@@ -41,6 +43,12 @@ public interface ItemConverter {
 
     // itemEntity -> fanficDetailVO
     @InheritConfiguration(name = "toItemDetailVO")
+    @Mapping(target = "trackingTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getTrackingType(), com.dangeboer.raindream.enums.TrackingTypeEnum.class))")
+    @Mapping(target = "contentTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getContentType(), com.dangeboer.raindream.enums.ContentTypeEnum.class))")
+    @Mapping(target = "mediaTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getMediaType(), com.dangeboer.raindream.enums.MediaTypeEnum.class))")
     @Mapping(target = "fanficVO", source = "fanfic") // 会自动调用下面的 toFanficVO
     FanficDetailVO toFanficDetailVO(Item item, Fanfic fanfic);
 
