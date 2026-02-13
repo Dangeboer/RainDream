@@ -7,12 +7,12 @@
 
     <insert id="insertBatch">
         INSERT INTO media (
-            item_id, thumb_url, live_url
+        item_id, thumb_url, live_url
         )
         VALUES
         <foreach collection="list" item="media" separator=",">
             (
-                #{media.itemId}, #{media.thumbUrl}, #{media.liveUrl}
+            #{media.itemId}, #{media.thumbUrl}, #{media.liveUrl}
             )
         </foreach>
     </insert>

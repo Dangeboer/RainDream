@@ -7,13 +7,13 @@
 
     <insert id="insertBatch">
         INSERT INTO fanfic (
-            item_id, era, char_setting, length_type, work_type, update_date, ending_type, read_count
+        item_id, era, char_setting, length_type, work_type, update_date, ending_type, read_count
         )
         VALUES
         <foreach collection="list" item="fanfic" separator=",">
             (
-                #{fanfic.itemId}, #{fanfic.era}, #{fanfic.charSetting}, #{fanfic.lengthType},
-                #{fanfic.workType}, #{fanfic.updateDate}, #{fanfic.endingType}, #{fanfic.readCount}
+            #{fanfic.itemId}, #{fanfic.era}, #{fanfic.charSetting}, #{fanfic.lengthType},
+            #{fanfic.workType}, #{fanfic.updateDate}, #{fanfic.endingType}, #{fanfic.readCount}
             )
         </foreach>
     </insert>
