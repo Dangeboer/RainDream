@@ -1,7 +1,7 @@
 <template>
   <el-scrollbar class="sidebar-scroll">
     <div class="sidebar-inner">
-      <div class="logo">李宁玉没死</div>
+      <div class="logo">RainDream</div>
       <el-button
         type="primary"
         class="new-btn"
@@ -42,17 +42,12 @@
           >
         </nav>
       </section>
-      <div class="user card-panel">
-        <div>{{ auth.username || "Archivist" }}</div>
-        <el-button text @click="onLogout">退出登录</el-button>
-      </div>
     </div>
   </el-scrollbar>
 </template>
 
 <script setup>
-import { useRoute, useRouter } from "vue-router";
-import { useAuthStore } from "../stores/auth";
+import { useRoute } from "vue-router";
 
 const contentMenu = [
   {
@@ -138,8 +133,6 @@ const mediaMenu = [
   },
 ];
 
-const auth = useAuthStore();
-const router = useRouter();
 const route = useRoute();
 
 const isEntryActive = (entry) => {
@@ -157,11 +150,6 @@ const isEntryActive = (entry) => {
     );
   }
   return false;
-};
-
-const onLogout = () => {
-  auth.logout();
-  router.push("/login");
 };
 </script>
 
@@ -253,13 +241,5 @@ const onLogout = () => {
   background: var(--highlight);
   color: var(--dark);
   font-weight: 700;
-}
-
-.user {
-  margin-top: 20px;
-  padding: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 </style>

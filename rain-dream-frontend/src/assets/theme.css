@@ -129,8 +129,25 @@ body.font-hand .el-input__inner::placeholder {
 .el-pagination .el-pager li {
   background: var(--bg-panel-strong) !important;
   border-color: var(--line) !important;
-  box-shadow: none !important;
   color: var(--text-main) !important;
+}
+
+.el-input__wrapper,
+.el-select__wrapper {
+  box-shadow: inset 0 0 0 1px var(--line) !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: inset 0 0 0 1px var(--accent) !important;
+}
+
+.el-textarea__inner,
+.el-card,
+.el-dialog,
+.el-pagination button,
+.el-pagination .el-pager li {
+  box-shadow: none !important;
 }
 
 .el-input__inner::placeholder,

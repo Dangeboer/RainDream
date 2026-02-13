@@ -7,7 +7,24 @@
       <el-scrollbar class="content-scroll">
         <div class="content-inner">
           <header class="topbar card-panel">
-            <el-input v-model="keyword" placeholder="搜索……" clearable />
+            <div class="search-wrap">
+              <el-input
+                v-model="keyword"
+                placeholder="搜索标题，作者，标签……"
+                clearable
+              />
+            </div>
+            <div class="topbar-actions">
+              <el-button text @click="router.push('/tags')">标签管理</el-button>
+              <el-button text @click="router.push('/plts')">平台管理</el-button>
+              <div class="user-chip">
+                <el-avatar :size="28">
+                  {{ (auth.username || "A").slice(0, 1).toUpperCase() }}
+                </el-avatar>
+                <span>{{ auth.username || "Archivist" }}</span>
+              </div>
+              <el-button text @click="onLogout">退出登录</el-button>
+            </div>
           </header>
           <router-view />
         </div>
@@ -18,9 +35,18 @@
 
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 import SidebarNav from "./SidebarNav.vue";
 
 const keyword = ref("");
+const auth = useAuthStore();
+const router = useRouter();
+
+const onLogout = () => {
+  auth.logout();
+  router.push("/login");
+};
 </script>
 
 <style scoped>
@@ -46,6 +72,26 @@ const keyword = ref("");
 .topbar {
   padding: 12px 16px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.search-wrap {
+  width: min(520px, 100%);
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+  color: var(--text-main);
+  font-weight: 600;
 }
 :deep(.content-scroll .el-scrollbar__wrap) {
   overflow-x: hidden;
@@ -72,6 +118,16 @@ const keyword = ref("");
   .sidebar {
     border-right: none;
     border-bottom: 1px solid var(--line);
+  }
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-wrap {
+    width: 100%;
+  }
+  .topbar-actions {
+    justify-content: space-between;
   }
 }
 </style>
