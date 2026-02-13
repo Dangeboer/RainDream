@@ -413,7 +413,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         List<Item> items = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             Item item = new Item();
-            item.setId(IdWorker.getId());
+            item.setId(IdWorker.getId()); // 非自增的 ID 生成策略，MyBatis-Plus 提供的工具类，生成一个全局唯一的 Long 类型 ID
             item.setUserId(userId);
             item.setMediaType(form.getMediaType());
             item.setContentType(form.getContentType());
@@ -445,6 +445,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             throw new BadRequestException("批量创建项目失败");
         }
 
+        // 因为有上面的 IdWorker，所以这里不是从数据库拿的，只是把“早就生成好的 ID”收集出来
         List<Long> createdIds = items.stream().map(Item::getId).toList();
 
         if (isFanfic) {
@@ -461,6 +462,10 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                 fanfic.setReadCount(ff.getReadCount());
                 return fanfic;
             }).toList();
+
+            // 自己写的 mapper 的 insertBatch 和 service 自带的 saveBatch 的区别：
+            // saveBatch 本质还是循环调用单条 insert，只是用 batch executor 减少交互次数
+            // insertBatch 是一条 SQL 插入多行
             fanficMapper.insertBatch(fanfics);
         } else if (isMedia) {
             List<Media> medias = createdIds.stream()
