@@ -175,6 +175,9 @@ body.font-hand .el-input__inner::placeholder {
   --el-button-active-border-color: var(--accent-hover) !important;
 
   --el-button-outline-color: transparent !important;
+
+  border-radius: 10px !important;
+
   box-shadow: none !important;
 }
 
