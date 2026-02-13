@@ -377,7 +377,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     public List<Long> createBatchItem(Long userId, ItemBatchForm form) {
         if (form == null) throw new BadRequestException();
 
-        boolean isFanfic = !Integer.valueOf(1).equals(form.getContentType());
+        boolean isFanfic = Integer.valueOf(1).equals(form.getContentType());
         if (isFanfic) {
             throw new BadRequestException("不允许批量上传文章");
         }

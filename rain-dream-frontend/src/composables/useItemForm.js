@@ -142,6 +142,7 @@ export const useItemForm = ({ route, router }) => {
   const form = reactive({
     mediaType: null,
     contentType: null,
+    storeUrl: "",
     content: null,
     title: "",
     fandom: "风声",
@@ -183,25 +184,26 @@ export const useItemForm = ({ route, router }) => {
     const fanfic = data?.fanficForm || data?.fanfic_form || {};
     form.mediaType = data?.mediaType ?? data?.media_type ?? null;
     form.contentType = data?.contentType ?? data?.content_type ?? null;
+    form.storeUrl = data?.storeUrl ?? data?.store_url ?? null;
     form.content = data?.content ?? null;
-    form.title = data?.title ?? "";
+    form.title = data?.title ?? null;
     form.fandom = data?.fandom ?? "风声";
     form.cp = data?.cp ?? "玉梦";
-    form.author = data?.author ?? "";
-    form.sourceUrl = data?.sourceUrl ?? data?.source_url ?? "";
+    form.author = data?.author ?? null;
+    form.sourceUrl = data?.sourceUrl ?? data?.source_url ?? null;
     form.releaseYear = data?.releaseYear ?? data?.release_year ?? null;
     form.trackingType = data?.trackingType ?? data?.tracking_type ?? null;
     form.rating = data?.rating ?? null;
-    form.notes = data?.notes ?? "";
-    form.summary = data?.summary ?? "";
+    form.notes = data?.notes ?? null;
+    form.summary = data?.summary ?? null;
     form.fanficForm = {
       era: fanfic?.era ?? null,
-      charSetting: fanfic?.charSetting ?? fanfic?.char_setting ?? "",
+      charSetting: fanfic?.charSetting ?? fanfic?.char_setting ?? null,
       lengthType: fanfic?.lengthType ?? fanfic?.length_type ?? null,
       workType: fanfic?.workType ?? fanfic?.work_type ?? null,
       updateDate: fanfic?.updateDate ?? fanfic?.update_date ?? null,
       endingType: fanfic?.endingType ?? fanfic?.ending_type ?? null,
-      readCount: fanfic?.readCount ?? fanfic?.read_count ?? 1,
+      readCount: fanfic?.readCount ?? fanfic?.read_count ?? null,
     };
     form.tags = (data?.tags || data?.tag_vos || [])
       .map((item) => item?.name || item?.tag_name || item)
@@ -255,7 +257,11 @@ export const useItemForm = ({ route, router }) => {
   const buildPayload = () => ({
     media_type: form.mediaType,
     content_type: form.contentType,
-    content: toNullableString(form.content),
+    store_url: [2, 3, 4, 5].includes(Number(form.mediaType))
+      ? toNullableString(form.content)
+      : null,
+    content:
+      Number(form.mediaType) === 1 ? toNullableString(form.content) : null,
     title: toNullableString(form.title),
     fandom: toNullableString(form.fandom) ?? "风声",
     cp: toNullableString(form.cp) ?? "玉梦",
@@ -277,6 +283,12 @@ export const useItemForm = ({ route, router }) => {
           read_count: form.fanficForm.readCount ?? 1,
         }
       : null,
+    media_form:
+      Number(form.mediaType) === 4
+        ? {
+            live_url: null,
+          }
+        : null,
     tags: [
       ...new Set(
         (form.tags || [])
