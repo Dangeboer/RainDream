@@ -1,25 +1,42 @@
 @import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap");
 
+/* =====================================================
+   1) Design Tokens
+   颜色、边框、阴影、按钮语义变量统一在这里管理
+   ===================================================== */
 :root {
-  /* ===== 主配色（参考图） ===== */
-  --bg-main: #f6ecc9; /* 奶油底 */
-  --bg-top: #f2e4b8; /* 顶部渐变 */
-  --bg-panel: #fff8e6; /* 卡片底色 */
+  /* Base palette */
+  --bg-main: #f6ecc9;
+  --bg-top: #f2e4b8;
+  --bg-panel: #fff8e6;
   --bg-panel-strong: #ffffff;
 
-  --dark: #262626; /* 深色对比 */
-
+  --dark: #262626;
   --text-main: #262626;
   --text-secondary: rgba(38, 38, 38, 0.6);
 
-  --accent: #eb7a53; /* 橙 */
+  --accent: #eb7a53;
   --accent-hover: #f08c69;
-  --highlight: #f7d44c; /* 黄 */
+  --highlight: #f7d44c;
 
   --line: rgba(38, 38, 38, 0.1);
   --shadow: 0 8px 25px rgba(38, 38, 38, 0.08);
+
+  /* Button system: Primary / Secondary / Text */
+  --btn-secondary-bg: var(--bg-panel-strong);
+  --btn-secondary-border: var(--line);
+  --btn-secondary-text: var(--text-main);
+  --btn-secondary-hover-bg: var(--highlight);
+  --btn-secondary-hover-border: var(--highlight);
+  --btn-secondary-hover-text: var(--dark);
+
+  --btn-text-color: var(--text-secondary);
+  --btn-text-hover-color: var(--text-main);
 }
 
+/* =====================================================
+   2) Global Base
+   ===================================================== */
 * {
   box-sizing: border-box;
 }
@@ -37,7 +54,25 @@ body {
   color: var(--text-main);
 }
 
-/* 快速试字体：在 main.js 里改 document.body.className */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.card-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+/* =====================================================
+   3) Font Presets (切换 body.className 使用)
+   ===================================================== */
 body.font-sans {
   --el-font-family:
     "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial,
@@ -62,7 +97,7 @@ body.font-hand {
   font-family: "Ma Shan Zheng", "Kaiti SC", "STKaiti", cursive;
 }
 
-/* 兜底：强制 Element Plus 常见文本组件跟随当前字体 */
+/* 兜底：保证 Element 常用文本组件跟随当前字体 */
 body.font-sans .el-button,
 body.font-sans .el-button *,
 body.font-sans .el-input__inner,
@@ -82,33 +117,9 @@ body.font-hand .el-input__inner::placeholder {
   font-family: inherit !important;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.page-shell {
-  min-height: 100vh;
-}
-
-/* ===== 卡片面板 ===== */
-.card-panel {
-  background: var(--bg-panel);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-}
-
-/* ===== 主按钮 ===== */
-.el-button--primary {
-  --el-button-bg-color: var(--accent) !important;
-  --el-button-border-color: var(--accent) !important;
-  --el-button-hover-bg-color: var(--accent-hover) !important;
-  --el-button-hover-border-color: var(--accent-hover) !important;
-  color: var(--dark) !important;
-}
-
-/* ===== 表单 / Dialog / Card ===== */
+/* =====================================================
+   4) Element Plus: Form / Popup / Table
+   ===================================================== */
 .el-input__wrapper,
 .el-select__wrapper,
 .el-textarea__inner,
@@ -122,13 +133,11 @@ a {
   color: var(--text-main) !important;
 }
 
-/* Placeholder 柔一点 */
 .el-input__inner::placeholder,
 .el-textarea__inner::placeholder {
   color: rgba(38, 38, 38, 0.45) !important;
 }
 
-/* 表格 */
 .el-table,
 .el-table tr,
 .el-table th.el-table__cell,
@@ -138,7 +147,6 @@ a {
   border-color: var(--line) !important;
 }
 
-/* Message / Notification */
 .el-message-box,
 .el-notification {
   background: var(--bg-panel-strong) !important;
@@ -146,20 +154,30 @@ a {
   border-color: var(--line) !important;
 }
 
-/* ===== 按钮体系：Primary / Secondary / Text ===== */
-:root {
-  --btn-secondary-bg: var(--bg-panel-strong);
-  --btn-secondary-border: var(--line);
-  --btn-secondary-text: var(--text-main);
-  --btn-secondary-hover-bg: var(--bg-main);
-  --btn-secondary-hover-border: var(--bg-main);
-  --btn-secondary-hover-text: var(--dark);
-
-  --btn-text-color: var(--text-secondary);
-  --btn-text-hover-color: var(--text-main);
+.el-select-dropdown__item.is-selected {
+  color: var(--accent) !important;
+  font-weight: 700;
 }
 
-/* Secondary：默认按钮 */
+/* =====================================================
+   5) Button System
+   Primary / Secondary / Text / Segmented(Radio Button)
+   ===================================================== */
+.el-button--primary {
+  --el-button-bg-color: var(--accent) !important;
+  --el-button-border-color: var(--accent) !important;
+  --el-button-text-color: var(--dark) !important;
+
+  --el-button-hover-bg-color: var(--accent-hover) !important;
+  --el-button-hover-border-color: var(--accent-hover) !important;
+
+  --el-button-active-bg-color: var(--accent-hover) !important;
+  --el-button-active-border-color: var(--accent-hover) !important;
+
+  --el-button-outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .el-button:not(.el-button--primary):not(.is-text):not(.el-button--link) {
   --el-button-bg-color: var(--btn-secondary-bg);
   --el-button-border-color: var(--btn-secondary-border);
@@ -170,7 +188,6 @@ a {
   box-shadow: none !important;
 }
 
-/* Text：弱操作按钮 */
 .el-button.is-text:not(.el-button--primary),
 .el-button--link:not(.el-button--primary) {
   --el-button-text-color: var(--btn-text-color);
@@ -180,7 +197,6 @@ a {
   box-shadow: none !important;
 }
 
-/* Segmented：radio-button 跟 Secondary/Active 统一 */
 .el-radio-button__inner {
   background: var(--btn-secondary-bg) !important;
   border-color: var(--btn-secondary-border) !important;
@@ -201,16 +217,9 @@ a {
   box-shadow: none !important;
 }
 
-/* 下拉项选中态 */
-.el-select-dropdown__item.is-selected {
-  color: var(--accent) !important; /* 选中文字色 */
-  font-weight: 700;
-}
-
 /* =====================================================
-   侧边栏：深色 #262626（不紫）
+   6) Sidebar (Dark Theme)
    ===================================================== */
-
 .app-sidebar {
   background: var(--dark);
   color: #fff;
@@ -232,7 +241,6 @@ a {
   color: #fff !important;
 }
 
-/* 选中态 */
 .app-sidebar .el-menu-item.is-active {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #fff !important;
@@ -247,5 +255,5 @@ a {
   bottom: 10px;
   width: 4px;
   border-radius: 4px;
-  background: var(--highlight); /* 黄色高亮 */
+  background: var(--highlight);
 }

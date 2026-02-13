@@ -487,24 +487,30 @@ const onWheelFanficField = (field, event, step = 1, min, max) => {
   );
 };
 
+const toNullableString = (value) => {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text === "" ? null : text;
+};
+
 const buildPayload = () => ({
   media_type: form.mediaType,
   content_type: form.contentType,
-  content: form.content || null,
-  title: form.title || "",
-  fandom: form.fandom ?? "风声",
-  cp: form.cp ?? "玉梦",
-  author: form.author || "",
-  source_url: form.sourceUrl || "",
+  content: toNullableString(form.content),
+  title: toNullableString(form.title),
+  fandom: toNullableString(form.fandom) ?? "风声",
+  cp: toNullableString(form.cp) ?? "玉梦",
+  author: toNullableString(form.author),
+  source_url: toNullableString(form.sourceUrl),
   release_year: form.releaseYear,
   tracking_type: form.trackingType,
   rating: form.rating,
-  notes: form.notes || "",
-  summary: form.summary || "",
+  notes: toNullableString(form.notes),
+  summary: toNullableString(form.summary),
   fanfic_form: isFanficType.value
     ? {
         era: form.fanficForm.era,
-        char_setting: form.fanficForm.charSetting || "",
+        char_setting: toNullableString(form.fanficForm.charSetting),
         length_type: form.fanficForm.lengthType,
         work_type: form.fanficForm.workType,
         update_date: form.fanficForm.updateDate,
