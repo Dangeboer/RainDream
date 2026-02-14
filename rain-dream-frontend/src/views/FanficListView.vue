@@ -1,7 +1,8 @@
 <template>
   <section class="card-panel panel">
     <h2>文章列表</h2>
-    <el-table :data="rows" stripe fit table-layout="fixed" style="width: 100%">
+    <div class="table-wrap" @wheel.capture="onTableWheel">
+      <el-table ref="tableRef" :data="rows" stripe fit table-layout="fixed" style="width: 100%">
       <!-- <el-table-column prop="id" label="ID" width="80" /> -->
       <el-table-column prop="eraLabel" label="年代" min-width="80" show-overflow-tooltip />
       <el-table-column prop="title" label="名称" min-width="160" show-overflow-tooltip />
@@ -31,7 +32,8 @@
           <el-link @click="$router.push(`/fanfic/${row.id}`)">详情</el-link>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </div>
     <el-pagination
       layout="prev, pager, next"
       :total="total"
@@ -53,6 +55,7 @@ import { getFanficListApi } from "../api/item";
 
 const rows = ref([]);
 const total = ref(0);
+const tableRef = ref(null);
 const query = reactive({});
 
 const fetchData = async () => {
@@ -82,12 +85,29 @@ const fetchData = async () => {
   total.value = Number(resp?.total ?? rows.value.length);
 };
 
+const onTableWheel = (event) => {
+  if (!event.shiftKey) return;
+  const tableEl = tableRef.value?.$el;
+  if (!tableEl) return;
+  const bodyWrap =
+    tableEl.querySelector(".el-table__body-wrapper .el-scrollbar__wrap") ||
+    tableEl.querySelector(".el-table__body-wrapper");
+  if (!bodyWrap || bodyWrap.scrollWidth <= bodyWrap.clientWidth) return;
+  const delta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
+  bodyWrap.scrollLeft += delta;
+  event.preventDefault();
+};
+
 onMounted(fetchData);
 </script>
 
 <style scoped>
 .panel {
   padding: 16px;
+}
+
+.table-wrap {
+  min-width: 0;
 }
 
 :deep(.el-table .op-col .cell) {

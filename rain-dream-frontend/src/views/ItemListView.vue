@@ -4,7 +4,8 @@
       <h2>{{ pageTitle }}</h2>
       <el-button type="primary" @click="$router.push('/items/new')">新增作品</el-button>
     </div>
-    <el-table :data="rows" stripe>
+    <div class="table-wrap" @wheel.capture="onTableWheel">
+      <el-table ref="tableRef" :data="rows" stripe>
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="title" label="标题" min-width="180" />
       <el-table-column prop="fandom" label="Fandom" width="140" />
@@ -17,7 +18,8 @@
           <el-button text type="danger" @click="remove(row.id)">删除</el-button>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </div>
     <el-pagination
       layout="prev, pager, next"
       :total="total"
@@ -38,6 +40,7 @@ const route = useRoute()
 const router = useRouter()
 const rows = ref([])
 const total = ref(0)
+const tableRef = ref(null)
 const query = reactive({
   page: 1,
   size: 10,
@@ -112,6 +115,18 @@ const remove = async (id) => {
   fetchData()
 }
 
+const onTableWheel = (event) => {
+  if (!event.shiftKey) return
+  const tableEl = tableRef.value?.$el
+  if (!tableEl) return
+  const bodyWrap = tableEl.querySelector('.el-table__body-wrapper .el-scrollbar__wrap')
+    || tableEl.querySelector('.el-table__body-wrapper')
+  if (!bodyWrap || bodyWrap.scrollWidth <= bodyWrap.clientWidth) return
+  const delta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY
+  bodyWrap.scrollLeft += delta
+  event.preventDefault()
+}
+
 watch(
   () => route.query,
   () => {
@@ -125,4 +140,5 @@ watch(
 <style scoped>
 .panel { padding: 16px; }
 .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.table-wrap { min-width: 0; }
 </style>
