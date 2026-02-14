@@ -291,8 +291,15 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             throw new ForbiddenException();
         }
 
-        // 返回的是受影响的行数
-        return (long) itemMapper.deleteById(itemId);
+        Long affected = (long) itemMapper.deleteById(itemId);
+        if (affected > 0 && item.getStoreUrl() != null && !item.getStoreUrl().isBlank()) {
+            try {
+                ossService.deleteObject(userId, item.getStoreUrl());
+            } catch (Exception ignored) {
+                // 失败时不阻塞主流程，避免影响条目删除
+            }
+        }
+        return affected;
     }
 
     @Override

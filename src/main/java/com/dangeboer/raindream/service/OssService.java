@@ -7,4 +7,6 @@ public interface OssService {
     OssPresignVO presignPutUrl(Long userId, OssPresignForm form);
 
     String presignReadUrl(Long userId, String storeUrl);
+
+    void deleteObject(Long userId, String storeUrl);
 }

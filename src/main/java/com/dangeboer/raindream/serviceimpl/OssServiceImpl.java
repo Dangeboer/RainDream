@@ -112,6 +112,36 @@ public class OssServiceImpl implements OssService {
         }
     }
 
+    @Override
+    public void deleteObject(Long userId, String storeUrl) {
+        if (userId == null || isBlank(storeUrl)) {
+            throw new BadRequestException("storeUrl 不能为空");
+        }
+        validateConfig();
+
+        String objectKey = parseObjectKey(storeUrl);
+        String expectedPrefix = "user/" + userId + "/";
+        if (!objectKey.startsWith(expectedPrefix)) {
+            throw new BadRequestException("无权删除该文件");
+        }
+
+        String endpointWithScheme = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+                ? endpoint
+                : "https://" + endpoint;
+
+        OSS ossClient = null;
+        try {
+            ossClient = new OSSClientBuilder().build(endpointWithScheme, accessKeyId, accessKeySecret);
+            ossClient.deleteObject(bucket, objectKey);
+        } catch (Exception e) {
+            throw new BadRequestException("删除 OSS 文件失败");
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
+
     private void validateConfig() {
         if (isBlank(endpoint) || isBlank(bucket) || isBlank(accessKeyId) || isBlank(accessKeySecret)) {
             throw new BadRequestException("OSS 配置不完整，请先配置 endpoint/bucket/access key");
