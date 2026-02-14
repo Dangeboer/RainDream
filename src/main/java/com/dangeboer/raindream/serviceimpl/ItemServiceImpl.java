@@ -56,13 +56,22 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     private final OssService ossService;
 
     @Override
-    public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size) {
+    public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size, Integer contentType, Integer mediaType) {
 
         // 查询条件
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
                 .eq(Item::getUserId, userId)
-                .ne(Item::getContentType, 1)
                 .orderByDesc(Item::getCreatedAt);
+
+        if (contentType == null) {
+            wrapper.ne(Item::getContentType, 1);
+        } else {
+            wrapper.eq(Item::getContentType, contentType);
+        }
+
+        if (mediaType != null) {
+            wrapper.eq(Item::getMediaType, mediaType);
+        }
 
         // 1) 不分页：两个参数都没传才走全量
         if (page == null && size == null) {

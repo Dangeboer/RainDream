@@ -13,7 +13,7 @@ import com.dangeboer.raindream.model.vo.ItemListVO;
 import java.util.List;
 
 public interface ItemService extends IService<Item> {
-    PageResult<ItemListVO> getItemList(Long userId, Long page, Long size);
+    PageResult<ItemListVO> getItemList(Long userId, Long page, Long size, Integer contentType, Integer mediaType);
 
     ItemDetailVO getItemDetail(Long userId, Long itemId);
 

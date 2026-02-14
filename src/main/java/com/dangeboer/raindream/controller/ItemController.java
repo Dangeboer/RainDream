@@ -25,9 +25,11 @@ public class ItemController {
     public PageResult<ItemListVO> getItemList(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) Long page,
-            @RequestParam(required = false) Long size
+            @RequestParam(required = false) Long size,
+            @RequestParam(required = false) Integer contentType,
+            @RequestParam(required = false) Integer mediaType
     ) {
-        return itemService.getItemList(user.getId(), page, size);
+        return itemService.getItemList(user.getId(), page, size, contentType, mediaType);
     }
 
     @GetMapping("/detail/{itemId}")
