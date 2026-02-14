@@ -133,7 +133,8 @@ const toNullableString = (value) => {
   return text === "" ? null : text;
 };
 
-const isMediaUploadType = (mediaType) => [2, 3, 4, 5].includes(Number(mediaType));
+const isMediaUploadType = (mediaType) =>
+  [1, 2, 3, 4, 5].includes(Number(mediaType));
 
 const uploadFileToOss = async (file, mediaType) => {
   const contentType = file?.type || "application/octet-stream";
@@ -172,6 +173,7 @@ export const useItemForm = ({ route, router }) => {
     mediaType: null,
     contentType: null,
     storeUrl: "",
+    sizeBytes: null,
     content: null,
     title: "",
     fandom: "风声",
@@ -198,13 +200,15 @@ export const useItemForm = ({ route, router }) => {
       if (isMediaUploadType(form.mediaType)) {
         const fileUrl = await uploadFileToOss(file, form.mediaType);
         form.storeUrl = fileUrl;
-        form.content = fileUrl;
+        form.content = null;
+        form.sizeBytes = file.size || null;
         contentFileName.value = file.name || "";
         ElMessage.success("文件已上传到 OSS");
         return;
       }
       const asText = looksLikeTextFile(file);
       form.content = await readFileAsTextOrDataUrl(file, asText);
+      form.sizeBytes = file.size || null;
       contentFileName.value = file.name || "";
     } catch (error) {
       ElMessage.error(error?.message || "上传失败，请稍后重试");
@@ -215,6 +219,7 @@ export const useItemForm = ({ route, router }) => {
     contentFileName.value = "";
     form.content = null;
     form.storeUrl = null;
+    form.sizeBytes = null;
   };
 
   const loadDetail = async () => {
@@ -224,6 +229,7 @@ export const useItemForm = ({ route, router }) => {
     form.mediaType = data?.mediaType ?? data?.media_type ?? null;
     form.contentType = data?.contentType ?? data?.content_type ?? null;
     form.storeUrl = data?.storeUrl ?? data?.store_url ?? null;
+    form.sizeBytes = data?.sizeBytes ?? data?.size_bytes ?? null;
     form.content = data?.content ?? null;
     form.title = data?.title ?? null;
     form.fandom = data?.fandom ?? "风声";
@@ -297,16 +303,19 @@ export const useItemForm = ({ route, router }) => {
     media_type: form.mediaType,
     content_type: form.contentType,
     store_url: isMediaUploadType(form.mediaType)
-      ? toNullableString(form.storeUrl ?? form.content)
+      ? toNullableString(form.storeUrl)
       : null,
     content:
-      Number(form.mediaType) === 1 ? toNullableString(form.content) : null,
+      Number(form.mediaType) === 1 && contentInputMode.value === "text"
+        ? toNullableString(form.content)
+        : null,
     title: toNullableString(form.title),
     fandom: toNullableString(form.fandom) ?? "风声",
     cp: toNullableString(form.cp) ?? "玉梦",
     author: toNullableString(form.author),
     source_url: toNullableString(form.sourceUrl),
     release_year: form.releaseYear,
+    size_bytes: form.sizeBytes,
     tracking_type: form.trackingType,
     rating: form.rating,
     notes: toNullableString(form.notes),

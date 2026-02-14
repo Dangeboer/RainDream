@@ -53,19 +53,19 @@
       <el-descriptions-item label="上次更新日期">{{
         show(detail.fanfic_vo?.update_date)
       }}</el-descriptions-item>
-      <el-descriptions-item label="访问链接">
+      <el-descriptions-item label="下载链接">
         <el-link
           v-if="detail.store_url"
           :href="detail.store_url"
           target="_blank"
           rel="noopener noreferrer"
         >
-          点击查看
+          点击下载
         </el-link>
         <span v-else>-</span>
       </el-descriptions-item>
       <el-descriptions-item label="文件大小">{{
-        show(detail.size_bytes)
+        formatFileSize(detail.size_bytes)
       }}</el-descriptions-item>
       <el-descriptions-item label="平台" :span="2">{{
         platformText
@@ -107,6 +107,17 @@ const detail = ref({});
 
 const show = (value) =>
   value === null || value === undefined || value === "" ? "-" : value;
+
+const formatFileSize = (bytes) => {
+  const size = Number(bytes);
+  if (!Number.isFinite(size) || size <= 0) return "-";
+  const KB = 1000;
+  const MB = 1000 * KB;
+  const GB = 1000 * MB;
+  if (size >= GB) return `${(size / GB).toFixed(2)} GB`;
+  if (size >= MB) return `${(size / MB).toFixed(2)} MB`;
+  return `${Math.max(size / KB, 0.01).toFixed(2)} KB`;
+};
 
 const tagText = computed(() => {
   const tags = detail.value.tag_vos;
