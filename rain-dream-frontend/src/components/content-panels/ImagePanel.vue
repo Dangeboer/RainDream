@@ -18,10 +18,12 @@
 
         <div class="image-overlay">
           <div class="overlay-main">
-            <h3 class="title">{{ row.title || '未命名图片' }}</h3>
+            <h3 class="title">{{ row.title || "" }}</h3>
             <p class="sub">
-              {{ row.author || 'Unknown' }}
-              <span v-if="mediaTypeLabelMap[row.mediaType]">· {{ mediaTypeLabelMap[row.mediaType] }}</span>
+              {{ row.author || "" }}
+              <span v-if="mediaTypeLabelMap[row.mediaType]"
+                >· {{ mediaTypeLabelMap[row.mediaType] }}</span
+              >
             </p>
           </div>
 
@@ -36,8 +38,14 @@
             >
               下载
             </a>
-            <button class="action" type="button" @click.stop="openPreview(row)">大图看</button>
-            <button class="action danger" type="button" @click.stop="$emit('remove', row.id)">
+            <button class="action" type="button" @click.stop="$emit('edit', row.id)">
+              修改
+            </button>
+            <button
+              class="action danger"
+              type="button"
+              @click.stop="$emit('remove', row.id)"
+            >
               删除
             </button>
           </div>
@@ -45,15 +53,23 @@
       </article>
     </div>
 
-    <el-dialog v-model="previewVisible" width="min(900px, 90vw)" destroy-on-close>
+    <el-dialog
+      v-model="previewVisible"
+      width="min(900px, 90vw)"
+      destroy-on-close
+    >
       <template #header>
         <div class="dialog-head">
-          <span>{{ previewItem?.title || '图片预览' }}</span>
-          <span class="dialog-sub">{{ previewItem?.author || 'Unknown' }}</span>
+          <span>{{ previewItem?.title || "图片预览" }}</span>
+          <span class="dialog-sub">{{ previewItem?.author || "Unknown" }}</span>
         </div>
       </template>
       <div class="preview-body" v-if="previewItem">
-        <img class="preview-image" :src="getStoreUrl(previewItem)" :alt="previewItem.title || 'preview'" />
+        <img
+          class="preview-image"
+          :src="getStoreUrl(previewItem)"
+          :alt="previewItem.title || 'preview'"
+        />
       </div>
     </el-dialog>
   </div>
