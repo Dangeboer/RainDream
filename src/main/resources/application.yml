@@ -24,4 +24,5 @@ raindream:
     access-key-id: ${OSS_ACCESS_KEY_ID:}
     access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
     expires-seconds: ${OSS_PRESIGN_EXPIRES_SECONDS:300}
+    read-expires-seconds: ${OSS_PRESIGN_READ_EXPIRES_SECONDS:600}
     public-domain: ${OSS_PUBLIC_DOMAIN:}

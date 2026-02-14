@@ -23,6 +23,7 @@ import com.dangeboer.raindream.model.vo.ItemListVO;
 import com.dangeboer.raindream.service.ItemPltService;
 import com.dangeboer.raindream.service.ItemService;
 import com.dangeboer.raindream.service.ItemTagService;
+import com.dangeboer.raindream.service.OssService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
     private final ItemTagService itemTagService;
     private final ItemPltService itemPltService;
+    private final OssService ossService;
 
     @Override
     public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size) {
@@ -69,6 +71,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             List<ItemListVO> voList = items.stream()
                     .map(itemConverter::toItemListVO)
                     .toList();
+            voList.forEach(vo -> signStoreUrlInPlace(userId, vo));
 
             PageResult<ItemListVO> result = new PageResult<>();
             result.setTotal((long) items.size());
@@ -89,6 +92,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                 .stream()
                 .map(itemConverter::toItemListVO)
                 .toList();
+        voList.forEach(vo -> signStoreUrlInPlace(userId, vo));
 
         PageResult<ItemListVO> result = new PageResult<>();
         result.setTotal(itemPage.getTotal());
@@ -108,6 +112,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         ItemDetailVO itemDetailVO = itemConverter.toItemDetailVO(item);
+        signStoreUrlInPlace(userId, itemDetailVO);
 
         List<Tag> tags = tagMapper.selectByItemId(userId, itemId);
         List<Plt> plts = pltMapper.selectByItemId(userId, itemId);
@@ -156,6 +161,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             List<FanficListVO> voList = items.stream()
                     .map(item -> itemConverter.toFanficListVO(item, idToFanfic.get(item.getId())))
                     .toList();
+            voList.forEach(vo -> signStoreUrlInPlace(userId, vo));
 
             // 5) 返回 PageResult
             PageResult<FanficListVO> result = new PageResult<>();
@@ -192,6 +198,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         List<FanficListVO> voList = items.stream()
                 .map(item -> itemConverter.toFanficListVO(item, idToFanfic.get(item.getId())))
                 .toList();
+        voList.forEach(vo -> signStoreUrlInPlace(userId, vo));
 
         // 5) 返回 PageResult
         PageResult<FanficListVO> result = new PageResult<>();
@@ -212,6 +219,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         }
 
         FanficDetailVO fanficDetailVO = itemConverter.toFanficDetailVO(item, fanficMapper.selectById(itemId));
+        signStoreUrlInPlace(userId, fanficDetailVO);
 
         List<Tag> tags = tagMapper.selectByItemId(userId, itemId);
         List<Plt> plts = pltMapper.selectByItemId(userId, itemId);
@@ -579,6 +587,28 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         if (!relations.isEmpty()) {
             saveRelationsBatch.accept(relations);
+        }
+    }
+
+    private void signStoreUrlInPlace(Long userId, ItemListVO vo) {
+        if (vo == null || vo.getStoreUrl() == null || vo.getStoreUrl().isBlank()) {
+            return;
+        }
+        try {
+            vo.setStoreUrl(ossService.presignReadUrl(userId, vo.getStoreUrl()));
+        } catch (Exception ignored) {
+            // 签名失败时保留原始 storeUrl，避免影响主流程返回。
+        }
+    }
+
+    private void signStoreUrlInPlace(Long userId, ItemDetailVO vo) {
+        if (vo == null || vo.getStoreUrl() == null || vo.getStoreUrl().isBlank()) {
+            return;
+        }
+        try {
+            vo.setStoreUrl(ossService.presignReadUrl(userId, vo.getStoreUrl()));
+        } catch (Exception ignored) {
+            // 签名失败时保留原始 storeUrl，避免影响主流程返回。
         }
     }
 

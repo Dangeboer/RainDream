@@ -10,6 +10,17 @@
       <el-descriptions-item label="Fandom">{{ detail.fandom }}</el-descriptions-item>
       <el-descriptions-item label="CP">{{ detail.cp }}</el-descriptions-item>
       <el-descriptions-item label="Source URL" :span="2">{{ detail.sourceUrl }}</el-descriptions-item>
+      <el-descriptions-item label="资源链接" :span="2">
+        <el-link
+          v-if="detail.storeUrl || detail.store_url"
+          :href="detail.storeUrl || detail.store_url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          点击查看
+        </el-link>
+        <span v-else>-</span>
+      </el-descriptions-item>
       <el-descriptions-item label="评分">{{ detail.rating }}</el-descriptions-item>
       <el-descriptions-item label="年份">{{ detail.releaseYear }}</el-descriptions-item>
       <el-descriptions-item label="简介" :span="2">{{ detail.summary }}</el-descriptions-item>

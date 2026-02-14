@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Locale;
@@ -35,6 +36,9 @@ public class OssServiceImpl implements OssService {
 
     @Value("${raindream.oss.expires-seconds:300}")
     private Long expiresSeconds;
+
+    @Value("${raindream.oss.read-expires-seconds:600}")
+    private Long readExpiresSeconds;
 
     @Value("${raindream.oss.public-domain:}")
     private String publicDomain;
@@ -66,6 +70,41 @@ public class OssServiceImpl implements OssService {
             return new OssPresignVO(presigned.toString(), objectKey, fileUrl);
         } catch (Exception e) {
             throw new BadRequestException("生成 OSS 上传签名失败");
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
+
+    @Override
+    public String presignReadUrl(Long userId, String storeUrl) {
+        if (userId == null || isBlank(storeUrl)) {
+            throw new BadRequestException("storeUrl 不能为空");
+        }
+        validateConfig();
+
+        String objectKey = parseObjectKey(storeUrl);
+        String expectedPrefix = "user/" + userId + "/";
+        if (!objectKey.startsWith(expectedPrefix)) {
+            throw new BadRequestException("无权访问该文件");
+        }
+
+        String endpointWithScheme = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+                ? endpoint
+                : "https://" + endpoint;
+        long ttl = (readExpiresSeconds == null || readExpiresSeconds < 60) ? 600L : readExpiresSeconds;
+        Date expiration = new Date(System.currentTimeMillis() + ttl * 1000L);
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, objectKey, HttpMethod.GET);
+        request.setExpiration(expiration);
+
+        OSS ossClient = null;
+        try {
+            ossClient = new OSSClientBuilder().build(endpointWithScheme, accessKeyId, accessKeySecret);
+            URL presigned = ossClient.generatePresignedUrl(request);
+            return presigned.toString();
+        } catch (Exception e) {
+            throw new BadRequestException("生成 OSS 访问签名失败");
         } finally {
             if (ossClient != null) {
                 ossClient.shutdown();
@@ -134,6 +173,41 @@ public class OssServiceImpl implements OssService {
             return domain + "/" + objectKey;
         }
         return "https://" + bucket + "." + normalizedEndpoint + "/" + objectKey;
+    }
+
+    private String parseObjectKey(String storeUrl) {
+        String normalized = storeUrl.trim();
+        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+            normalized = "https://" + normalized;
+        }
+        try {
+            URI uri = URI.create(normalized);
+            String host = uri.getHost();
+            String path = uri.getPath();
+            if (isBlank(host) || isBlank(path) || "/".equals(path)) {
+                throw new BadRequestException("storeUrl 不合法");
+            }
+            if (!isAllowedHost(host)) {
+                throw new BadRequestException("storeUrl 非法域名");
+            }
+            return path.startsWith("/") ? path.substring(1) : path;
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("storeUrl 不合法");
+        }
+    }
+
+    private boolean isAllowedHost(String host) {
+        String lowerHost = host.toLowerCase(Locale.ROOT);
+        String endpointHost = stripScheme(endpoint).toLowerCase(Locale.ROOT);
+        String bucketHost = (bucket + "." + endpointHost).toLowerCase(Locale.ROOT);
+        if (bucketHost.equals(lowerHost)) {
+            return true;
+        }
+        if (!isBlank(publicDomain)) {
+            String publicHost = stripScheme(publicDomain).toLowerCase(Locale.ROOT);
+            return publicHost.equals(lowerHost);
+        }
+        return false;
     }
 
     private String stripScheme(String value) {
