@@ -10,7 +10,11 @@
     </el-select>
   </el-form-item>
   <el-form-item label="内容类型*">
-    <el-select v-model="form.contentType" placeholder="请选择内容类型" clearable>
+    <el-select
+      v-model="form.contentType"
+      placeholder="请选择内容类型"
+      clearable
+    >
       <el-option
         v-for="option in contentTypeOptions"
         :key="option.value"
@@ -39,7 +43,7 @@
     <div class="content-input">
       <el-radio-group v-model="contentInputModeProxy" size="small">
         <el-radio-button label="text">直接输入</el-radio-button>
-        <el-radio-button label="file">上传本地文件</el-radio-button>
+        <el-radio-button label="file">上传文件</el-radio-button>
       </el-radio-group>
 
       <el-input
@@ -99,36 +103,52 @@
     />
   </el-form-item>
   <el-form-item label="标签">
-    <el-select
-      v-model="form.tags"
-      multiple
-      filterable
-      allow-create
-      default-first-option
-    >
-      <el-option
-        v-for="tag in tags"
-        :key="tag.id"
-        :label="tag.name"
-        :value="tag.name"
-      />
-    </el-select>
+    <div class="meta-picker">
+      <el-select
+        v-model="form.tags"
+        placeholder="请选择标签"
+        multiple
+        filterable
+        allow-create
+        default-first-option
+        class="meta-picker-select"
+        @change="onTagsChange"
+      >
+        <el-option
+          v-for="tag in tags"
+          :key="tag.id"
+          :label="tag.name"
+          :value="tag.name"
+        />
+      </el-select>
+      <el-button class="meta-add-btn" @click="onCreateTagQuick"
+        >+ 新增</el-button
+      >
+    </div>
   </el-form-item>
   <el-form-item label="平台">
-    <el-select
-      v-model="form.plts"
-      multiple
-      filterable
-      allow-create
-      default-first-option
-    >
-      <el-option
-        v-for="plt in plts"
-        :key="plt.id"
-        :label="plt.name"
-        :value="plt.name"
-      />
-    </el-select>
+    <div class="meta-picker">
+      <el-select
+        v-model="form.plts"
+        placeholder="请选择平台"
+        multiple
+        filterable
+        allow-create
+        default-first-option
+        class="meta-picker-select"
+        @change="onPltsChange"
+      >
+        <el-option
+          v-for="plt in plts"
+          :key="plt.id"
+          :label="plt.name"
+          :value="plt.name"
+        />
+      </el-select>
+      <el-button class="meta-add-btn" @click="onCreatePltQuick"
+        >+ 新增</el-button
+      >
+    </div>
   </el-form-item>
   <el-form-item label="备注" class="span-2">
     <el-input v-model="form.notes" type="textarea" rows="3" />
@@ -231,6 +251,10 @@ const props = defineProps({
   clearContentFile: { type: Function, required: true },
   onWheelField: { type: Function, required: true },
   onWheelFanficField: { type: Function, required: true },
+  onTagsChange: { type: Function, required: true },
+  onPltsChange: { type: Function, required: true },
+  onCreateTagQuick: { type: Function, required: true },
+  onCreatePltQuick: { type: Function, required: true },
 });
 
 const emit = defineEmits(["update:contentInputMode"]);
@@ -269,6 +293,22 @@ const contentInputModeProxy = computed({
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.meta-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.meta-picker-select {
+  min-width: 0;
+  flex: 1;
+}
+
+.meta-add-btn {
+  flex: 0 0 auto;
 }
 
 .file-name {

@@ -1,5 +1,5 @@
 import { computed, reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { createItemApi, getItemDetailApi, updateItemApi } from "../api/item";
 import { createPltApi, createTagApi, getPltApi, getTagApi } from "../api/meta";
 import { presignOssUploadApi } from "../api/oss";
@@ -165,6 +165,8 @@ const uploadFileToOss = async (file, mediaType) => {
 export const useItemForm = ({ route, router }) => {
   const tags = ref([]);
   const plts = ref([]);
+  const syncingTags = ref(false);
+  const syncingPlts = ref(false);
   const contentInputMode = ref("text");
   const contentFileName = ref("");
   const wheelState = new Map();
@@ -281,6 +283,103 @@ export const useItemForm = ({ route, router }) => {
     const missing = uniqueNames.filter((name) => !existing.has(name));
     if (missing.length === 0) return;
     await Promise.all(missing.map((name) => createApi({ name })));
+  };
+
+  const sanitizeNameList = (values) => [
+    ...new Set(
+      (values || []).map((item) => String(item || "").trim()).filter(Boolean),
+    ),
+  ];
+
+  const syncNewNames = async (values, listRef, createApi) => {
+    const next = sanitizeNameList(values);
+    const existing = new Set(
+      (listRef.value || []).map((item) => item?.name).filter(Boolean),
+    );
+    const missing = next.filter((name) => !existing.has(name));
+    if (missing.length > 0) {
+      for (const name of missing) {
+        await createApi({ name });
+      }
+      await loadMeta();
+    }
+    return next;
+  };
+
+  const onTagsChange = async (values) => {
+    if (syncingTags.value) return;
+    syncingTags.value = true;
+    try {
+      form.tags = await syncNewNames(values, tags, createTagApi);
+    } finally {
+      syncingTags.value = false;
+    }
+  };
+
+  const onPltsChange = async (values) => {
+    if (syncingPlts.value) return;
+    syncingPlts.value = true;
+    try {
+      form.plts = await syncNewNames(values, plts, createPltApi);
+    } finally {
+      syncingPlts.value = false;
+    }
+  };
+
+  const promptAndCreateMeta = async ({
+    title,
+    message,
+    createApi,
+    listRef,
+    field,
+  }) => {
+    let inputValue = "";
+    try {
+      const result = await ElMessageBox.prompt(message, title, {
+        confirmButtonText: "新增",
+        cancelButtonText: "取消",
+        inputPlaceholder: "请输入名称",
+      });
+      inputValue = result?.value ?? "";
+    } catch (error) {
+      if (error === "cancel" || error === "close") return;
+      throw error;
+    }
+    const name = String(inputValue || "").trim();
+    if (!name) return;
+
+    const existing = new Set(
+      (listRef.value || []).map((item) => item?.name).filter(Boolean),
+    );
+
+    if (!existing.has(name)) {
+      await createApi({ name });
+      await loadMeta();
+    }
+
+    const selected = sanitizeNameList([...(form[field] || []), name]);
+    form[field] = selected;
+    ElMessage.success("新增成功");
+  };
+
+  const onCreateTagQuick = async () => {
+    await promptAndCreateMeta({
+      title: "新增标签",
+      message: "输入新标签名称",
+      createApi: createTagApi,
+      listRef: tags,
+      field: "tags",
+    });
+  };
+
+  const onCreatePltQuick = async () => {
+    await promptAndCreateMeta({
+      title: "新增平台",
+      message: "输入新平台名称",
+      createApi: createPltApi,
+      listRef: plts,
+      field: "plts",
+    });
   };
 
   const onWheelField = (field, event, step = 1, min, max) => {
@@ -404,6 +503,10 @@ export const useItemForm = ({ route, router }) => {
     clearContentFile,
     onWheelField,
     onWheelFanficField,
+    onTagsChange,
+    onPltsChange,
+    onCreateTagQuick,
+    onCreatePltQuick,
     submit,
     init,
   };

@@ -25,6 +25,10 @@
         :clear-content-file="clearContentFile"
         :on-wheel-field="onWheelField"
         :on-wheel-fanfic-field="onWheelFanficField"
+        :on-tags-change="onTagsChange"
+        :on-plts-change="onPltsChange"
+        :on-create-tag-quick="onCreateTagQuick"
+        :on-create-plt-quick="onCreatePltQuick"
         @update:content-input-mode="contentInputMode = $event"
       />
       <el-form-item class="span-2">
@@ -63,6 +67,10 @@ const {
   clearContentFile,
   onWheelField,
   onWheelFanficField,
+  onTagsChange,
+  onPltsChange,
+  onCreateTagQuick,
+  onCreatePltQuick,
   submit,
   init,
 } = useItemForm({ route, router });
