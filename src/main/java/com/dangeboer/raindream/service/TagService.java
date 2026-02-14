@@ -10,6 +10,6 @@ import java.util.List;
 public interface TagService extends IService<Tag> {
     List<TagVO> getTag(Long userId);
     Long createTag(Long userId, TagForm tagForm);
-    Long updateTag(Long userId, Long tagId, TagForm tagForm);
+    Long updateTag(Long userId, Long tagId, TagForm tagForm, Boolean force);
     Long deleteTag(Long userId, Long tagId);
 }

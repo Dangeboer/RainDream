@@ -27,8 +27,11 @@ public class TagController {
     }
 
     @PutMapping("/update/{tagId}")
-    public Long updateTag(@AuthenticationPrincipal User user, @PathVariable Long tagId, @RequestBody TagForm tagForm) {
-        return tagService.updateTag(user.getId(), tagId, tagForm);
+    public Long updateTag(@AuthenticationPrincipal User user,
+                          @PathVariable Long tagId,
+                          @RequestBody TagForm tagForm,
+                          @RequestParam(value = "force", defaultValue = "false") Boolean force) {
+        return tagService.updateTag(user.getId(), tagId, tagForm, force);
     }
 
     @DeleteMapping("/delete/{tagId}")

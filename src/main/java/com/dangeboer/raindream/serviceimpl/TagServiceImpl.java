@@ -46,13 +46,18 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     }
 
     @Override
-    public Long updateTag(Long userId, Long tagId, TagForm tagForm) {
+    public Long updateTag(Long userId, Long tagId, TagForm tagForm, Boolean force) {
         Tag tag = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().eq(Tag::getId, tagId));
 
         if (tag == null) {
             throw new CanNotFoundException();
         } else if (!Objects.equals(tag.getUserId(), userId)) {
             throw new ForbiddenException();
+        }
+
+        Long relationCount = itemTagMapper.countByTagId(tagId);
+        if (relationCount != null && relationCount > 0 && !Boolean.TRUE.equals(force)) {
+            throw new BadRequestException("该标签已关联条目，确认后可继续更新");
         }
 
         Tag toUpdate = new Tag(tagId, tagForm.getName());

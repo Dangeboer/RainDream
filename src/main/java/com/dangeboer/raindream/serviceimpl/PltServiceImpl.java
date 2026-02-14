@@ -46,13 +46,18 @@ public class PltServiceImpl extends ServiceImpl<PltMapper, Plt> implements PltSe
     }
 
     @Override
-    public Long updatePlt(Long userId, Long pltId, PltForm pltForm) {
+    public Long updatePlt(Long userId, Long pltId, PltForm pltForm, Boolean force) {
         Plt plt = pltMapper.selectOne(new LambdaQueryWrapper<Plt>().eq(Plt::getId, pltId));
 
         if (plt == null) {
             throw new CanNotFoundException();
         } else if (!Objects.equals(plt.getUserId(), userId)) {
             throw new ForbiddenException();
+        }
+
+        Long relationCount = itemPltMapper.countByPltId(pltId);
+        if (relationCount != null && relationCount > 0 && !Boolean.TRUE.equals(force)) {
+            throw new BadRequestException("该平台已关联条目，确认后可继续更新");
         }
 
         Plt toUpdate = new Plt(pltId, pltForm.getName());

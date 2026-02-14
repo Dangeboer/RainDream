@@ -16,7 +16,11 @@ export const getTagApi = async () => {
   return normalizeMetaList(data, 'tag_name')
 }
 export const createTagApi = (payload) => http.post('/api/tag/create', payload)
-export const updateTagApi = (tagId, payload) => http.put(`/api/tag/update/${tagId}`, payload)
+export const updateTagApi = (tagId, payload, options = {}) =>
+  http.put(`/api/tag/update/${tagId}`, payload, {
+    params: { force: !!options.force },
+    suppressError: !!options.suppressError
+  })
 export const deleteTagApi = (tagId) => http.delete(`/api/tag/delete/${tagId}`)
 
 export const getPltApi = async () => {
@@ -24,5 +28,9 @@ export const getPltApi = async () => {
   return normalizeMetaList(data, 'plt_name')
 }
 export const createPltApi = (payload) => http.post('/api/plt/create', payload)
-export const updatePltApi = (pltId, payload) => http.put(`/api/plt/update/${pltId}`, payload)
+export const updatePltApi = (pltId, payload, options = {}) =>
+  http.put(`/api/plt/update/${pltId}`, payload, {
+    params: { force: !!options.force },
+    suppressError: !!options.suppressError
+  })
 export const deletePltApi = (pltId) => http.delete(`/api/plt/delete/${pltId}`)

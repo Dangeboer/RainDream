@@ -27,8 +27,11 @@ public class PltController {
     }
 
     @PutMapping("/update/{pltId}")
-    public Long updatePlt(@AuthenticationPrincipal User user, @PathVariable Long pltId, @RequestBody PltForm pltForm) {
-        return pltService.updatePlt(user.getId(), pltId, pltForm);
+    public Long updatePlt(@AuthenticationPrincipal User user,
+                          @PathVariable Long pltId,
+                          @RequestBody PltForm pltForm,
+                          @RequestParam(value = "force", defaultValue = "false") Boolean force) {
+        return pltService.updatePlt(user.getId(), pltId, pltForm, force);
     }
 
     @DeleteMapping("/delete/{pltId}")

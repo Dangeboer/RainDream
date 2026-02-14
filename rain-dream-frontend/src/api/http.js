@@ -38,7 +38,9 @@ http.interceptors.response.use(
     // Backend wraps all controller responses as: { code, message, data }
     if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
       if (payload.code !== 0 && payload.code !== 200) {
-        ElMessage.error(payload.message || '请求失败')
+        if (!response.config?.suppressError) {
+          ElMessage.error(payload.message || '请求失败')
+        }
         return Promise.reject(new Error(payload.message || '请求失败'))
       }
       return payload.data
@@ -48,7 +50,9 @@ http.interceptors.response.use(
   },
   (error) => {
     const message = error?.response?.data?.message || error?.message || '请求失败'
-    ElMessage.error(message)
+    if (!error?.config?.suppressError) {
+      ElMessage.error(message)
+    }
     if (error?.response?.status === 401) {
       localStorage.removeItem('rd_token')
       localStorage.removeItem('rd_user')
