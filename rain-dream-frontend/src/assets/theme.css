@@ -190,6 +190,9 @@ body.font-hand .el-input__inner::placeholder {
 
   --el-button-active-bg-color: var(--accent-hover) !important;
   --el-button-active-border-color: var(--accent-hover) !important;
+  --el-button-disabled-bg-color: rgba(235, 122, 83, 0.28) !important;
+  --el-button-disabled-border-color: rgba(235, 122, 83, 0.28) !important;
+  --el-button-disabled-text-color: rgba(38, 38, 38, 0.42) !important;
 
   --el-button-outline-color: transparent !important;
 

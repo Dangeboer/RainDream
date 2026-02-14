@@ -15,7 +15,14 @@
               />
             </div>
             <div class="topbar-actions">
-              <el-button text @click="router.push('/meta')">标签/平台管理</el-button>
+              <el-button
+                text
+                class="topbar-link"
+                :class="{ 'is-active': isMetaRoute }"
+                @click="router.push('/meta')"
+              >
+                标签/平台管理
+              </el-button>
               <div class="user-chip">
                 <el-avatar :size="28">
                   {{ (auth.username || "A").slice(0, 1).toUpperCase() }}
@@ -33,14 +40,16 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import SidebarNav from "./SidebarNav.vue";
 
 const keyword = ref("");
 const auth = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+const isMetaRoute = computed(() => route.path === "/meta");
 
 const onLogout = () => {
   auth.logout();
@@ -96,6 +105,23 @@ const onLogout = () => {
   padding-left: 8px;
   color: var(--text-main);
   font-weight: 600;
+}
+.topbar-link {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+}
+.topbar-link.is-active {
+  color: var(--dark);
+  background: var(--bg-panel-strong);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.topbar-link.is-active:hover,
+.topbar-link.is-active:focus-visible,
+.topbar-link.is-active:active {
+  color: var(--dark);
+  background: var(--bg-panel-strong);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 :deep(.content-scroll .el-scrollbar__wrap) {
   overflow-x: hidden;

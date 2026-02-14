@@ -1,35 +1,83 @@
 <template>
   <section class="meta-manage">
     <article class="card-panel panel">
-      <h2>标签管理</h2>
-      <div class="row">
-        <el-input v-model="tagName" placeholder="输入新标签" />
-        <el-button type="primary" :disabled="!normalizeName(tagName)" @click="createTag">新增</el-button>
+      <div class="panel-head">
+        <h2>标签管理</h2>
+        <span class="count">{{ tags.length }}</span>
+      </div>
+      <div class="create-row">
+        <el-input
+          v-model="tagName"
+          class="create-input"
+          size="small"
+          placeholder="输入新标签"
+        />
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="!normalizeName(tagName)"
+          @click="createTag"
+        >
+          新增
+        </el-button>
       </div>
       <div class="chips">
         <div v-for="tag in tags" :key="tag.id" class="chip">
           <el-input v-model="tag.name" size="small" />
-          <el-button text :disabled="!hasNameChanged(tag)" @click="updateTag(tag)">更新</el-button>
-          <el-button text type="danger" @click="removeTag(tag.id)"
-            >删除</el-button
-          >
+          <div class="chip-actions">
+            <el-button
+              text
+              size="small"
+              :disabled="!hasNameChanged(tag)"
+              @click="updateTag(tag)"
+            >
+              更新
+            </el-button>
+            <el-button text size="small" type="danger" @click="removeTag(tag.id)">
+              删除
+            </el-button>
+          </div>
         </div>
       </div>
     </article>
 
     <article class="card-panel panel">
-      <h2>平台管理</h2>
-      <div class="row">
-        <el-input v-model="pltName" placeholder="输入新平台" />
-        <el-button type="primary" :disabled="!normalizeName(pltName)" @click="createPlt">新增</el-button>
+      <div class="panel-head">
+        <h2>平台管理</h2>
+        <span class="count">{{ plts.length }}</span>
+      </div>
+      <div class="create-row">
+        <el-input
+          v-model="pltName"
+          class="create-input"
+          size="small"
+          placeholder="输入新平台"
+        />
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="!normalizeName(pltName)"
+          @click="createPlt"
+        >
+          新增
+        </el-button>
       </div>
       <div class="chips">
         <div v-for="plt in plts" :key="plt.id" class="chip">
           <el-input v-model="plt.name" size="small" />
-          <el-button text :disabled="!hasNameChanged(plt)" @click="updatePlt(plt)">更新</el-button>
-          <el-button text type="danger" @click="removePlt(plt.id)"
-            >删除</el-button
-          >
+          <div class="chip-actions">
+            <el-button
+              text
+              size="small"
+              :disabled="!hasNameChanged(plt)"
+              @click="updatePlt(plt)"
+            >
+              更新
+            </el-button>
+            <el-button text size="small" type="danger" @click="removePlt(plt.id)">
+              删除
+            </el-button>
+          </div>
         </div>
       </div>
     </article>
@@ -179,28 +227,84 @@ onMounted(() => {
 <style scoped>
 .meta-manage {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .panel {
-  padding: 16px;
+  padding: 14px 16px;
 }
 
-.row {
+.panel-head {
   display: flex;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.count {
+  min-width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(235, 122, 83, 0.16);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.create-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.create-input {
+  width: min(280px, 100%);
 }
 
 .chips {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
 }
 
 .chip {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 10px;
+  display: flex;
   align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.chip :deep(.el-input) {
+  min-width: 0;
+  flex: 1;
+}
+
+.chip-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+@media (max-width: 720px) {
+  .chips {
+    grid-template-columns: 1fr;
+  }
+
+  .create-input {
+    width: 100%;
+  }
 }
 </style>
