@@ -5,7 +5,7 @@
       <el-button type="primary" @click="goCreate">新增资源</el-button>
     </div>
 
-    <div v-if="query.mode === 'content'" class="media-tabs">
+    <div v-if="showMediaTabs" class="media-tabs">
       <el-button
         v-for="entry in availableMediaGroups"
         :key="entry.value"
@@ -170,7 +170,6 @@ const getAllowedContentGroups = (contentType) => {
 };
 
 const IMAGE_MEDIA_TYPES = [2, 3, 4];
-const IMAGE_ALL_FETCH_SIZE = 1000;
 
 const query = reactive({
   mode: "content",
@@ -185,6 +184,77 @@ const query = reactive({
 const parsePositiveInt = (value) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) || parsed <= 0 ? undefined : parsed;
+};
+
+const normalizeItem = (item = {}) => ({
+  ...item,
+  id: item.id ?? item.item_id,
+  contentType: item.contentType ?? item.content_type,
+  mediaType: item.mediaType ?? item.media_type,
+  storeUrl: item.storeUrl ?? item.store_url ?? "",
+  sourceUrl: item.sourceUrl ?? item.source_url ?? "",
+  trackingType: item.trackingType ?? item.tracking_type,
+  trackingTypeLabel: item.trackingTypeLabel ?? item.tracking_type_label,
+});
+
+const extractListPayload = (payload) => {
+  if (Array.isArray(payload?.records)) return payload.records;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload)) return payload;
+  return [];
+};
+
+const applyClientPagination = (list) => {
+  total.value = list.length;
+  const start = (query.page - 1) * query.size;
+  rows.value = list.slice(start, start + query.size);
+};
+
+const inferMediaTypeFromStoreUrl = (storeUrl = "") => {
+  const clean = String(storeUrl).split("?")[0].toLowerCase();
+  if (!clean) return 2;
+  if (clean.endsWith(".gif") || clean.endsWith(".webp")) return 3;
+  if (
+    clean.endsWith(".heic") ||
+    clean.endsWith(".heif") ||
+    clean.endsWith(".livephoto")
+  ) {
+    return 4;
+  }
+  if (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".mov") ||
+    clean.endsWith(".m4v") ||
+    clean.endsWith(".webm")
+  ) {
+    return 5;
+  }
+  return 2;
+};
+
+const resolveItemMediaType = (item) => {
+  const fromPayload = Number(item?.mediaType);
+  if (IMAGE_MEDIA_TYPES.includes(fromPayload)) return fromPayload;
+  return inferMediaTypeFromStoreUrl(item?.storeUrl || item?.store_url || "");
+};
+
+const filterByImageSubType = (list, imageSubType) => {
+  const target = imageSubType === "all" ? "all" : Number(imageSubType);
+  return list.filter((item) => {
+    const resolvedType = resolveItemMediaType(item);
+    if (target === "all") return IMAGE_MEDIA_TYPES.includes(resolvedType);
+    return resolvedType === target;
+  });
+};
+
+const filterByContentType = (list, contentType) => {
+  if (!contentType) return list;
+  return list.filter((item) => {
+    if (item?.contentType === undefined || item?.contentType === null || item?.contentType === "") {
+      return true;
+    }
+    return Number(item.contentType) === Number(contentType);
+  });
 };
 
 const currentMediaGroup = computed(() => {
@@ -208,8 +278,12 @@ const availableImageTypeEntries = computed(() => {
   const imageOptions = mediaTypeOptions.filter((item) =>
     IMAGE_MEDIA_TYPES.includes(item.value),
   );
-  return [{ value: "all", label: "全部图片" }, ...imageOptions];
+  return [{ value: "all", label: "全部" }, ...imageOptions];
 });
+
+const showMediaTabs = computed(
+  () => query.mode === "content" && availableMediaGroups.value.length > 1,
+);
 
 const showImageTypeTabs = computed(() => currentMediaGroup.value === "image");
 
@@ -229,9 +303,9 @@ const pageTitle = computed(() => {
       contentMediaGroupLabelMap[currentMediaGroup.value] || "全部";
     if (currentMediaGroup.value === "image") {
       if (query.imageSubType === "all") {
-        return `${content} / 图片 / 全部图片`;
+        return `${content} / 全部`;
       }
-      return `${content} / 图片 / ${mediaTypeLabelMap[query.mediaType] || "图片"}`;
+      return `${content} / ${mediaTypeLabelMap[query.mediaType] || "图片"}`;
     }
     return `${content} / ${mediaGroupLabel}`;
   }
@@ -338,15 +412,13 @@ const syncQueryFromRoute = async () => {
 };
 
 const fetchImageUnionAndPaginate = async ({ contentType }) => {
-  const params = { page: 1, size: IMAGE_ALL_FETCH_SIZE };
+  const params = {};
   if (contentType) params.contentType = contentType;
   const raw = await getItemListApi(params);
-  const imageRecords = (raw?.records || []).filter((item) =>
-    IMAGE_MEDIA_TYPES.includes(Number(item?.mediaType)),
-  );
-  total.value = imageRecords.length;
-  const start = (query.page - 1) * query.size;
-  rows.value = imageRecords.slice(start, start + query.size);
+  let normalizedList = extractListPayload(raw).map(normalizeItem);
+  normalizedList = filterByContentType(normalizedList, contentType);
+  const imageRecords = filterByImageSubType(normalizedList, query.imageSubType);
+  applyClientPagination(imageRecords);
 };
 
 const fetchData = async () => {
@@ -357,10 +429,7 @@ const fetchData = async () => {
     return;
   }
 
-  const params = {
-    page: query.page,
-    size: query.size,
-  };
+  const params = {};
 
   if (query.mode === "content" && query.contentType) {
     params.contentType = query.contentType;
@@ -370,8 +439,15 @@ const fetchData = async () => {
   }
 
   const data = await getItemListApi(params);
-  rows.value = data?.records || [];
-  total.value = Number(data?.total || 0);
+  let list = extractListPayload(data).map(normalizeItem);
+  list = filterByContentType(
+    list,
+    query.mode === "content" ? query.contentType : undefined,
+  );
+  if (currentMediaGroup.value === "image") {
+    list = filterByImageSubType(list, query.imageSubType);
+  }
+  applyClientPagination(list);
 };
 
 const onPageChange = async (page) => {
