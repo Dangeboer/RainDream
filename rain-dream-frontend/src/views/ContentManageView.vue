@@ -157,6 +157,18 @@ const mediaTypesByGroup = {
   link: [6],
 };
 
+const contentTypeFixedMediaGroupMap = {
+  2: "image",
+  3: "image",
+  4: "video",
+};
+
+const getAllowedContentGroups = (contentType) => {
+  const fixed = contentTypeFixedMediaGroupMap[contentType];
+  if (fixed) return [fixed];
+  return contentMediaGroupOptions.map((item) => item.value);
+};
+
 const IMAGE_MEDIA_TYPES = [2, 3, 4];
 const IMAGE_ALL_FETCH_SIZE = 1000;
 
@@ -177,6 +189,8 @@ const parsePositiveInt = (value) => {
 
 const currentMediaGroup = computed(() => {
   if (query.mode === "content") {
+    const fixed = contentTypeFixedMediaGroupMap[query.contentType];
+    if (fixed) return fixed;
     if (query.mediaGroup === "all") return "all";
     if (query.mediaGroup) return query.mediaGroup;
     return mediaGroupByType[query.mediaType] || "all";
@@ -184,9 +198,11 @@ const currentMediaGroup = computed(() => {
   return query.mediaGroup || mediaGroupByType[query.mediaType] || "text";
 });
 
-const availableMediaGroups = computed(() =>
-  query.mode === "content" ? contentMediaGroupOptions : globalMediaGroupOptions,
-);
+const availableMediaGroups = computed(() => {
+  if (query.mode !== "content") return globalMediaGroupOptions;
+  const allowed = getAllowedContentGroups(query.contentType);
+  return contentMediaGroupOptions.filter((item) => allowed.includes(item.value));
+});
 
 const availableImageTypeEntries = computed(() => {
   const imageOptions = mediaTypeOptions.filter((item) =>
@@ -265,9 +281,10 @@ const syncQueryFromRoute = async () => {
 
   let mediaGroup;
   if (mode === "content") {
-    mediaGroup = routeMediaGroup || "all";
-    if (!["all", "text", "image", "video", "link"].includes(mediaGroup)) {
-      mediaGroup = "all";
+    const allowedGroups = getAllowedContentGroups(contentType);
+    mediaGroup = routeMediaGroup || allowedGroups[0];
+    if (!allowedGroups.includes(mediaGroup)) {
+      mediaGroup = allowedGroups[0];
     }
   } else {
     mediaGroup = routeMediaGroup || mediaGroupByType[routeMediaType] || "text";
