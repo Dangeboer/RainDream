@@ -15,8 +15,7 @@
               />
             </div>
             <div class="topbar-actions">
-              <el-button text @click="router.push('/tags')">标签管理</el-button>
-              <el-button text @click="router.push('/plts')">平台管理</el-button>
+              <el-button text @click="router.push('/meta')">标签/平台管理</el-button>
               <div class="user-chip">
                 <el-avatar :size="28">
                   {{ (auth.username || "A").slice(0, 1).toUpperCase() }}
