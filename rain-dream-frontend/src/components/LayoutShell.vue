@@ -62,12 +62,14 @@ const onLogout = () => {
 }
 .content {
   min-height: 0;
+  min-width: 0;
 }
 .content-scroll {
   height: 100%;
 }
 .content-inner {
   padding: 24px;
+  min-width: 0;
 }
 .topbar {
   padding: 12px 16px;
@@ -84,6 +86,9 @@ const onLogout = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .user-chip {
   display: inline-flex;
