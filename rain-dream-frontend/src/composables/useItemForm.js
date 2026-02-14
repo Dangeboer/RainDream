@@ -2,7 +2,7 @@ import { computed, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { createItemApi, getItemDetailApi, updateItemApi } from "../api/item";
 import { createPltApi, createTagApi, getPltApi, getTagApi } from "../api/meta";
-import { presignOssUploadApi } from "../api/oss";
+import { deleteOssObjectApi, presignOssUploadApi } from "../api/oss";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -165,8 +165,7 @@ const uploadFileToOss = async (file, mediaType) => {
 export const useItemForm = ({ route, router }) => {
   const tags = ref([]);
   const plts = ref([]);
-  const syncingTags = ref(false);
-  const syncingPlts = ref(false);
+  const pendingUploadFile = ref(null);
   const contentInputMode = ref("text");
   const contentFileName = ref("");
   const wheelState = new Map();
@@ -200,12 +199,11 @@ export const useItemForm = ({ route, router }) => {
     if (!file) return;
     try {
       if (isMediaUploadType(form.mediaType)) {
-        const fileUrl = await uploadFileToOss(file, form.mediaType);
-        form.storeUrl = fileUrl;
+        pendingUploadFile.value = file;
         form.content = null;
         form.sizeBytes = file.size || null;
         contentFileName.value = file.name || "";
-        ElMessage.success("文件已上传到 OSS");
+        ElMessage.success("文件已选择，将在保存时上传");
         return;
       }
       const asText = looksLikeTextFile(file);
@@ -218,6 +216,7 @@ export const useItemForm = ({ route, router }) => {
   };
 
   const clearContentFile = () => {
+    pendingUploadFile.value = null;
     contentFileName.value = "";
     form.content = null;
     form.storeUrl = null;
@@ -262,6 +261,7 @@ export const useItemForm = ({ route, router }) => {
       typeof form.content === "string" && form.content.startsWith("data:")
         ? "file"
         : "text";
+    pendingUploadFile.value = null;
     contentFileName.value = "";
   };
 
@@ -291,46 +291,17 @@ export const useItemForm = ({ route, router }) => {
     ),
   ];
 
-  const syncNewNames = async (values, listRef, createApi) => {
-    const next = sanitizeNameList(values);
-    const existing = new Set(
-      (listRef.value || []).map((item) => item?.name).filter(Boolean),
-    );
-    const missing = next.filter((name) => !existing.has(name));
-    if (missing.length > 0) {
-      for (const name of missing) {
-        await createApi({ name });
-      }
-      await loadMeta();
-    }
-    return next;
+  const onTagsChange = (values) => {
+    form.tags = sanitizeNameList(values);
   };
 
-  const onTagsChange = async (values) => {
-    if (syncingTags.value) return;
-    syncingTags.value = true;
-    try {
-      form.tags = await syncNewNames(values, tags, createTagApi);
-    } finally {
-      syncingTags.value = false;
-    }
+  const onPltsChange = (values) => {
+    form.plts = sanitizeNameList(values);
   };
 
-  const onPltsChange = async (values) => {
-    if (syncingPlts.value) return;
-    syncingPlts.value = true;
-    try {
-      form.plts = await syncNewNames(values, plts, createPltApi);
-    } finally {
-      syncingPlts.value = false;
-    }
-  };
-
-  const promptAndCreateMeta = async ({
+  const promptAndSelectMeta = async ({
     title,
     message,
-    createApi,
-    listRef,
     field,
   }) => {
     let inputValue = "";
@@ -347,39 +318,34 @@ export const useItemForm = ({ route, router }) => {
     }
     const name = String(inputValue || "").trim();
     if (!name) return;
-
-    const existing = new Set(
-      (listRef.value || []).map((item) => item?.name).filter(Boolean),
-    );
-
-    if (!existing.has(name)) {
-      await createApi({ name });
-      await loadMeta();
-    }
-
-    const selected = sanitizeNameList([...(form[field] || []), name]);
-    form[field] = selected;
-    ElMessage.success("新增成功");
+    form[field] = sanitizeNameList([...(form[field] || []), name]);
   };
 
   const onCreateTagQuick = async () => {
-    await promptAndCreateMeta({
+    await promptAndSelectMeta({
       title: "新增标签",
       message: "输入新标签名称",
-      createApi: createTagApi,
-      listRef: tags,
       field: "tags",
     });
   };
 
   const onCreatePltQuick = async () => {
-    await promptAndCreateMeta({
+    await promptAndSelectMeta({
       title: "新增平台",
       message: "输入新平台名称",
-      createApi: createPltApi,
-      listRef: plts,
       field: "plts",
     });
+  };
+
+  const uploadPendingMediaIfNeeded = async () => {
+    if (!isMediaUploadType(form.mediaType) || !pendingUploadFile.value) {
+      return null;
+    }
+    const uploadedUrl = await uploadFileToOss(pendingUploadFile.value, form.mediaType);
+    form.storeUrl = uploadedUrl;
+    form.sizeBytes = pendingUploadFile.value.size || form.sizeBytes;
+    pendingUploadFile.value = null;
+    return uploadedUrl;
   };
 
   const onWheelField = (field, event, step = 1, min, max) => {
@@ -465,16 +431,39 @@ export const useItemForm = ({ route, router }) => {
     if (!form.mediaType || !form.contentType || !form.fandom || !form.cp) {
       return ElMessage.warning("请先填写必填项");
     }
-    await ensureNamesExist(form.tags, tags, createTagApi);
-    await ensureNamesExist(form.plts, plts, createPltApi);
-    await loadMeta();
-    const payload = buildPayload();
-    if (isEdit.value) {
-      await updateItemApi(route.params.id, payload);
-      ElMessage.success("更新成功");
-    } else {
-      await createItemApi(payload);
-      ElMessage.success("创建成功");
+
+    const previousStoreUrl = form.storeUrl;
+    let uploadedStoreUrl = null;
+    try {
+      uploadedStoreUrl = await uploadPendingMediaIfNeeded();
+      await ensureNamesExist(form.tags, tags, createTagApi);
+      await ensureNamesExist(form.plts, plts, createPltApi);
+      await loadMeta();
+      const payload = buildPayload();
+      if (isEdit.value) {
+        await updateItemApi(route.params.id, payload);
+        ElMessage.success("更新成功");
+      } else {
+        await createItemApi(payload);
+        ElMessage.success("创建成功");
+      }
+    } catch (error) {
+      if (uploadedStoreUrl) {
+        await deleteOssObjectApi(uploadedStoreUrl, { suppressError: true }).catch(() => {});
+      }
+      if (uploadedStoreUrl) {
+        form.storeUrl = previousStoreUrl;
+      }
+      throw error;
+    }
+
+    if (
+      isEdit.value &&
+      uploadedStoreUrl &&
+      previousStoreUrl &&
+      previousStoreUrl !== uploadedStoreUrl
+    ) {
+      await deleteOssObjectApi(previousStoreUrl, { suppressError: true }).catch(() => {});
     }
     router.push(getSuccessRoute());
   };
