@@ -65,3 +65,6 @@ replay_pid*
 
 # Local secrets (do not commit)
 src/main/resources/application-local.yml
+
+# Frontend build output
+rain-dream-frontend/dist/
