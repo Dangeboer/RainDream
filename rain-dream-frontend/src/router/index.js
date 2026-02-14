@@ -14,7 +14,7 @@ const routes = [
       { path: 'items/:id', name: 'item-detail', component: () => import('../views/ItemDetailView.vue') },
       { path: 'fanfic', name: 'fanfic-list', component: () => import('../views/FanficListView.vue') },
       { path: 'fanfic/:id', name: 'fanfic-detail', component: () => import('../views/FanficDetailView.vue') },
-      { path: 'meta', name: 'meta', component: () => import('../views/MetaManageView.vue') },
+      { path: 'meta', name: 'meta', component: () => import('../views/TagPltManagerView.vue') },
       { path: 'tags', redirect: '/meta' },
       { path: 'plts', redirect: '/meta' }
     ]
