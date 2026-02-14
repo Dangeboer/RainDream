@@ -53,9 +53,17 @@
       <el-descriptions-item label="上次更新日期">{{
         show(detail.fanfic_vo?.update_date)
       }}</el-descriptions-item>
-      <el-descriptions-item label="下载地址">{{
-        show(detail.store_url)
-      }}</el-descriptions-item>
+      <el-descriptions-item label="访问链接">
+        <el-link
+          v-if="detail.store_url"
+          :href="detail.store_url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          点击查看
+        </el-link>
+        <span v-else>-</span>
+      </el-descriptions-item>
       <el-descriptions-item label="文件大小">{{
         show(detail.size_bytes)
       }}</el-descriptions-item>
