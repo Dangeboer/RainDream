@@ -58,82 +58,76 @@ const contentMenu = [
   },
   {
     label: "图绘",
-    to: { path: "/items", query: { contentType: 2 } },
+    to: { path: "/content", query: { mode: "content", contentType: 2 } },
     group: "content",
     value: 2,
   },
   {
     label: "精修",
-    to: { path: "/items", query: { contentType: 3 } },
+    to: { path: "/content", query: { mode: "content", contentType: 3 } },
     group: "content",
     value: 3,
   },
   {
     label: "混剪",
-    to: { path: "/items", query: { contentType: 4 } },
+    to: { path: "/content", query: { mode: "content", contentType: 4 } },
     group: "content",
     value: 4,
   },
   {
     label: "解析",
-    to: { path: "/items", query: { contentType: 5 } },
+    to: { path: "/content", query: { mode: "content", contentType: 5 } },
     group: "content",
     value: 5,
   },
   {
     label: "吐槽",
-    to: { path: "/items", query: { contentType: 6 } },
+    to: { path: "/content", query: { mode: "content", contentType: 6 } },
     group: "content",
     value: 6,
   },
   {
     label: "主创说",
-    to: { path: "/items", query: { contentType: 7 } },
+    to: { path: "/content", query: { mode: "content", contentType: 7 } },
     group: "content",
     value: 7,
   },
   {
     label: "RPS",
-    to: { path: "/items", query: { contentType: 8 } },
+    to: { path: "/content", query: { mode: "content", contentType: 8 } },
     group: "content",
     value: 8,
   },
   {
     label: "其他",
-    to: { path: "/items", query: { contentType: 9 } },
+    to: { path: "/content", query: { mode: "content", contentType: 9 } },
     group: "content",
     value: 9,
   },
 ];
 
-const mediaMenu = [
-  {
-    label: "文本",
-    to: { path: "/items", query: { mediaType: 1 } },
-    group: "media",
-    value: 1,
-  },
-  {
-    label: "图片",
-    to: { path: "/items", query: { mediaType: 2 } },
-    group: "media",
-    value: 2,
-  },
-  {
-    label: "视频",
-    to: { path: "/items", query: { mediaType: 3 } },
-    group: "media",
-    value: 3,
-  },
-  {
-    label: "链接",
-    to: { path: "/items", query: { mediaType: 4 } },
-    group: "media",
-    value: 4,
-  },
+const mediaMenuBase = [
+  { label: "文本", value: "text", group: "media" },
+  { label: "图片", value: "image", group: "media" },
+  { label: "视频", value: "video", group: "media" },
+  { label: "链接", value: "link", group: "media" },
 ];
 
+const mediaGroupByType = { 1: "text", 2: "image", 3: "image", 4: "image", 5: "video", 6: "link" };
+const mediaTypeByGroup = { text: 1, image: 2, video: 5, link: 6 };
+
 const route = useRoute();
+const mediaMenu = mediaMenuBase.map((entry) => ({
+  ...entry,
+  to: {
+    path: "/content",
+    query: {
+      mode: "media",
+      mediaGroup: entry.value,
+      mediaType: mediaTypeByGroup[entry.value],
+    },
+  },
+}));
 
 const isEntryActive = (entry) => {
   if (entry.group === "content") {
@@ -141,12 +135,16 @@ const isEntryActive = (entry) => {
       return route.path === "/fanfic" || route.path.startsWith("/fanfic/");
     }
     return (
-      route.path === "/items" && route.query.contentType === String(entry.value)
+      route.path === "/content" &&
+      route.query.mode === "content" &&
+      route.query.contentType === String(entry.value)
     );
   }
   if (entry.group === "media") {
-    return (
-      route.path === "/items" && route.query.mediaType === String(entry.value)
+    const mediaGroup = String(route.query.mediaGroup || "");
+    const currentMediaType = Number.parseInt(route.query.mediaType, 10);
+    return route.path === "/content" && route.query.mode === "media" && (
+      mediaGroup === entry.value || mediaGroupByType[currentMediaType] === entry.value
     );
   }
   return false;

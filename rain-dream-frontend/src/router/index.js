@@ -8,6 +8,7 @@ const routes = [
     children: [
       { path: '', redirect: '/dashboard' },
       { path: 'dashboard', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
+      { path: 'content', name: 'content-manage', component: () => import('../views/ContentManageView.vue') },
       { path: 'items', name: 'items', component: () => import('../views/ItemListView.vue') },
       { path: 'items/new', name: 'item-new', component: () => import('../views/ItemFormView.vue') },
       { path: 'items/edit/:id', name: 'item-edit', component: () => import('../views/ItemFormView.vue') },

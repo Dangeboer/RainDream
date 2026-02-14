@@ -194,6 +194,18 @@ export const useItemForm = ({ route, router }) => {
   const isEdit = computed(() => !!route.params.id);
   const isFanficType = computed(() => Number(form.contentType) === 1);
 
+  const applyQueryDefaults = () => {
+    if (isEdit.value) return;
+    const contentType = Number.parseInt(route.query.contentType, 10);
+    const mediaType = Number.parseInt(route.query.mediaType, 10);
+    if (!Number.isNaN(contentType) && contentType > 0) {
+      form.contentType = contentType;
+    }
+    if (!Number.isNaN(mediaType) && mediaType > 0) {
+      form.mediaType = mediaType;
+    }
+  };
+
   const onContentFileChange = async (uploadFile) => {
     const file = uploadFile?.raw;
     if (!file) return;
@@ -420,9 +432,16 @@ export const useItemForm = ({ route, router }) => {
 
   const getSuccessRoute = () => {
     const contentType = Number(form.contentType);
+    const mediaType = Number(form.mediaType);
     if (contentType === 1) return { path: "/fanfic" };
     if (contentType > 1) {
-      return { path: "/items", query: { contentType } };
+      return {
+        path: "/content",
+        query: {
+          contentType,
+          mediaType: Number.isNaN(mediaType) ? undefined : mediaType,
+        },
+      };
     }
     return { path: "/items" };
   };
@@ -469,6 +488,7 @@ export const useItemForm = ({ route, router }) => {
   };
 
   const init = async () => {
+    applyQueryDefaults();
     await loadMeta();
     await loadDetail();
   };
