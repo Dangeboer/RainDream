@@ -10,4 +10,6 @@ import java.util.List;
 @Mapper
 public interface ItemPltMapper extends BaseMapper<ItemPlt> {
     int insertBatch(@Param("list") List<ItemPlt> list);
+
+    Long countByPltId(@Param("pltId") Long pltId);
 }

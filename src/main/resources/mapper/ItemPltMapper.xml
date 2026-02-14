@@ -17,4 +17,10 @@
         </foreach>
     </insert>
 
+    <select id="countByPltId" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM item_plt
+        WHERE plt_id = #{pltId}
+    </select>
+
 </mapper>

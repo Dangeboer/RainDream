@@ -6,6 +6,7 @@ import com.dangeboer.raindream.converter.PltConverter;
 import com.dangeboer.raindream.exception.BadRequestException;
 import com.dangeboer.raindream.exception.CanNotFoundException;
 import com.dangeboer.raindream.exception.ForbiddenException;
+import com.dangeboer.raindream.mapper.ItemPltMapper;
 import com.dangeboer.raindream.mapper.PltMapper;
 import com.dangeboer.raindream.model.entity.Plt;
 import com.dangeboer.raindream.model.form.PltForm;
@@ -21,6 +22,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PltServiceImpl extends ServiceImpl<PltMapper, Plt> implements PltService {
     private final PltMapper pltMapper;
+    private final ItemPltMapper itemPltMapper;
     private final PltConverter pltConverter;
 
     @Override
@@ -66,6 +68,11 @@ public class PltServiceImpl extends ServiceImpl<PltMapper, Plt> implements PltSe
             throw new CanNotFoundException();
         } else if (!Objects.equals(plt.getUserId(), userId)) {
             throw new ForbiddenException();
+        }
+
+        Long relationCount = itemPltMapper.countByPltId(pltId);
+        if (relationCount != null && relationCount > 0) {
+            throw new BadRequestException("该平台已关联条目，无法删除");
         }
 
         return (long) pltMapper.deleteById(pltId);

@@ -17,4 +17,10 @@
         </foreach>
     </insert>
 
+    <select id="countByTagId" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM item_tag
+        WHERE tag_id = #{tagId}
+    </select>
+
 </mapper>

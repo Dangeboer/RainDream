@@ -6,6 +6,7 @@ import com.dangeboer.raindream.converter.TagConverter;
 import com.dangeboer.raindream.exception.BadRequestException;
 import com.dangeboer.raindream.exception.CanNotFoundException;
 import com.dangeboer.raindream.exception.ForbiddenException;
+import com.dangeboer.raindream.mapper.ItemTagMapper;
 import com.dangeboer.raindream.mapper.TagMapper;
 import com.dangeboer.raindream.model.entity.Tag;
 import com.dangeboer.raindream.model.form.TagForm;
@@ -21,6 +22,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {
     private final TagMapper tagMapper;
+    private final ItemTagMapper itemTagMapper;
     private final TagConverter tagConverter;
 
     @Override
@@ -66,6 +68,11 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             throw new CanNotFoundException();
         } else if (!Objects.equals(tag.getUserId(), userId)) {
             throw new ForbiddenException();
+        }
+
+        Long relationCount = itemTagMapper.countByTagId(tagId);
+        if (relationCount != null && relationCount > 0) {
+            throw new BadRequestException("该标签已关联条目，无法删除");
         }
 
         return (long) tagMapper.deleteById(tagId);

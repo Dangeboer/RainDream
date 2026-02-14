@@ -10,4 +10,6 @@ import java.util.List;
 @Mapper
 public interface ItemTagMapper extends BaseMapper<ItemTag> {
     int insertBatch(@Param("list") List<ItemTag> list);
+
+    Long countByTagId(@Param("tagId") Long tagId);
 }
