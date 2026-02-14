@@ -12,4 +12,6 @@ public interface PltMapper extends BaseMapper<Plt> {
     List<Plt> selectByItemId(@Param("userId") Long userId, @Param("itemId") Long itemId);
 
     int insertBatch(@Param("list") List<Plt> list);
+
+    Long countByUserIdAndExactName(@Param("userId") Long userId, @Param("name") String name);
 }

@@ -41,7 +41,16 @@ public class PltServiceImpl extends ServiceImpl<PltMapper, Plt> implements PltSe
         if (pltForm == null || pltForm.getName() == null) {
             throw new BadRequestException();
         }
-        Plt plt = new Plt(userId, pltForm.getName());
+        String name = pltForm.getName().trim();
+        if (name.isEmpty()) {
+            throw new BadRequestException("平台名不能为空");
+        }
+        Long duplicated = pltMapper.countByUserIdAndExactName(userId, name);
+        if (duplicated != null && duplicated > 0) {
+            throw new BadRequestException("平台已存在");
+        }
+
+        Plt plt = new Plt(userId, name);
         return (long) pltMapper.insert(plt);
     }
 

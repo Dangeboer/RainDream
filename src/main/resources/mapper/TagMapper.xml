@@ -27,4 +27,11 @@
         </foreach>
     </insert>
 
+    <select id="countByUserIdAndExactName" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM tag
+        WHERE user_id = #{userId}
+          AND BINARY tag_name = #{name}
+    </select>
+
 </mapper>

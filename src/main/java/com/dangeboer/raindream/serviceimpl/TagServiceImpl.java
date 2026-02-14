@@ -41,7 +41,16 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         if (tagForm == null || tagForm.getName() == null) {
             throw new BadRequestException();
         }
-        Tag tag = new Tag(userId, tagForm.getName());
+        String name = tagForm.getName().trim();
+        if (name.isEmpty()) {
+            throw new BadRequestException("标签名不能为空");
+        }
+        Long duplicated = tagMapper.countByUserIdAndExactName(userId, name);
+        if (duplicated != null && duplicated > 0) {
+            throw new BadRequestException("标签已存在");
+        }
+
+        Tag tag = new Tag(userId, name);
         return (long) tagMapper.insert(tag);
     }
 

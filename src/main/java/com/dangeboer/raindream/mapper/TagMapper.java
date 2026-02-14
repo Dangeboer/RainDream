@@ -12,4 +12,6 @@ public interface TagMapper extends BaseMapper<Tag> {
     List<Tag> selectByItemId(@Param("userId") Long userId, @Param("itemId") Long itemId);
 
     int insertBatch(@Param("list") List<Tag> list);
+
+    Long countByUserIdAndExactName(@Param("userId") Long userId, @Param("name") String name);
 }
