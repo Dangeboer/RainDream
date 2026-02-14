@@ -18,7 +18,7 @@
       </el-button>
     </div>
 
-    <div v-if="query.mode === 'content' && showImageTypeTabs" class="media-sub-tabs">
+    <div v-if="showImageTypeTabs" class="media-sub-tabs">
       <el-button
         v-for="entry in availableImageTypeEntries"
         :key="entry.value"
@@ -188,10 +188,12 @@ const availableMediaGroups = computed(() =>
   query.mode === "content" ? contentMediaGroupOptions : globalMediaGroupOptions,
 );
 
-const availableImageTypeEntries = computed(() => [
-  { value: "all", label: "全部图片" },
-  ...mediaTypeOptions.filter((item) => IMAGE_MEDIA_TYPES.includes(item.value)),
-]);
+const availableImageTypeEntries = computed(() => {
+  const imageOptions = mediaTypeOptions.filter((item) =>
+    IMAGE_MEDIA_TYPES.includes(item.value),
+  );
+  return [{ value: "all", label: "全部图片" }, ...imageOptions];
+});
 
 const showImageTypeTabs = computed(() => currentMediaGroup.value === "image");
 
