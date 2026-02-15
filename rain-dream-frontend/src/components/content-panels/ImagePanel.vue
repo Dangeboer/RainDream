@@ -61,6 +61,7 @@
       v-model="previewVisible"
       width="min(900px, 90vw)"
       destroy-on-close
+      @closed="onPreviewClosed"
     >
       <template #header>
         <div class="dialog-head">
@@ -71,11 +72,24 @@
         </div>
       </template>
       <div class="preview-body" v-if="previewItem">
-        <img
-          class="preview-image"
-          :src="getStoreUrl(previewItem)"
-          :alt="previewItem.title || 'preview'"
-        />
+        <div class="preview-toolbar">
+          <button class="preview-tool" type="button" @click="zoomOut">-</button>
+          <span class="preview-scale"
+            >{{ Math.round(previewScale * 100) }}%</span
+          >
+          <button class="preview-tool" type="button" @click="zoomIn">+</button>
+          <button class="preview-tool" type="button" @click="resetZoom">
+            重置
+          </button>
+        </div>
+        <div class="preview-canvas" @wheel="onPreviewWheel">
+          <img
+            class="preview-image"
+            :src="getStoreUrl(previewItem)"
+            :alt="previewItem.title || 'preview'"
+            :style="{ transform: `scale(${previewScale})` }"
+          />
+        </div>
       </div>
     </el-dialog>
 
@@ -249,6 +263,7 @@ const emit = defineEmits(["detail", "edit", "remove", "updated"]);
 
 const previewVisible = ref(false);
 const previewItem = ref(null);
+const previewScale = ref(1);
 const detailVisible = ref(false);
 const detailLoading = ref(false);
 const detailItem = ref(null);
@@ -301,8 +316,53 @@ const normalizeDetail = (data = {}) => ({
 
 const openPreview = (row) => {
   if (!getStoreUrl(row)) return;
+  previewScale.value = 1;
   previewItem.value = row;
   previewVisible.value = true;
+};
+
+const PREVIEW_MIN_SCALE = 0.5;
+const PREVIEW_MAX_SCALE = 4;
+
+const setPreviewScale = (next) => {
+  const clamped = Math.min(
+    PREVIEW_MAX_SCALE,
+    Math.max(PREVIEW_MIN_SCALE, next),
+  );
+  previewScale.value = Number(clamped.toFixed(2));
+};
+
+const zoomIn = () => {
+  setPreviewScale(previewScale.value + 0.2);
+};
+
+const zoomOut = () => {
+  setPreviewScale(previewScale.value - 0.2);
+};
+
+const resetZoom = () => {
+  previewScale.value = 1;
+};
+
+const WHEEL_ZOOM_STEP = 0.004; // 越大越灵敏
+
+const onPreviewWheel = (event) => {
+  const shouldZoom = event.metaKey || event.ctrlKey;
+  if (!shouldZoom) return;
+  event.preventDefault();
+
+  const next = previewScale.value - event.deltaY * WHEEL_ZOOM_STEP;
+  setPreviewScale(next);
+  // if (event.deltaY < 0) {
+  //   zoomIn();
+  // } else {
+  //   zoomOut();
+  // }
+};
+
+const onPreviewClosed = () => {
+  previewItem.value = null;
+  previewScale.value = 1;
 };
 
 const openDetail = async (itemId) => {
@@ -531,16 +591,52 @@ const formatSize = (size = 0) => {
 
 .preview-body {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
   max-height: 72vh;
+}
+
+.preview-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-tool {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--xhs-black);
+  min-width: 32px;
+  height: 30px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.preview-scale {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--grey);
+}
+
+.preview-canvas {
+  flex: 1;
+  max-height: calc(72vh - 38px);
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .preview-image {
   max-width: 100%;
-  max-height: 72vh;
+  max-height: none;
   border-radius: 8px;
   object-fit: contain;
+  transform-origin: top center;
+  transition: transform 0.12s ease;
 }
 
 .edit-form {
