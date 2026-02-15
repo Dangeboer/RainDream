@@ -11,6 +11,7 @@ const routes = [
       { path: 'content', name: 'content-manage', component: () => import('../views/ContentManageView.vue') },
       { path: 'items', name: 'items', component: () => import('../views/ItemListView.vue') },
       { path: 'items/new', name: 'item-new', component: () => import('../views/ItemFormView.vue') },
+      { path: 'items/batch/new', name: 'item-batch-new', component: () => import('../views/BatchItemFormView.vue') },
       { path: 'items/edit/:id', name: 'item-edit', component: () => import('../views/ItemFormView.vue') },
       { path: 'items/:id', name: 'item-detail', component: () => import('../views/ItemDetailView.vue') },
       { path: 'fanfic', name: 'fanfic-list', component: () => import('../views/FanficListView.vue') },

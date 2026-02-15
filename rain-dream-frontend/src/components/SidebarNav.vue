@@ -8,6 +8,12 @@
         @click="$router.push('/items/new')"
         >+ 上传新资源</el-button
       >
+      <el-button
+        type="primary"
+        class="new-btn batch-btn"
+        @click="$router.push('/items/batch/new')"
+        >+ 批量上传资源</el-button
+      >
       <nav class="menu home-menu">
         <router-link
           to="/dashboard"
@@ -199,8 +205,11 @@ const isEntryActive = (entry) => {
   width: 100%;
   height: 44px;
   font-size: 20px;
-  margin-bottom: 32px;
   font-weight: 700;
+}
+.batch-btn {
+  margin-top: 8px;
+  margin-bottom: 32px;
 }
 
 .menu {
