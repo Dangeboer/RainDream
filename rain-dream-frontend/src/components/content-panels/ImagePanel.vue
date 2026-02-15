@@ -471,14 +471,14 @@ const submitEdit = async () => {
 
 .title {
   margin: 0;
-  font-size: 20px;
+  font-size: 15px;
   line-height: 1.25;
   font-weight: 700;
 }
 
 .sub {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 10px;
   opacity: 0.92;
 }
 

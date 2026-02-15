@@ -126,7 +126,6 @@
       <template #header>
         <div class="dialog-head">
           <span>{{ editForm.title || "编辑资源" }}</span>
-          <span class="dialog-sub">前置弹窗编辑</span>
         </div>
       </template>
 
@@ -471,21 +470,23 @@ const submitEdit = async () => {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 0;
-  background: var(--accent);
+  background: rgba(235, 122, 83, 0.82);
   display: grid;
   place-items: center;
   cursor: pointer;
   transition:
     box-shadow 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .video-card:hover .play-btn {
   box-shadow: 0 8px 24px rgba(38, 38, 38, 0.3);
+  background: rgba(235, 122, 83, 0.92);
 }
 
 .video-card:hover .video-hover-layer {
@@ -522,14 +523,14 @@ const submitEdit = async () => {
 
 .title {
   margin: 0;
-  font-size: 20px;
+  font-size: 15px;
   line-height: 1.25;
   font-weight: 700;
 }
 
 .sub {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 10px;
   opacity: 0.92;
 }
 
