@@ -85,12 +85,13 @@
           </button>
         </div>
         <div class="preview-canvas" @wheel="onPreviewWheel">
-          <img
-            class="preview-image"
-            :src="getStoreUrl(previewItem)"
-            :alt="previewItem.title || 'preview'"
-            :style="{ '--preview-scale': previewScale }"
-          />
+          <div class="preview-stage" :style="previewStageStyle">
+            <img
+              class="preview-image"
+              :src="getStoreUrl(previewItem)"
+              :alt="previewItem.title || 'preview'"
+            />
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -216,7 +217,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { getItemDetailApi, updateItemApi } from "../../api/item";
 
@@ -239,14 +240,6 @@ const mediaTypeOptions = [
   { value: 4, label: "实况照片" },
   { value: 5, label: "视频" },
   { value: 6, label: "链接" },
-];
-
-const trackingTypeOptions = [
-  { value: 1, label: "未看" },
-  { value: 2, label: "在看" },
-  { value: 3, label: "追平" },
-  { value: 4, label: "看过" },
-  { value: 5, label: "归档" },
 ];
 
 defineProps({
@@ -352,7 +345,7 @@ const onPreviewWheel = (event) => {
   if (!shouldZoom) return;
   event.preventDefault();
 
-  const next = previewScale.value + event.deltaY * WHEEL_ZOOM_STEP;
+  const next = previewScale.value - event.deltaY * WHEEL_ZOOM_STEP;
   setPreviewScale(next);
 };
 
@@ -360,6 +353,14 @@ const onPreviewClosed = () => {
   previewItem.value = null;
   previewScale.value = 1;
 };
+
+const previewStageStyle = computed(() => {
+  const scale = previewScale.value;
+  return {
+    width: `${scale * 100}%`,
+    height: `${scale * 100}%`,
+  };
+});
 
 const openDetail = async (itemId) => {
   if (!itemId) return;
@@ -625,17 +626,26 @@ const formatSize = (size = 0) => {
   overflow: auto;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.preview-stage {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .preview-image {
-  height: calc(100% * var(--preview-scale, 1));
-  width: auto;
-  max-width: none;
-  max-height: none;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   border-radius: 8px;
-  object-fit: initial;
-  transition: height 0.12s ease;
+  object-fit: contain;
+  transition: none;
 }
 
 :deep(.preview-dialog .el-dialog__body) {
