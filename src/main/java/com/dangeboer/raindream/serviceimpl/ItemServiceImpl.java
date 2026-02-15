@@ -427,6 +427,8 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                 .distinct()
                 .toList();
 
+        List<Long> sizes = form.getSizeBytesList();
+
         // 2) 决定本次要创建多少条 item - media：每个 storeUrl 一条
         int count = storeUrls.size();
         if (count == 0) throw new BadRequestException("需要 storeUrls（批量媒体链接）");
@@ -454,6 +456,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
             // ===== 每条 item 的差异字段：storeUrl =====
             item.setStoreUrl(storeUrls.get(i));
+            item.setSizeBytes(sizes.get(i));
             items.add(item);
         }
 

@@ -9,4 +9,5 @@ import java.util.List;
 @Setter
 public class ItemBatchForm extends ItemForm {
     List<String> storeUrls;
+    List<Long> sizeBytesList;
 }
