@@ -10,9 +10,9 @@
       >
       <el-button
         type="primary"
-        class="new-btn batch-btn"
+        class="new-btn"
         @click="$router.push('/items/batch/new')"
-        >+ 批量上传资源</el-button
+        >+ 批量上传</el-button
       >
       <nav class="menu home-menu">
         <router-link
@@ -204,10 +204,11 @@ const isEntryActive = (entry) => {
 .new-btn {
   width: 100%;
   height: 44px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
 }
-.batch-btn {
+.new-btn + .new-btn {
+  margin-left: 0;
   margin-top: 8px;
   margin-bottom: 32px;
 }

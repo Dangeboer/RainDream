@@ -140,9 +140,9 @@ const acceptByMediaType = computed(() => {
 
 const formatSize = (size = 0) => {
   if (!size) return "0 B";
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  if (size < 1000) return `${size} B`;
+  if (size < 1000 * 1000) return `${(size / 1000).toFixed(1)} KB`;
+  return `${(size / (1000 * 1000)).toFixed(1)} MB`;
 };
 
 const onUploadChange = (uploadFile) => {
@@ -227,11 +227,17 @@ const submit = async () => {
       uploadedStoreUrls.push(storeUrl);
     }
 
+    const sizeBytesList = selectedFiles.value.map((file) =>
+      Number(file?.size || 0),
+    );
+
     const payload = {
       media_type: Number(form.mediaType),
       content_type: Number(form.contentType),
       fandom: String(form.fandom).trim(),
       cp: String(form.cp).trim(),
+      tracking_type: 5,
+      size_bytes_list: sizeBytesList,
       store_urls: uploadedStoreUrls,
     };
 

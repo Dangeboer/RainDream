@@ -35,15 +35,15 @@
             >
               下载
             </a>
-            <button class="action" type="button" @click.stop="openEdit(row.id)">
-              修改
-            </button>
             <button
               class="action"
               type="button"
               @click.stop="openDetail(row.id)"
             >
               详情
+            </button>
+            <button class="action" type="button" @click.stop="openEdit(row.id)">
+              修改
             </button>
             <button
               class="action danger"
@@ -102,6 +102,9 @@
         <el-descriptions-item label="评分">{{
           detailItem.rating ?? "-"
         }}</el-descriptions-item>
+        <el-descriptions-item label="大小">{{
+          formatSize(detailItem.size_bytes ?? 0)
+        }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{
           detailItem.notes || "-"
         }}</el-descriptions-item>
@@ -157,16 +160,6 @@
           </el-form-item>
           <el-form-item label="作者">
             <el-input v-model="editForm.author" />
-          </el-form-item>
-          <el-form-item label="追踪状态">
-            <el-select v-model="editForm.trackingType" clearable>
-              <el-option
-                v-for="opt in trackingTypeOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-select>
           </el-form-item>
           <el-form-item label="评分">
             <el-input-number
@@ -404,6 +397,13 @@ const submitEdit = async () => {
   } finally {
     editSubmitting.value = false;
   }
+};
+
+const formatSize = (size = 0) => {
+  if (!size) return "0 B";
+  if (size < 1000) return `${size} B`;
+  if (size < 1000 * 1000) return `${(size / 1000).toFixed(1)} KB`;
+  return `${(size / (1000 * 1000)).toFixed(1)} MB`;
 };
 </script>
 
