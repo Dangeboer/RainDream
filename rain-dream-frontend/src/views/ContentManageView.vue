@@ -1,5 +1,5 @@
 <template>
-  <section class="card-panel panel">
+  <section ref="panelRef" class="card-panel panel">
     <div class="head">
       <h2>{{ pageTitle }}</h2>
       <el-button @click="goCreate">+ 新增资源</el-button>
@@ -62,7 +62,7 @@
         @detail="onDetail"
         @edit="onEdit"
         @remove="remove"
-        @updated="fetchData"
+        @updated="onPanelUpdated"
       />
     </template>
 
@@ -77,7 +77,15 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { deleteItemApi, getItemListApi } from "../api/item";
@@ -205,7 +213,7 @@ const IMAGE_MEDIA_TYPES = [2, 3, 4];
 const query = reactive({
   mode: "content",
   page: 1,
-  size: 8,
+  size: DEFAULT_PAGE_SIZE,
   contentType: 2,
   mediaGroup: "all",
   imageSubType: "all",
@@ -215,6 +223,14 @@ const query = reactive({
 const parsePositiveInt = (value) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) || parsed <= 0 ? undefined : parsed;
+};
+
+const clampPageSize = (value) =>
+  Math.min(MAX_PAGE_SIZE, Math.max(1, Number(value) || DEFAULT_PAGE_SIZE));
+
+const parsePageSize = (value) => {
+  const parsed = parsePositiveInt(value);
+  return parsed ? clampPageSize(parsed) : undefined;
 };
 
 const normalizeItem = (item = {}) => ({
@@ -417,6 +433,28 @@ const ensureVideoCacheRecords = async ({ contentType, mediaType, requiredCount }
   }
 };
 
+const ensureImageFilteredCacheRecords = async ({
+  contentType,
+  imageSubType,
+  requiredCount,
+}) => {
+  await ensureImageAllCacheRecords({ contentType, requiredCount: 1 });
+
+  while (hasMoreRawPagesForImageAll()) {
+    const filteredCount = filterByImageSubType(
+      imageAllCache.records,
+      imageSubType,
+    ).length;
+    if (filteredCount >= requiredCount) {
+      break;
+    }
+    await ensureImageAllCacheRecords({
+      contentType,
+      requiredCount: imageAllCache.records.length + 1,
+    });
+  }
+};
+
 const inferMediaTypeFromStoreUrl = (storeUrl = "") => {
   const clean = String(storeUrl).split("?")[0].toLowerCase();
   if (!clean) return 2;
@@ -504,6 +542,12 @@ const showGenericTable = computed(
   () => query.mode === "content" && currentMediaGroup.value === "all",
 );
 
+const isAdaptiveSizeView = computed(() => {
+  if (currentMediaGroup.value === "video") return true;
+  if (currentMediaGroup.value === "image") return true;
+  return false;
+});
+
 const currentPanel = computed(() => {
   if (showGenericTable.value) return null;
   return mediaPanelMap[currentMediaGroup.value] || TextPanel;
@@ -541,6 +585,7 @@ const isImageSubActive = (value) => {
 
 const resolveImageSubType = (rawValue, currentType, group) => {
   if (group !== "image") return "all";
+  if (String(rawValue) === "all") return "all";
   const parsed = parsePositiveInt(rawValue);
   if (IMAGE_MEDIA_TYPES.includes(parsed)) return parsed;
   if (IMAGE_MEDIA_TYPES.includes(currentType)) return currentType;
@@ -649,6 +694,7 @@ const scheduleAdaptivePageSizeSync = () => {
 const syncQueryFromRoute = async () => {
   const mode = route.query.mode === "media" ? "media" : "content";
   const page = parsePositiveInt(route.query.page) || 1;
+  const size = parsePageSize(route.query.size) || DEFAULT_PAGE_SIZE;
 
   const contentType =
     mode === "content"
@@ -692,10 +738,12 @@ const syncQueryFromRoute = async () => {
     String((mediaGroup === "image" ? imageSubType : undefined) || "") !==
       String(route.query.imageSubType || "") ||
     String(mediaType || "") !== String(route.query.mediaType || "") ||
-    String(page) !== String(route.query.page || "");
+    String(page) !== String(route.query.page || "") ||
+    String(size) !== String(route.query.size || "");
 
   query.mode = mode;
   query.page = page;
+  query.size = size;
   query.contentType = contentType;
   query.mediaGroup = mediaGroup;
   query.imageSubType = imageSubType;
@@ -711,22 +759,13 @@ const syncQueryFromRoute = async () => {
         imageSubType: mediaGroup === "image" ? imageSubType : undefined,
         mediaType: mediaType || undefined,
         page,
+        size,
       },
     });
     return true;
   }
 
   return false;
-};
-
-const fetchImageUnionAndPaginate = async ({ contentType }) => {
-  const params = {};
-  if (contentType) params.contentType = contentType;
-  const raw = await getItemListApi(params);
-  let normalizedList = extractListPayload(raw).map(normalizeItem);
-  normalizedList = filterByContentType(normalizedList, contentType);
-  const imageRecords = filterByImageSubType(normalizedList, query.imageSubType);
-  applyClientPagination(imageRecords);
 };
 
 const fetchImageFromCacheAndPaginate = async ({ contentType, imageSubType }) => {
@@ -763,9 +802,10 @@ const fetchVideoFromCacheAndPaginate = async ({ contentType, mediaType }) => {
 };
 
 const fetchData = async () => {
-  if (currentMediaGroup.value === "image" && query.imageSubType === "all") {
-    await fetchImageUnionAndPaginate({
+  if (currentMediaGroup.value === "image") {
+    await fetchImageFromCacheAndPaginate({
       contentType: query.mode === "content" ? query.contentType : undefined,
+      imageSubType: query.imageSubType,
     });
     return;
   }
@@ -778,6 +818,8 @@ const fetchData = async () => {
   }
 
   const params = {};
+  params.page = query.page;
+  params.size = query.size;
 
   if (query.mode === "content" && query.contentType) {
     params.contentType = query.contentType;
@@ -795,7 +837,8 @@ const fetchData = async () => {
   if (currentMediaGroup.value === "image") {
     list = filterByImageSubType(list, query.imageSubType);
   }
-  applyClientPagination(list);
+  rows.value = list;
+  total.value = Number(data?.total ?? list.length);
 };
 
 const onPanelUpdated = async () => {
@@ -807,15 +850,7 @@ const onPanelUpdated = async () => {
 const onPageChange = async (page) => {
   await router.push({
     path: "/content",
-    query: {
-      mode: query.mode,
-      contentType: query.mode === "content" ? query.contentType : undefined,
-      mediaGroup: query.mediaGroup,
-      imageSubType:
-        query.mediaGroup === "image" ? query.imageSubType : undefined,
-      mediaType: query.mediaType || undefined,
-      page,
-    },
+    query: buildRouteQuery({ page }),
   });
 };
 
@@ -828,14 +863,12 @@ const onMediaGroupChange = async (group) => {
   );
   await router.push({
     path: "/content",
-    query: {
-      mode: query.mode,
-      contentType: query.mode === "content" ? query.contentType : undefined,
+    query: buildRouteQuery({
       mediaGroup: group,
       imageSubType: group === "image" ? imageSubType : undefined,
       mediaType: mediaType || undefined,
       page: 1,
-    },
+    }),
   });
 };
 
@@ -843,14 +876,12 @@ const onImageTypeChange = async (imageType) => {
   const mediaType = imageType === "all" ? undefined : Number(imageType);
   await router.push({
     path: "/content",
-    query: {
-      mode: query.mode,
-      contentType: query.mode === "content" ? query.contentType : undefined,
+    query: buildRouteQuery({
       mediaGroup: "image",
       imageSubType: imageType,
       mediaType: mediaType || undefined,
       page: 1,
-    },
+    }),
   });
 };
 
@@ -910,10 +941,41 @@ watch(
   async () => {
     const replaced = await syncQueryFromRoute();
     if (replaced) return;
+    const sizeReplaced = await syncAdaptivePageSize();
+    if (sizeReplaced) return;
     await fetchData();
   },
   { immediate: true },
 );
+
+watch(
+  () => currentMediaGroup.value,
+  () => {
+    scheduleAdaptivePageSizeSync();
+  },
+);
+
+onMounted(() => {
+  panelResizeObserver = new ResizeObserver(() => {
+    scheduleAdaptivePageSizeSync();
+  });
+  if (panelRef.value) {
+    panelResizeObserver.observe(panelRef.value);
+  }
+  window.addEventListener("resize", scheduleAdaptivePageSizeSync);
+});
+
+onBeforeUnmount(() => {
+  if (panelResizeObserver) {
+    panelResizeObserver.disconnect();
+    panelResizeObserver = null;
+  }
+  window.removeEventListener("resize", scheduleAdaptivePageSizeSync);
+  if (resizeTimer) {
+    clearTimeout(resizeTimer);
+    resizeTimer = null;
+  }
+});
 </script>
 
 <style scoped>
