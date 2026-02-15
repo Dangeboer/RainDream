@@ -68,3 +68,6 @@ src/main/resources/application-local.yml
 
 # Frontend build output
 rain-dream-frontend/dist/
+
+# Frontend dependencies/cache
+rain-dream-frontend/node_modules/
