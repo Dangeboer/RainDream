@@ -352,6 +352,10 @@ const submit = async () => {
   margin-top: 0;
 }
 
+.file-list-wrap {
+  margin-left: 40px;
+}
+
 @media (max-width: 1200px) {
   .form-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
