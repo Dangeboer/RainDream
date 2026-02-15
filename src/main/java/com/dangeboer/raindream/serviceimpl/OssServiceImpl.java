@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Service
 public class OssServiceImpl implements OssService {
-    private static final long MAX_FILE_SIZE = 30 * 1024 * 1024L;
+    private static final long MAX_FILE_SIZE = 1024 * 1024 * 1024L;
 
     @Value("${raindream.oss.endpoint}")
     private String endpoint;
@@ -159,7 +159,7 @@ public class OssServiceImpl implements OssService {
             throw new BadRequestException("文件大小不合法");
         }
         if (form.getSize() > MAX_FILE_SIZE) {
-            throw new BadRequestException("文件过大，当前限制 30MB");
+            throw new BadRequestException("文件过大，当前限制 1GB");
         }
         String contentType = form.getContentType().toLowerCase(Locale.ROOT);
         if (!(contentType.startsWith("image/")
