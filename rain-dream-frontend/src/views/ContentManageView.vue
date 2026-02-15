@@ -61,6 +61,7 @@
         @detail="onDetail"
         @edit="onEdit"
         @remove="remove"
+        @updated="fetchData"
       />
     </template>
 
