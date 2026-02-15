@@ -182,7 +182,7 @@ export const useItemForm = ({ route, router }) => {
     author: "",
     sourceUrl: "",
     releaseYear: null,
-    trackingType: null,
+    trackingType: 5,
     rating: null,
     notes: "",
     summary: "",
@@ -250,7 +250,7 @@ export const useItemForm = ({ route, router }) => {
     form.author = data?.author ?? null;
     form.sourceUrl = data?.sourceUrl ?? data?.source_url ?? null;
     form.releaseYear = data?.releaseYear ?? data?.release_year ?? null;
-    form.trackingType = data?.trackingType ?? data?.tracking_type ?? null;
+    form.trackingType = data?.trackingType ?? data?.tracking_type ?? 5;
     form.rating = data?.rating ?? null;
     form.notes = data?.notes ?? null;
     form.summary = data?.summary ?? null;
@@ -311,11 +311,7 @@ export const useItemForm = ({ route, router }) => {
     form.plts = sanitizeNameList(values);
   };
 
-  const promptAndSelectMeta = async ({
-    title,
-    message,
-    field,
-  }) => {
+  const promptAndSelectMeta = async ({ title, message, field }) => {
     let inputValue = "";
     try {
       const result = await ElMessageBox.prompt(message, title, {
@@ -353,7 +349,10 @@ export const useItemForm = ({ route, router }) => {
     if (!isMediaUploadType(form.mediaType) || !pendingUploadFile.value) {
       return null;
     }
-    const uploadedUrl = await uploadFileToOss(pendingUploadFile.value, form.mediaType);
+    const uploadedUrl = await uploadFileToOss(
+      pendingUploadFile.value,
+      form.mediaType,
+    );
     form.storeUrl = uploadedUrl;
     form.sizeBytes = pendingUploadFile.value.size || form.sizeBytes;
     pendingUploadFile.value = null;
@@ -393,7 +392,7 @@ export const useItemForm = ({ route, router }) => {
     source_url: toNullableString(form.sourceUrl),
     release_year: form.releaseYear,
     size_bytes: form.sizeBytes,
-    tracking_type: form.trackingType,
+    tracking_type: form.trackingType ?? 5,
     rating: form.rating,
     notes: toNullableString(form.notes),
     summary: toNullableString(form.summary),
@@ -468,7 +467,9 @@ export const useItemForm = ({ route, router }) => {
       }
     } catch (error) {
       if (uploadedStoreUrl) {
-        await deleteOssObjectApi(uploadedStoreUrl, { suppressError: true }).catch(() => {});
+        await deleteOssObjectApi(uploadedStoreUrl, {
+          suppressError: true,
+        }).catch(() => {});
       }
       if (uploadedStoreUrl) {
         form.storeUrl = previousStoreUrl;
@@ -482,7 +483,9 @@ export const useItemForm = ({ route, router }) => {
       previousStoreUrl &&
       previousStoreUrl !== uploadedStoreUrl
     ) {
-      await deleteOssObjectApi(previousStoreUrl, { suppressError: true }).catch(() => {});
+      await deleteOssObjectApi(previousStoreUrl, { suppressError: true }).catch(
+        () => {},
+      );
     }
     router.push(getSuccessRoute());
   };
