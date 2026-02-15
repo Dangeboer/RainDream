@@ -16,20 +16,24 @@
             </div>
             <div class="topbar-actions">
               <el-button
-                text
-                class="topbar-link"
                 :class="{ 'is-active': isMetaRoute }"
                 @click="router.push('/meta')"
               >
                 标签/平台管理
               </el-button>
-              <div class="user-chip">
-                <el-avatar :size="28">
-                  {{ (auth.username || "A").slice(0, 1).toUpperCase() }}
-                </el-avatar>
-                <span>{{ auth.username || "Archivist" }}</span>
-              </div>
-              <el-button text @click="onLogout">退出登录</el-button>
+              <el-dropdown trigger="click" @command="onUserCommand">
+                <div class="user-chip user-chip-trigger">
+                  <el-avatar :size="28">
+                    {{ (auth.username || "A").slice(0, 1).toUpperCase() }}
+                  </el-avatar>
+                  <span>{{ auth.username || "Archivist" }}</span>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
           </header>
           <router-view />
@@ -54,6 +58,10 @@ const isMetaRoute = computed(() => route.path === "/meta");
 const onLogout = () => {
   auth.logout();
   router.push("/login");
+};
+
+const onUserCommand = (command) => {
+  if (command === "logout") onLogout();
 };
 </script>
 
@@ -105,6 +113,9 @@ const onLogout = () => {
   padding-left: 8px;
   color: var(--text-main);
   font-weight: 600;
+}
+.user-chip-trigger {
+  cursor: pointer;
 }
 .topbar-link {
   border-radius: 999px;
