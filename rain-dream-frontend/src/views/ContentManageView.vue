@@ -176,7 +176,7 @@ const IMAGE_MEDIA_TYPES = [2, 3, 4];
 const query = reactive({
   mode: "content",
   page: 1,
-  size: 10,
+  size: 8,
   contentType: 2,
   mediaGroup: "all",
   imageSubType: "all",
