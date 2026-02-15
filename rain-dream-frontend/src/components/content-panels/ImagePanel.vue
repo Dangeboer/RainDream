@@ -504,6 +504,16 @@ const formatSize = (size = 0) => {
   background: rgba(38, 38, 38, 0.75);
 }
 
+.action:focus {
+  outline: none;
+}
+
+.action:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
 .action.danger {
   background: rgba(235, 122, 83, 0.82);
 }
