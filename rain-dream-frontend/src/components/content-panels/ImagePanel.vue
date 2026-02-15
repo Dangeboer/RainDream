@@ -727,6 +727,26 @@ const formatSize = (size = 0) => {
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.55) transparent;
+}
+
+.preview-canvas::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.preview-canvas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-canvas::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.55);
+  border-radius: 999px;
+}
+
+.preview-canvas::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .preview-stage {
