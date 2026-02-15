@@ -143,7 +143,6 @@ const mediaTypeOptions = [
   { value: 1, label: "文本" },
   { value: 2, label: "静图" },
   { value: 3, label: "动图" },
-  { value: 4, label: "实况照片" },
   { value: 5, label: "视频" },
   { value: 6, label: "链接" },
 ];
@@ -191,7 +190,7 @@ const mediaGroupByType = {
 
 const mediaTypesByGroup = {
   text: [1],
-  image: [2, 3, 4],
+  image: [2, 3],
   video: [5],
   link: [6],
 };
@@ -208,7 +207,7 @@ const getAllowedContentGroups = (contentType) => {
   return contentMediaGroupOptions.map((item) => item.value);
 };
 
-const IMAGE_MEDIA_TYPES = [2, 3, 4];
+const IMAGE_MEDIA_TYPES = [2, 3];
 
 const query = reactive({
   mode: "content",
@@ -459,13 +458,6 @@ const inferMediaTypeFromStoreUrl = (storeUrl = "") => {
   const clean = String(storeUrl).split("?")[0].toLowerCase();
   if (!clean) return 2;
   if (clean.endsWith(".gif") || clean.endsWith(".webp")) return 3;
-  if (
-    clean.endsWith(".heic") ||
-    clean.endsWith(".heif") ||
-    clean.endsWith(".livephoto")
-  ) {
-    return 4;
-  }
   if (
     clean.endsWith(".mp4") ||
     clean.endsWith(".mov") ||

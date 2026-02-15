@@ -20,7 +20,6 @@ const mediaTypeOptions = [
   { value: 1, label: "文本" },
   { value: 2, label: "静图" },
   { value: 3, label: "动图" },
-  { value: 4, label: "实况照片" },
   { value: 5, label: "视频" },
   { value: 6, label: "链接" },
 ];
@@ -67,6 +66,10 @@ const emptyFanficForm = () => ({
   updateDate: null,
   endingType: null,
   readCount: 1,
+});
+
+const emptyMediaForm = () => ({
+  liveUrl: "",
 });
 
 const readFileAsTextOrDataUrl = (file, asText) =>
@@ -188,6 +191,7 @@ export const useItemForm = ({ route, router }) => {
     notes: "",
     summary: "",
     fanficForm: emptyFanficForm(),
+    mediaForm: emptyMediaForm(),
     tags: [],
     plts: [],
   });
@@ -263,6 +267,10 @@ export const useItemForm = ({ route, router }) => {
       updateDate: fanfic?.updateDate ?? fanfic?.update_date ?? null,
       endingType: fanfic?.endingType ?? fanfic?.ending_type ?? null,
       readCount: fanfic?.readCount ?? fanfic?.read_count ?? null,
+    };
+    const media = data?.mediaForm ?? data?.media_form ?? {};
+    form.mediaForm = {
+      liveUrl: media?.liveUrl ?? media?.live_url ?? "",
     };
     form.tags = (data?.tags || data?.tag_vos || [])
       .map((item) => item?.name || item?.tag_name || item)
@@ -411,7 +419,7 @@ export const useItemForm = ({ route, router }) => {
     media_form:
       Number(form.mediaType) === 4
         ? {
-            live_url: null,
+            live_url: toNullableString(form.mediaForm?.liveUrl),
           }
         : null,
     tags: [
@@ -451,7 +459,6 @@ export const useItemForm = ({ route, router }) => {
     if (!form.mediaType || !form.contentType || !form.fandom || !form.cp) {
       return ElMessage.warning("请先填写必填项");
     }
-
     submitting.value = true;
     try {
       const previousStoreUrl = form.storeUrl;

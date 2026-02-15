@@ -233,7 +233,6 @@ const mediaTypeOptions = [
   { value: 1, label: "文本" },
   { value: 2, label: "静图" },
   { value: 3, label: "动图" },
-  { value: 4, label: "实况照片" },
   { value: 5, label: "视频" },
   { value: 6, label: "链接" },
 ];

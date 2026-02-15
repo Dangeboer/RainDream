@@ -247,7 +247,6 @@ const mediaTypeOptions = [
   { value: 1, label: "文本" },
   { value: 2, label: "静图" },
   { value: 3, label: "动图" },
-  { value: 4, label: "实况照片" },
   { value: 5, label: "视频" },
   { value: 6, label: "链接" },
 ];
@@ -315,6 +314,14 @@ const normalizeDetail = (data = {}) => ({
   storeUrl: data?.storeUrl ?? data?.store_url ?? "",
   sourceUrl: data?.sourceUrl ?? data?.source_url ?? "",
   trackingType: data?.trackingType ?? data?.tracking_type,
+  mediaForm: {
+    liveUrl:
+      data?.mediaForm?.liveUrl ??
+      data?.mediaForm?.live_url ??
+      data?.media_form?.liveUrl ??
+      data?.media_form?.live_url ??
+      "",
+  },
   tags: (data?.tags || data?.tag_vos || [])
     .map((item) => item?.name || item?.tag_name || item)
     .filter(Boolean),
@@ -500,7 +507,7 @@ const openEdit = async (itemId) => {
     editForm.tags = data.tags || [];
     editForm.plts = data.plts || [];
     editForm.fanficForm = data.fanficForm ?? data.fanfic_form ?? null;
-    editForm.mediaForm = data.mediaForm ?? data.media_form ?? null;
+    editForm.mediaForm = data.mediaForm ?? data.media_form ?? { liveUrl: "" };
   } finally {
     editLoading.value = false;
   }
