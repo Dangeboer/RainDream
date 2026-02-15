@@ -80,16 +80,19 @@
             >{{ Math.round(previewScale * 100) }}%</span
           >
           <button class="preview-tool" type="button" @click="zoomIn">+</button>
-          <button class="preview-tool" type="button" @click="resetZoom">
-            重置
-          </button>
         </div>
-        <div class="preview-canvas" @wheel="onPreviewWheel">
+        <div
+          ref="previewCanvasRef"
+          class="preview-canvas"
+          @wheel="onPreviewWheel"
+        >
           <div class="preview-stage" :style="previewStageStyle">
             <img
               class="preview-image"
               :src="getStoreUrl(previewItem)"
               :alt="previewItem.title || 'preview'"
+              @load="onPreviewImageLoad"
+              @click="togglePreviewQuickZoom"
             />
           </div>
         </div>
@@ -217,7 +220,14 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+} from "vue";
 import { ElMessage } from "element-plus";
 import { getItemDetailApi, updateItemApi } from "../../api/item";
 
@@ -258,6 +268,11 @@ const emit = defineEmits(["detail", "edit", "remove", "updated"]);
 const previewVisible = ref(false);
 const previewItem = ref(null);
 const previewScale = ref(1);
+const previewCanvasRef = ref(null);
+const previewImageRatio = ref(0);
+const previewCanvasWidth = ref(0);
+const previewCanvasHeight = ref(0);
+const previewQuickZoomed = ref(false);
 const detailVisible = ref(false);
 const detailLoading = ref(false);
 const detailItem = ref(null);
@@ -311,31 +326,96 @@ const normalizeDetail = (data = {}) => ({
 const openPreview = (row) => {
   if (!getStoreUrl(row)) return;
   previewScale.value = 1;
+  previewImageRatio.value = 0;
+  previewQuickZoomed.value = false;
   previewItem.value = row;
   previewVisible.value = true;
+  nextTick(() => {
+    updatePreviewCanvasSize();
+  });
 };
 
 const PREVIEW_MIN_SCALE = 0.5;
-const PREVIEW_MAX_SCALE = 4;
+const PREVIEW_MAX_SCALE = 10;
 
 const setPreviewScale = (next) => {
   const clamped = Math.min(
     PREVIEW_MAX_SCALE,
     Math.max(PREVIEW_MIN_SCALE, next),
   );
-  previewScale.value = Number(clamped.toFixed(2));
+  previewScale.value = Number(clamped.toFixed(4));
 };
 
 const zoomIn = () => {
   setPreviewScale(previewScale.value + 0.2);
+  previewQuickZoomed.value = false;
 };
 
 const zoomOut = () => {
   setPreviewScale(previewScale.value - 0.2);
+  previewQuickZoomed.value = false;
 };
 
 const resetZoom = () => {
   previewScale.value = 1;
+  previewQuickZoomed.value = false;
+};
+
+const onPreviewImageLoad = (event) => {
+  const img = event?.target;
+  const naturalWidth = img?.naturalWidth || 0;
+  const naturalHeight = img?.naturalHeight || 0;
+  if (!naturalWidth || !naturalHeight) return;
+  previewImageRatio.value = naturalWidth / naturalHeight;
+  updatePreviewCanvasSize();
+};
+
+const updatePreviewCanvasSize = () => {
+  const canvasEl = previewCanvasRef.value;
+  if (!canvasEl) return;
+  previewCanvasWidth.value = canvasEl.clientWidth;
+  previewCanvasHeight.value = canvasEl.clientHeight;
+};
+
+const getBasePreviewSize = () => {
+  const imageRatio = previewImageRatio.value;
+  const canvasWidth = previewCanvasWidth.value;
+  const canvasHeight = previewCanvasHeight.value;
+  if (!imageRatio || !canvasWidth || !canvasHeight) return null;
+
+  const canvasRatio = canvasWidth / canvasHeight;
+  if (imageRatio >= canvasRatio) {
+    return {
+      width: canvasWidth,
+      height: canvasWidth / imageRatio,
+    };
+  }
+
+  return {
+    width: canvasHeight * imageRatio,
+    height: canvasHeight,
+  };
+};
+
+const fitShortSide = () => {
+  updatePreviewCanvasSize();
+  const baseSize = getBasePreviewSize();
+  if (!baseSize) return false;
+  const fitShortScale = Math.max(
+    previewCanvasWidth.value / baseSize.width,
+    previewCanvasHeight.value / baseSize.height,
+  );
+  setPreviewScale(fitShortScale * 0.95);
+  previewQuickZoomed.value = true;
+  return true;
+};
+
+const togglePreviewQuickZoom = () => {
+  if (previewQuickZoomed.value) {
+    resetZoom();
+    return;
+  }
+  fitShortSide();
 };
 
 const WHEEL_ZOOM_STEP = 0.004; // 越大越灵敏
@@ -344,6 +424,7 @@ const onPreviewWheel = (event) => {
   const shouldZoom = event.metaKey || event.ctrlKey;
   if (!shouldZoom) return;
   event.preventDefault();
+  previewQuickZoomed.value = false;
 
   const next = previewScale.value - event.deltaY * WHEEL_ZOOM_STEP;
   setPreviewScale(next);
@@ -352,14 +433,33 @@ const onPreviewWheel = (event) => {
 const onPreviewClosed = () => {
   previewItem.value = null;
   previewScale.value = 1;
+  previewImageRatio.value = 0;
+  previewCanvasWidth.value = 0;
+  previewCanvasHeight.value = 0;
+  previewQuickZoomed.value = false;
 };
 
 const previewStageStyle = computed(() => {
+  const baseSize = getBasePreviewSize();
+  if (!baseSize) {
+    return {
+      width: "100%",
+      height: "100%",
+    };
+  }
   const scale = previewScale.value;
   return {
-    width: `${scale * 100}%`,
-    height: `${scale * 100}%`,
+    width: `${baseSize.width * scale}px`,
+    height: `${baseSize.height * scale}px`,
   };
+});
+
+onMounted(() => {
+  window.addEventListener("resize", updatePreviewCanvasSize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updatePreviewCanvasSize);
 });
 
 const openDetail = async (itemId) => {
@@ -625,8 +725,8 @@ const formatSize = (size = 0) => {
   min-height: 0;
   overflow: auto;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .preview-stage {
@@ -636,6 +736,7 @@ const formatSize = (size = 0) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 0 auto;
 }
 
 .preview-image {
@@ -646,6 +747,7 @@ const formatSize = (size = 0) => {
   border-radius: 8px;
   object-fit: contain;
   transition: none;
+  cursor: pointer;
 }
 
 :deep(.preview-dialog .el-dialog__body) {
