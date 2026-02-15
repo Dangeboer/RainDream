@@ -32,7 +32,9 @@
         @update:content-input-mode="contentInputMode = $event"
       />
       <el-form-item class="span-2">
-        <el-button type="primary" @click="submit">保存</el-button>
+        <el-button type="primary" :loading="submitting" @click="submit"
+          >保存</el-button
+        >
         <el-button @click="$router.back()">取消</el-button>
       </el-form-item>
     </el-form>
@@ -52,6 +54,7 @@ const {
   form,
   isEdit,
   isFanficType,
+  submitting,
   tags,
   plts,
   contentInputMode,

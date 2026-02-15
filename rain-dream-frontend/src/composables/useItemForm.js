@@ -165,6 +165,7 @@ const uploadFileToOss = async (file, mediaType) => {
 export const useItemForm = ({ route, router }) => {
   const tags = ref([]);
   const plts = ref([]);
+  const submitting = ref(false);
   const pendingUploadFile = ref(null);
   const contentInputMode = ref("text");
   const contentFileName = ref("");
@@ -446,48 +447,54 @@ export const useItemForm = ({ route, router }) => {
   };
 
   const submit = async () => {
+    if (submitting.value) return;
     if (!form.mediaType || !form.contentType || !form.fandom || !form.cp) {
       return ElMessage.warning("请先填写必填项");
     }
 
-    const previousStoreUrl = form.storeUrl;
-    let uploadedStoreUrl = null;
+    submitting.value = true;
     try {
-      uploadedStoreUrl = await uploadPendingMediaIfNeeded();
-      await ensureNamesExist(form.tags, tags, createTagApi);
-      await ensureNamesExist(form.plts, plts, createPltApi);
-      await loadMeta();
-      const payload = buildPayload();
-      if (isEdit.value) {
-        await updateItemApi(route.params.id, payload);
-        ElMessage.success("更新成功");
-      } else {
-        await createItemApi(payload);
-        ElMessage.success("创建成功");
+      const previousStoreUrl = form.storeUrl;
+      let uploadedStoreUrl = null;
+      try {
+        uploadedStoreUrl = await uploadPendingMediaIfNeeded();
+        await ensureNamesExist(form.tags, tags, createTagApi);
+        await ensureNamesExist(form.plts, plts, createPltApi);
+        await loadMeta();
+        const payload = buildPayload();
+        if (isEdit.value) {
+          await updateItemApi(route.params.id, payload);
+          ElMessage.success("更新成功");
+        } else {
+          await createItemApi(payload);
+          ElMessage.success("创建成功");
+        }
+      } catch (error) {
+        if (uploadedStoreUrl) {
+          await deleteOssObjectApi(uploadedStoreUrl, {
+            suppressError: true,
+          }).catch(() => {});
+        }
+        if (uploadedStoreUrl) {
+          form.storeUrl = previousStoreUrl;
+        }
+        throw error;
       }
-    } catch (error) {
-      if (uploadedStoreUrl) {
-        await deleteOssObjectApi(uploadedStoreUrl, {
-          suppressError: true,
-        }).catch(() => {});
-      }
-      if (uploadedStoreUrl) {
-        form.storeUrl = previousStoreUrl;
-      }
-      throw error;
-    }
 
-    if (
-      isEdit.value &&
-      uploadedStoreUrl &&
-      previousStoreUrl &&
-      previousStoreUrl !== uploadedStoreUrl
-    ) {
-      await deleteOssObjectApi(previousStoreUrl, { suppressError: true }).catch(
-        () => {},
-      );
+      if (
+        isEdit.value &&
+        uploadedStoreUrl &&
+        previousStoreUrl &&
+        previousStoreUrl !== uploadedStoreUrl
+      ) {
+        await deleteOssObjectApi(previousStoreUrl, { suppressError: true }).catch(
+          () => {},
+        );
+      }
+      router.push(getSuccessRoute());
+    } finally {
+      submitting.value = false;
     }
-    router.push(getSuccessRoute());
   };
 
   const init = async () => {
@@ -500,6 +507,7 @@ export const useItemForm = ({ route, router }) => {
     form,
     isEdit,
     isFanficType,
+    submitting,
     tags,
     plts,
     contentInputMode,
