@@ -20,7 +20,7 @@
           <div class="overlay-main">
             <h3 class="title">{{ row.title || "" }}</h3>
             <p class="sub">
-              {{ row.author || "" }}
+              {{ row.author ? "@" + row.author : "" }}
             </p>
           </div>
 
@@ -65,7 +65,9 @@
       <template #header>
         <div class="dialog-head">
           <span>{{ previewItem?.title || "图片预览" }}</span>
-          <span class="dialog-sub">{{ previewItem?.author || "" }}</span>
+          <span class="dialog-sub">{{
+            previewItem?.author ? "@" + previewItem.author : ""
+          }}</span>
         </div>
       </template>
       <div class="preview-body" v-if="previewItem">
@@ -201,6 +203,7 @@
 import { reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { getItemDetailApi, updateItemApi } from "../../api/item";
+import { ro } from "element-plus/es/locale/index.mjs";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },

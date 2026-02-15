@@ -27,7 +27,7 @@
           <div class="video-info">
             <h3 class="title">{{ row.title || "" }}</h3>
             <p class="sub">
-              {{ row.author || "" }}
+              {{ row.author ? "@" + row.author : "" }}
               <span v-if="getDuration(row)">· {{ getDuration(row) }}</span>
               <span v-else-if="row.rating">· 评分 {{ row.rating }}</span>
             </p>
@@ -69,7 +69,9 @@
       <template #header>
         <div class="dialog-head">
           <span>{{ playerItem?.title || "视频播放" }}</span>
-          <span class="dialog-sub">{{ playerItem?.author || "" }}</span>
+          <span class="dialog-sub">{{
+            playerItem?.author ? "@" + playerItem.author : ""
+          }}</span>
         </div>
       </template>
       <div class="player-body" v-if="playerItem">
