@@ -14,6 +14,12 @@ import java.math.BigDecimal;
 public class ItemListVO implements Serializable {
     private Long id;
 
+    private Integer mediaType;
+    private String mediaTypeLabel; // label
+
+    private Integer contentType;
+    private String contentTypeLabel; // label
+
     private String storeUrl;
     private String content;
 

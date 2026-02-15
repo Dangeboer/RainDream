@@ -15,10 +15,12 @@ import org.mapstruct.Mapping;
 public interface ItemConverter {
     // ======================= VO 相关 =======================================
     // itemEntity -> itemListVO
-    @Mapping(
-            target = "trackingTypeLabel",
-            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getTrackingType(), com.dangeboer.raindream.enums.TrackingTypeEnum.class))"
-    )
+    @Mapping(target = "trackingTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getTrackingType(), com.dangeboer.raindream.enums.TrackingTypeEnum.class))")
+    @Mapping(target = "contentTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getContentType(), com.dangeboer.raindream.enums.ContentTypeEnum.class))")
+    @Mapping(target = "mediaTypeLabel",
+            expression = "java(com.dangeboer.raindream.base.IBaseEnum.labelOf(item.getMediaType(), com.dangeboer.raindream.enums.MediaTypeEnum.class))")
     ItemListVO toItemListVO(Item item);
 
     // itemEntity -> fanficListVO
