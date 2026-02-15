@@ -225,7 +225,7 @@ const isEntryActive = (entry) => {
   width: 2px;
   transform: rotate(20deg);
   transform-origin: center;
-  background: var(--white);
+  background: var(--xhs-white);
   pointer-events: none;
 }
 
