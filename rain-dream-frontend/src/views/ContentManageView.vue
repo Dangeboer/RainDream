@@ -418,7 +418,10 @@ const syncQueryFromRoute = async () => {
         page,
       },
     });
+    return true;
   }
+
+  return false;
 };
 
 const fetchImageUnionAndPaginate = async ({ contentType }) => {
@@ -538,7 +541,8 @@ const remove = async (id) => {
 watch(
   () => route.query,
   async () => {
-    await syncQueryFromRoute();
+    const replaced = await syncQueryFromRoute();
+    if (replaced) return;
     await fetchData();
   },
   { immediate: true },
