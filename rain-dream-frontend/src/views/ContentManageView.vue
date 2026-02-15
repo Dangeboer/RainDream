@@ -9,6 +9,10 @@
       <el-button
         v-for="entry in availableMediaGroups"
         :key="entry.value"
+        :class="{
+          'is-main-tab-active': isMediaGroupActive(entry.value),
+          'is-main-tab-pill': usePillStyleForMediaTabs,
+        }"
         plain
         size="small"
         @click="onMediaGroupChange(entry.value)"
@@ -208,6 +212,8 @@ const getAllowedContentGroups = (contentType) => {
 };
 
 const IMAGE_MEDIA_TYPES = [2, 3];
+const IMAGE_SUBTYPE_ENABLED_CONTENT_TYPES = [2, 3];
+const PILL_STYLE_CONTENT_TYPES = [5, 6, 7, 8, 9];
 
 const query = reactive({
   mode: "content",
@@ -524,11 +530,28 @@ const availableImageTypeEntries = computed(() => {
   return [{ value: "all", label: "全部" }, ...imageOptions];
 });
 
+const canUseImageSubType = ({ mode, contentType, mediaGroup }) => {
+  if (mediaGroup !== "image") return false;
+  if (mode !== "content") return true;
+  return IMAGE_SUBTYPE_ENABLED_CONTENT_TYPES.includes(Number(contentType));
+};
+
 const showMediaTabs = computed(
   () => query.mode === "content" && availableMediaGroups.value.length > 1,
 );
 
-const showImageTypeTabs = computed(() => currentMediaGroup.value === "image");
+const showImageTypeTabs = computed(() =>
+  canUseImageSubType({
+    mode: query.mode,
+    contentType: query.contentType,
+    mediaGroup: currentMediaGroup.value,
+  }),
+);
+
+const usePillStyleForMediaTabs = computed(() => {
+  if (query.mode !== "content") return false;
+  return PILL_STYLE_CONTENT_TYPES.includes(Number(query.contentType));
+});
 
 const showGenericTable = computed(
   () => query.mode === "content" && currentMediaGroup.value === "all",
@@ -551,7 +574,14 @@ const pageTitle = computed(() => {
     const mediaGroupLabel =
       contentMediaGroupLabelMap[currentMediaGroup.value] || "全部";
     if (currentMediaGroup.value === "image") {
-      if (query.imageSubType === "all") {
+      if (
+        !canUseImageSubType({
+          mode: query.mode,
+          contentType: query.contentType,
+          mediaGroup: currentMediaGroup.value,
+        }) ||
+        query.imageSubType === "all"
+      ) {
         return `${content} / 全部`;
       }
       return `${content} / ${mediaTypeLabelMap[query.mediaType] || "图片"}`;
@@ -575,8 +605,14 @@ const isImageSubActive = (value) => {
   );
 };
 
-const resolveImageSubType = (rawValue, currentType, group) => {
+const resolveImageSubType = (
+  rawValue,
+  currentType,
+  group,
+  allowImageSubType = true,
+) => {
   if (group !== "image") return "all";
+  if (!allowImageSubType) return "all";
   if (String(rawValue) === "all") return "all";
   const parsed = parsePositiveInt(rawValue);
   if (IMAGE_MEDIA_TYPES.includes(parsed)) return parsed;
@@ -584,9 +620,16 @@ const resolveImageSubType = (rawValue, currentType, group) => {
   return "all";
 };
 
-const resolveMediaTypeForGroup = (group, currentType, imageSubType = "all") => {
+const resolveMediaTypeForGroup = (
+  group,
+  currentType,
+  imageSubType = "all",
+  allowImageSubType = true,
+) => {
   if (group === "all") return undefined;
-  if (group === "image" && imageSubType === "all") return undefined;
+  if (group === "image" && (!allowImageSubType || imageSubType === "all")) {
+    return undefined;
+  }
   const candidates = mediaTypesByGroup[group] || [];
   if (candidates.length === 0) return currentType;
   if (candidates.includes(currentType)) return currentType;
@@ -605,9 +648,16 @@ const buildRouteQuery = (overrides = {}) => {
     "contentType",
     mode === "content" ? query.contentType : undefined,
   );
+  const imageSubTypeEnabled = canUseImageSubType({
+    mode,
+    contentType,
+    mediaGroup,
+  });
   const imageSubType = pick(
     "imageSubType",
-    mediaGroup === "image" ? query.imageSubType : undefined,
+    mediaGroup === "image" && imageSubTypeEnabled
+      ? query.imageSubType
+      : undefined,
   );
   const mediaType = pick("mediaType", query.mediaType || undefined);
   const page = pick("page", query.page);
@@ -617,7 +667,10 @@ const buildRouteQuery = (overrides = {}) => {
     mode,
     contentType: mode === "content" ? contentType : undefined,
     mediaGroup,
-    imageSubType: mediaGroup === "image" ? imageSubType : undefined,
+    imageSubType:
+      mediaGroup === "image" && imageSubTypeEnabled
+        ? imageSubType
+        : undefined,
     mediaType,
     page,
     size,
@@ -710,15 +763,23 @@ const syncQueryFromRoute = async () => {
     }
   }
 
+  const imageSubTypeEnabled = canUseImageSubType({
+    mode,
+    contentType,
+    mediaGroup,
+  });
+
   const imageSubType = resolveImageSubType(
     route.query.imageSubType,
     routeMediaType,
     mediaGroup,
+    imageSubTypeEnabled,
   );
   const mediaType = resolveMediaTypeForGroup(
     mediaGroup,
     routeMediaType,
     imageSubType,
+    imageSubTypeEnabled,
   );
 
   const hasMismatch =
@@ -727,7 +788,11 @@ const syncQueryFromRoute = async () => {
       String(route.query.contentType || "") ||
     String((mode === "content" ? mediaGroup : mediaGroup) || "") !==
       String(route.query.mediaGroup || "") ||
-    String((mediaGroup === "image" ? imageSubType : undefined) || "") !==
+    String(
+      (mediaGroup === "image" && imageSubTypeEnabled
+        ? imageSubType
+        : undefined) || "",
+    ) !==
       String(route.query.imageSubType || "") ||
     String(mediaType || "") !== String(route.query.mediaType || "") ||
     String(page) !== String(route.query.page || "") ||
@@ -748,7 +813,10 @@ const syncQueryFromRoute = async () => {
         mode,
         contentType: mode === "content" ? contentType : undefined,
         mediaGroup,
-        imageSubType: mediaGroup === "image" ? imageSubType : undefined,
+        imageSubType:
+          mediaGroup === "image" && imageSubTypeEnabled
+            ? imageSubType
+            : undefined,
         mediaType: mediaType || undefined,
         page,
         size,
@@ -795,9 +863,16 @@ const fetchVideoFromCacheAndPaginate = async ({ contentType, mediaType }) => {
 
 const fetchData = async () => {
   if (currentMediaGroup.value === "image") {
+    const effectiveImageSubType = canUseImageSubType({
+      mode: query.mode,
+      contentType: query.contentType,
+      mediaGroup: currentMediaGroup.value,
+    })
+      ? query.imageSubType
+      : "all";
     await fetchImageFromCacheAndPaginate({
       contentType: query.mode === "content" ? query.contentType : undefined,
-      imageSubType: query.imageSubType,
+      imageSubType: effectiveImageSubType,
     });
     return;
   }
@@ -848,16 +923,23 @@ const onPageChange = async (page) => {
 
 const onMediaGroupChange = async (group) => {
   const imageSubType = group === "image" ? "all" : "all";
+  const imageSubTypeEnabled = canUseImageSubType({
+    mode: query.mode,
+    contentType: query.contentType,
+    mediaGroup: group,
+  });
   const mediaType = resolveMediaTypeForGroup(
     group,
     query.mediaType,
     imageSubType,
+    imageSubTypeEnabled,
   );
   await router.push({
     path: "/content",
     query: buildRouteQuery({
       mediaGroup: group,
-      imageSubType: group === "image" ? imageSubType : undefined,
+      imageSubType:
+        group === "image" && imageSubTypeEnabled ? imageSubType : undefined,
       mediaType: mediaType || undefined,
       page: 1,
     }),
@@ -876,6 +958,8 @@ const onImageTypeChange = async (imageType) => {
     }),
   });
 };
+
+const isMediaGroupActive = (value) => currentMediaGroup.value === value;
 
 const goCreate = () => {
   router.push({
@@ -986,6 +1070,16 @@ onBeforeUnmount(() => {
   gap: 2px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.media-tabs .el-button.is-main-tab-pill {
+  font-size: 14px;
+}
+
+.media-tabs .el-button.is-main-tab-pill.is-main-tab-active {
+  --el-button-bg-color: var(--xhs-yellow);
+  --el-button-border-color: var(--xhs-yellow);
+  --el-button-text-color: var(--xhs-black);
 }
 
 .media-sub-tabs {
