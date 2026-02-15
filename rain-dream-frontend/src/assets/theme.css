@@ -17,6 +17,10 @@
   --xhs-orange: #eb7a53;
   --xhs-orange-hover: #f08c69;
   --xhs-yellow: #f7d44c;
+  --xhs-yellow-hover: #fae07a;
+
+  --pagination-bg: #fffaf0;
+  --pagination-border: rgba(38, 38, 38, 0.08);
 
   --line: rgba(38, 38, 38, 0.1);
   --shadow: 0 8px 25px rgba(38, 38, 38, 0.08);
@@ -238,6 +242,34 @@ body.font-hand .el-input__inner::placeholder {
 .el-dropdown-menu__item:not(.is-disabled):hover {
   background: var(--xhs-yellow-hover) !important;
   color: var(--xhs-black) !important;
+}
+
+/* 换页标签 */
+.el-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-text-color: var(--xhs-dark);
+  --el-pagination-button-color: var(--xhs-dark);
+  --el-pagination-button-bg-color: var(--pagination-bg);
+  --el-pagination-hover-color: var(--xhs-black);
+}
+
+.el-pagination button,
+.el-pagination .el-pager li {
+  background: var(--pagination-bg) !important;
+  border-color: var(--pagination-border) !important;
+  color: var(--xhs-dark) !important;
+}
+
+.el-pagination button:hover,
+.el-pagination .el-pager li:hover {
+  background: var(--xhs-white) !important;
+  color: var(--xhs-black) !important;
+}
+
+.el-pagination .el-pager li.is-active {
+  background: var(--xhs-orange) !important;
+  color: var(--white) !important;
+  font-weight: 700;
 }
 
 /* =====================================================
