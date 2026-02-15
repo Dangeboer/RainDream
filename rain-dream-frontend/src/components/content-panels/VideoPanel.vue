@@ -42,11 +42,11 @@
               >
                 下载
               </a>
-              <button class="action" type="button" @click="openEdit(row.id)">
-                修改
-              </button>
               <button class="action" type="button" @click="openDetail(row.id)">
                 详情
+              </button>
+              <button class="action" type="button" @click="openEdit(row.id)">
+                修改
               </button>
               <button
                 class="action danger"
@@ -143,7 +143,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="内容类型">
-            <el-select v-model="editForm.contentType" disabled>
+            <el-select v-model="editForm.contentType">
               <el-option
                 v-for="opt in contentTypeOptions"
                 :key="opt.value"
@@ -432,7 +432,7 @@ const submitEdit = async () => {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  background: var(--bg-panel-strong);
+  background: transparent;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   aspect-ratio: 4 / 3;
@@ -450,6 +450,7 @@ const submitEdit = async () => {
 .video-hover-layer {
   position: absolute;
   inset: 0;
+  z-index: 2;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -470,23 +471,26 @@ const submitEdit = async () => {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  z-index: 3;
   width: 48px;
   height: 48px;
   border-radius: 50%;
   border: 0;
-  background: rgba(235, 122, 83, 0.82);
+  background: var(--xhs-yellow);
   display: grid;
   place-items: center;
   cursor: pointer;
+  opacity: 1;
   transition:
+    opacity 0.2s ease,
     box-shadow 0.2s ease,
     transform 0.2s ease,
     background-color 0.2s ease;
 }
 
 .video-card:hover .play-btn {
-  box-shadow: 0 8px 24px rgba(38, 38, 38, 0.3);
-  background: rgba(235, 122, 83, 0.92);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .video-card:hover .video-hover-layer {
@@ -508,7 +512,7 @@ const submitEdit = async () => {
   height: 0;
   border-top: 8px solid transparent;
   border-bottom: 8px solid transparent;
-  border-left: 12px solid var(--dark);
+  border-left: 12px solid var(--grey);
   margin-left: 2px;
 }
 
@@ -545,7 +549,7 @@ const submitEdit = async () => {
   border: 0;
   border-radius: 999px;
   padding: 5px 12px;
-  font-size: 13px;
+  font-size: 10px;
   line-height: 1;
   color: #fff;
   background: rgba(38, 38, 38, 0.55);
@@ -568,7 +572,7 @@ const submitEdit = async () => {
 }
 
 .dialog-sub {
-  color: var(--text-secondary);
+  color: var(--grey);
   font-size: 13px;
 }
 

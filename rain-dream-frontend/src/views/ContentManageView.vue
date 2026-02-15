@@ -2,14 +2,13 @@
   <section class="card-panel panel">
     <div class="head">
       <h2>{{ pageTitle }}</h2>
-      <el-button type="primary" @click="goCreate">新增资源</el-button>
+      <el-button @click="goCreate">+ 新增资源</el-button>
     </div>
 
     <div v-if="showMediaTabs" class="media-tabs">
       <el-button
         v-for="entry in availableMediaGroups"
         :key="entry.value"
-        :type="currentMediaGroup === entry.value ? 'primary' : 'default'"
         plain
         size="small"
         @click="onMediaGroupChange(entry.value)"
@@ -22,7 +21,7 @@
       <el-button
         v-for="entry in availableImageTypeEntries"
         :key="entry.value"
-        :type="isImageSubActive(entry.value) ? 'primary' : 'default'"
+        :class="{ 'is-sub-tab-active': isImageSubActive(entry.value) }"
         plain
         size="small"
         @click="onImageTypeChange(entry.value)"
@@ -47,7 +46,9 @@
             <template #default="{ row }">
               <el-button text @click="onDetail(row.id)">详情</el-button>
               <el-button text @click="onEdit(row.id)">编辑</el-button>
-              <el-button text type="danger" @click="remove(row.id)">删除</el-button>
+              <el-button text type="danger" @click="remove(row.id)"
+                >删除</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -251,7 +252,11 @@ const filterByImageSubType = (list, imageSubType) => {
 const filterByContentType = (list, contentType) => {
   if (!contentType) return list;
   return list.filter((item) => {
-    if (item?.contentType === undefined || item?.contentType === null || item?.contentType === "") {
+    if (
+      item?.contentType === undefined ||
+      item?.contentType === null ||
+      item?.contentType === ""
+    ) {
       return true;
     }
     return Number(item.contentType) === Number(contentType);
@@ -272,7 +277,9 @@ const currentMediaGroup = computed(() => {
 const availableMediaGroups = computed(() => {
   if (query.mode !== "content") return globalMediaGroupOptions;
   const allowed = getAllowedContentGroups(query.contentType);
-  return contentMediaGroupOptions.filter((item) => allowed.includes(item.value));
+  return contentMediaGroupOptions.filter((item) =>
+    allowed.includes(item.value),
+  );
 });
 
 const availableImageTypeEntries = computed(() => {
@@ -322,7 +329,9 @@ const pageTitle = computed(() => {
 
 const isImageSubActive = (value) => {
   if (value === "all") return query.imageSubType === "all";
-  return Number(query.mediaType) === Number(value) && query.imageSubType !== "all";
+  return (
+    Number(query.mediaType) === Number(value) && query.imageSubType !== "all"
+  );
 };
 
 const resolveImageSubType = (rawValue, currentType, group) => {
@@ -458,7 +467,8 @@ const onPageChange = async (page) => {
       mode: query.mode,
       contentType: query.mode === "content" ? query.contentType : undefined,
       mediaGroup: query.mediaGroup,
-      imageSubType: query.mediaGroup === "image" ? query.imageSubType : undefined,
+      imageSubType:
+        query.mediaGroup === "image" ? query.imageSubType : undefined,
       mediaType: query.mediaType || undefined,
       page,
     },
@@ -467,7 +477,11 @@ const onPageChange = async (page) => {
 
 const onMediaGroupChange = async (group) => {
   const imageSubType = group === "image" ? "all" : "all";
-  const mediaType = resolveMediaTypeForGroup(group, query.mediaType, imageSubType);
+  const mediaType = resolveMediaTypeForGroup(
+    group,
+    query.mediaType,
+    imageSubType,
+  );
   await router.push({
     path: "/content",
     query: {
@@ -540,21 +554,30 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
 }
 
 .media-tabs {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
 .media-sub-tabs {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.media-sub-tabs .el-button {
+  font-size: 14px;
+}
+
+.media-sub-tabs .el-button.is-sub-tab-active {
+  --el-button-bg-color: var(--xhs-yellow);
+  --el-button-border-color: var(--xhs-yellow);
+  --el-button-text-color: var(--xhs-black);
 }
 
 .table-wrap {

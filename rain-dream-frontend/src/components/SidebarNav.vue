@@ -113,7 +113,14 @@ const mediaMenuBase = [
   { label: "链接", value: "link", group: "media" },
 ];
 
-const mediaGroupByType = { 1: "text", 2: "image", 3: "image", 4: "image", 5: "video", 6: "link" };
+const mediaGroupByType = {
+  1: "text",
+  2: "image",
+  3: "image",
+  4: "image",
+  5: "video",
+  6: "link",
+};
 const mediaTypeByGroup = { text: 1, image: 2, video: 5, link: 6 };
 
 const route = useRoute();
@@ -143,8 +150,11 @@ const isEntryActive = (entry) => {
   if (entry.group === "media") {
     const mediaGroup = String(route.query.mediaGroup || "");
     const currentMediaType = Number.parseInt(route.query.mediaType, 10);
-    return route.path === "/content" && route.query.mode === "media" && (
-      mediaGroup === entry.value || mediaGroupByType[currentMediaType] === entry.value
+    return (
+      route.path === "/content" &&
+      route.query.mode === "media" &&
+      (mediaGroup === entry.value ||
+        mediaGroupByType[currentMediaType] === entry.value)
     );
   }
   return false;
@@ -211,7 +221,7 @@ const isEntryActive = (entry) => {
 }
 .home-menu .menu-item:hover:not(.is-active) {
   background: rgba(38, 38, 38, 0.06);
-  color: var(--text-main);
+  color: var(--xhs-dark);
 }
 .menu-group + .menu-group {
   margin-top: 16px;
@@ -226,17 +236,17 @@ const isEntryActive = (entry) => {
 .menu-item {
   padding: 12px 24px;
   border-radius: 10px;
-  color: var(--text-secondary);
+  color: var(--grey);
   position: relative;
 }
 
 .menu-item:hover {
   background: rgba(38, 38, 38, 0.06);
-  color: var(--text-main);
+  color: var(--xhs-dark);
 }
 
 .menu-item.is-active {
-  background: var(--highlight);
+  background: var(--xhs-yellow);
   color: var(--dark);
   font-weight: 700;
 }

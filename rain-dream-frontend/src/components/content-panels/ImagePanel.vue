@@ -140,7 +140,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="内容类型">
-            <el-select v-model="editForm.contentType" disabled>
+            <el-select v-model="editForm.contentType">
               <el-option
                 v-for="opt in contentTypeOptions"
                 :key="opt.value"
@@ -492,7 +492,7 @@ const submitEdit = async () => {
   border: 0;
   border-radius: 999px;
   padding: 5px 12px;
-  font-size: 13px;
+  font-size: 10px;
   line-height: 1;
   color: #fff;
   background: rgba(38, 38, 38, 0.55);
