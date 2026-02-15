@@ -532,10 +532,34 @@ const onEdit = (id) => {
 };
 
 const remove = async (id) => {
-  await ElMessageBox.confirm("确认删除该资源吗？", "提示", { type: "warning" });
-  await deleteItemApi(id);
-  ElMessage.success("删除成功");
-  fetchData();
+  try {
+    await ElMessageBox.confirm("确认删除该资源吗？", "提示", {
+      type: "warning",
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+      beforeClose: async (action, instance, done) => {
+        if (action !== "confirm") {
+          done();
+          return;
+        }
+        instance.confirmButtonLoading = true;
+        instance.confirmButtonText = "确认...";
+        try {
+          await deleteItemApi(id);
+          ElMessage.success("删除成功");
+          await fetchData();
+          done();
+        } finally {
+          instance.confirmButtonLoading = false;
+          instance.confirmButtonText = "确认";
+        }
+      },
+    });
+  } catch (error) {
+    if (error !== "cancel" && error !== "close") {
+      throw error;
+    }
+  }
 };
 
 watch(
