@@ -1,6 +1,7 @@
 package com.dangeboer.raindream.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -334,11 +335,29 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             throw new BadRequestException("请提供实况照片视频文件");
         }
 
-        // 2. 更新 item 主表（注意：要 setId，否则 MP 不知道更新哪条）
+        // 2. 更新 item 主表：显式 set，允许 null 覆盖原值
         Item toUpdate = itemConverter.toItem(itemForm);
-        toUpdate.setId(itemId);
-        toUpdate.setUserId(userId); // 防止被前端篡改
-        itemMapper.updateById(toUpdate);
+        itemMapper.update(
+                null,
+                new LambdaUpdateWrapper<Item>()
+                        .eq(Item::getId, itemId)
+                        .eq(Item::getUserId, userId)
+                        .set(Item::getMediaType, toUpdate.getMediaType())
+                        .set(Item::getContentType, toUpdate.getContentType())
+                        .set(Item::getStoreUrl, toUpdate.getStoreUrl())
+                        .set(Item::getContent, toUpdate.getContent())
+                        .set(Item::getTitle, toUpdate.getTitle())
+                        .set(Item::getFandom, toUpdate.getFandom())
+                        .set(Item::getCp, toUpdate.getCp())
+                        .set(Item::getAuthor, toUpdate.getAuthor())
+                        .set(Item::getSourceUrl, toUpdate.getSourceUrl())
+                        .set(Item::getReleaseYear, toUpdate.getReleaseYear())
+                        .set(Item::getSizeBytes, toUpdate.getSizeBytes())
+                        .set(Item::getTrackingType, toUpdate.getTrackingType())
+                        .set(Item::getRating, toUpdate.getRating())
+                        .set(Item::getNotes, toUpdate.getNotes())
+                        .set(Item::getSummary, toUpdate.getSummary())
+        );
 
         // 3. 处理 fanfic / media 切换
         // 你现在设计：fanfic/media 都以 itemId 为主键（或唯一）
@@ -353,7 +372,18 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             if (existingFanfic == null) {
                 fanficMapper.insert(fanfic);
             } else {
-                fanficMapper.updateById(fanfic);
+                fanficMapper.update(
+                        null,
+                        new LambdaUpdateWrapper<Fanfic>()
+                                .eq(Fanfic::getItemId, itemId)
+                                .set(Fanfic::getEra, fanfic.getEra())
+                                .set(Fanfic::getCharSetting, fanfic.getCharSetting())
+                                .set(Fanfic::getLengthType, fanfic.getLengthType())
+                                .set(Fanfic::getWorkType, fanfic.getWorkType())
+                                .set(Fanfic::getUpdateDate, fanfic.getUpdateDate())
+                                .set(Fanfic::getEndingType, fanfic.getEndingType())
+                                .set(Fanfic::getReadCount, fanfic.getReadCount())
+                );
             }
 
             // fanfic 形态下，不该有 media
@@ -367,7 +397,12 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             if (existingMedia == null) {
                 mediaMapper.insert(media);
             } else {
-                mediaMapper.updateById(media);
+                mediaMapper.update(
+                        null,
+                        new LambdaUpdateWrapper<Media>()
+                                .eq(Media::getItemId, itemId)
+                                .set(Media::getLiveUrl, media.getLiveUrl())
+                );
             }
 
             // media 形态下，不该有 fanfic
