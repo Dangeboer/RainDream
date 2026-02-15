@@ -52,33 +52,44 @@
           </div>
         </el-upload>
 
-        <div class="file-toolbar" v-if="selectedFiles.length">
-          <span>已选择 {{ selectedFiles.length }} 个文件</span>
-          <el-button @click="clearFiles">清空</el-button>
-        </div>
+        <div v-if="selectedFiles.length" class="file-list-wrap">
+          <div class="file-toolbar">
+            <span>已选择 {{ selectedFiles.length }} 个文件</span>
+            <el-button @click="clearFiles">清空</el-button>
+          </div>
 
-        <el-table
-          v-if="selectedFiles.length"
-          :data="selectedFiles"
-          stripe
-          size="small"
-          class="file-table"
-          max-height="280"
-        >
-          <el-table-column prop="name" label="文件名" min-width="300" />
-          <el-table-column label="大小" width="120">
-            <template #default="{ row }">
-              {{ formatSize(row.size) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="100">
-            <template #default="{ $index }">
-              <el-button type="danger" @click="removeFile($index)"
-                >删除</el-button
-              >
-            </template>
-          </el-table-column>
-        </el-table>
+          <el-table
+            :data="selectedFiles"
+            stripe
+            size="small"
+            class="file-table"
+            max-height="280"
+          >
+            <el-table-column prop="name" label="文件名" min-width="300" />
+            <el-table-column
+              label="大小"
+              width="120"
+              align="right"
+              header-align="right"
+            >
+              <template #default="{ row }">
+                {{ formatSize(row.size) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="操作"
+              width="110"
+              align="center"
+              header-align="center"
+            >
+              <template #default="{ $index }">
+                <el-button type="danger" @click="removeFile($index)">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-form-item>
 
       <el-form-item class="span-2">
@@ -300,15 +311,45 @@ const submit = async () => {
   font-size: 12px;
 }
 
+.compact-form :deep(.el-upload-dragger) {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.32);
+  color: var(--xhs-black);
+}
+
+.compact-form :deep(.el-upload-dragger:hover) {
+  border-color: var(--xhs-orange);
+  background: rgba(247, 212, 76, 0.1);
+}
+
+.compact-form :deep(.el-upload-dragger.is-dragover) {
+  border-color: var(--xhs-orange);
+  background: rgba(247, 212, 76, 0.14);
+}
+
+.compact-form :deep(.el-upload:focus .el-upload-dragger),
+.compact-form :deep(.el-upload:active .el-upload-dragger) {
+  border-color: var(--xhs-orange);
+  color: var(--xhs-black);
+}
+
+.compact-form :deep(.el-upload .el-upload__text),
+.compact-form :deep(.el-upload .el-upload__text em),
+.compact-form :deep(.el-upload:focus .upload-tip),
+.compact-form :deep(.el-upload:active .upload-tip) {
+  color: var(--xhs-black);
+}
+
 .file-toolbar {
   margin-top: 12px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .file-table {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 @media (max-width: 1200px) {
