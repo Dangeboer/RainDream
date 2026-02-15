@@ -59,7 +59,9 @@
 
     <el-dialog
       v-model="previewVisible"
-      width="min(900px, 90vw)"
+      width="min(820px, 84vw)"
+      class="preview-dialog"
+      :lock-scroll="true"
       destroy-on-close
       @closed="onPreviewClosed"
     >
@@ -87,7 +89,7 @@
             class="preview-image"
             :src="getStoreUrl(previewItem)"
             :alt="previewItem.title || 'preview'"
-            :style="{ transform: `scale(${previewScale})` }"
+            :style="{ '--preview-scale': previewScale }"
           />
         </div>
       </div>
@@ -217,7 +219,6 @@
 import { reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { getItemDetailApi, updateItemApi } from "../../api/item";
-import { ro } from "element-plus/es/locale/index.mjs";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -351,13 +352,8 @@ const onPreviewWheel = (event) => {
   if (!shouldZoom) return;
   event.preventDefault();
 
-  const next = previewScale.value - event.deltaY * WHEEL_ZOOM_STEP;
+  const next = previewScale.value + event.deltaY * WHEEL_ZOOM_STEP;
   setPreviewScale(next);
-  // if (event.deltaY < 0) {
-  //   zoomIn();
-  // } else {
-  //   zoomOut();
-  // }
 };
 
 const onPreviewClosed = () => {
@@ -593,7 +589,9 @@ const formatSize = (size = 0) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 72vh;
+  height: 70vh;
+  max-height: 70vh;
+  overflow: hidden;
 }
 
 .preview-toolbar {
@@ -623,7 +621,7 @@ const formatSize = (size = 0) => {
 
 .preview-canvas {
   flex: 1;
-  max-height: calc(72vh - 38px);
+  min-height: 0;
   overflow: auto;
   display: flex;
   justify-content: center;
@@ -631,12 +629,18 @@ const formatSize = (size = 0) => {
 }
 
 .preview-image {
-  max-width: 100%;
+  height: calc(100% * var(--preview-scale, 1));
+  width: auto;
+  max-width: none;
   max-height: none;
   border-radius: 8px;
-  object-fit: contain;
-  transform-origin: top center;
-  transition: transform 0.12s ease;
+  object-fit: initial;
+  transition: height 0.12s ease;
+}
+
+:deep(.preview-dialog .el-dialog__body) {
+  padding-top: 8px;
+  overflow: hidden;
 }
 
 .edit-form {
