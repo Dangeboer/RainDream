@@ -2,18 +2,22 @@
   <el-scrollbar class="sidebar-scroll">
     <div class="sidebar-inner">
       <div class="logo">RainDream</div>
-      <el-button
-        type="primary"
-        class="new-btn"
-        @click="$router.push('/items/new')"
-        >+ 上传新资源</el-button
-      >
-      <el-button
-        type="primary"
-        class="new-btn"
-        @click="$router.push('/items/batch/new')"
-        >+ 批量上传</el-button
-      >
+      <div class="quick-upload" role="group" aria-label="资源上传入口">
+        <button
+          type="button"
+          class="quick-upload-main"
+          @click="$router.push('/items/new')"
+        >
+          + 上传新资源
+        </button>
+        <button
+          type="button"
+          class="quick-upload-main"
+          @click="$router.push('/items/batch/new')"
+        >
+          + 批量
+        </button>
+      </div>
       <nav class="menu home-menu">
         <router-link
           to="/dashboard"
@@ -201,16 +205,61 @@ const isEntryActive = (entry) => {
   margin: 10px 8px 24px;
 }
 
-.new-btn {
+.quick-upload {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.6fr) minmax(0, 0.4fr);
   width: 100%;
+  margin-bottom: 32px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(38, 38, 38, 0.08);
+}
+
+.quick-upload::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 62%;
+  width: 2px;
+  transform: rotate(20deg);
+  transform-origin: center;
+  background: var(--white);
+  pointer-events: none;
+}
+
+.quick-upload-main {
   height: 44px;
+  border: 0;
+  color: var(--xhs-black);
   font-size: 18px;
   font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.18s ease;
+
+  background: var(--xhs-orange);
 }
-.new-btn + .new-btn {
-  margin-left: 0;
-  margin-top: 8px;
-  margin-bottom: 32px;
+
+.quick-upload-main:hover {
+  color: var(--white);
+  background: var(--xhs-orange);
+}
+
+.quick-upload-main:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: -2px;
+}
+
+@media (max-width: 900px) {
+  .quick-upload-main {
+    font-size: 16px;
+  }
+
+  .quick-upload::after {
+    left: 70%;
+  }
 }
 
 .menu {
