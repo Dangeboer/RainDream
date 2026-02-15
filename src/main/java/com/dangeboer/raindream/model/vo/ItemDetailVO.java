@@ -1,5 +1,6 @@
 package com.dangeboer.raindream.model.vo;
 
+import com.dangeboer.raindream.model.form.MediaForm;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,8 +40,10 @@ public class ItemDetailVO implements Serializable {
     private String notes;
     private String summary;
 
+    // 媒体补充信息（实况照片）
+    private MediaForm mediaForm;
+
     // 标签和平台信息
     private List<TagVO> tagVOS;
     private List<PltVO> pltVOS;
 }
-

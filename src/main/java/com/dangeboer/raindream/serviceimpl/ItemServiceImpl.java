@@ -17,6 +17,7 @@ import com.dangeboer.raindream.mapper.*;
 import com.dangeboer.raindream.model.entity.*;
 import com.dangeboer.raindream.model.form.ItemBatchForm;
 import com.dangeboer.raindream.model.form.ItemForm;
+import com.dangeboer.raindream.model.form.MediaForm;
 import com.dangeboer.raindream.model.vo.FanficDetailVO;
 import com.dangeboer.raindream.model.vo.FanficListVO;
 import com.dangeboer.raindream.model.vo.ItemDetailVO;
@@ -123,6 +124,15 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         ItemDetailVO itemDetailVO = itemConverter.toItemDetailVO(item);
         signStoreUrlInPlace(userId, itemDetailVO);
+        if (Integer.valueOf(4).equals(item.getMediaType())) {
+            Media media = mediaMapper.selectById(itemId);
+            if (media != null) {
+                MediaForm mediaForm = new MediaForm();
+                mediaForm.setLiveUrl(media.getLiveUrl());
+                itemDetailVO.setMediaForm(mediaForm);
+                signLiveUrlInPlace(userId, itemDetailVO);
+            }
+        }
 
         List<Tag> tags = tagMapper.selectByItemId(userId, itemId);
         List<Plt> plts = pltMapper.selectByItemId(userId, itemId);
@@ -258,7 +268,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         if (isFanfic && itemForm.getFanficForm() == null) {
             throw new BadRequestException("请提供文章详细信息");
-        } else if (isMedia && itemForm.getMediaForm() == null) {
+        } else if (isMedia && !hasLiveUrl(itemForm)) {
             throw new BadRequestException("请提供实况照片视频文件");
         }
 
@@ -331,7 +341,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         if (isFanfic && itemForm.getFanficForm() == null) {
             throw new BadRequestException("请提供文章详细信息");
-        } else if (isMedia && itemForm.getMediaForm() == null) {
+        } else if (isMedia && !hasLiveUrl(itemForm)) {
             throw new BadRequestException("请提供实况照片视频文件");
         }
 
@@ -664,6 +674,26 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         } catch (Exception ignored) {
             // 签名失败时保留原始 storeUrl，避免影响主流程返回。
         }
+    }
+
+    private void signLiveUrlInPlace(Long userId, ItemDetailVO vo) {
+        String liveUrl = vo == null || vo.getMediaForm() == null
+                ? null
+                : vo.getMediaForm().getLiveUrl();
+        if (liveUrl == null || liveUrl.isBlank()) {
+            return;
+        }
+        try {
+            vo.getMediaForm().setLiveUrl(ossService.presignReadUrl(userId, liveUrl));
+        } catch (Exception ignored) {
+            // 签名失败时保留原始 liveUrl，避免影响主流程返回。
+        }
+    }
+
+    private boolean hasLiveUrl(ItemForm itemForm) {
+        return itemForm.getMediaForm() != null
+                && itemForm.getMediaForm().getLiveUrl() != null
+                && !itemForm.getMediaForm().getLiveUrl().isBlank();
     }
 
 //       原始方法
