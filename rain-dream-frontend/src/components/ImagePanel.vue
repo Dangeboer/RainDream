@@ -1,87 +1,101 @@
 <template>
   <div class="media-grid-wrap">
-    <el-empty v-if="rows.length === 0" description="暂无视频" />
+    <el-empty v-if="rows.length === 0" description="暂无图片" />
 
-    <div v-else class="media-grid video-grid">
+    <div v-else class="media-grid image-grid">
       <article
         v-for="row in rows"
         :key="row.id"
-        class="video-card"
-        @click="openPlayer(row)"
+        class="image-card"
+        @click="openPreview(row)"
       >
-        <video
-          class="video-bg"
+        <img
+          class="image-main"
           :src="getStoreUrl(row)"
-          preload="metadata"
-          muted
-          playsinline
+          :alt="row.title || 'image'"
+          loading="lazy"
         />
 
-        <button class="play-btn" type="button" @click.stop="openPlayer(row)">
-          <span class="play-triangle"></span>
-        </button>
-
-        <div class="video-hover-layer">
-          <div class="video-mask"></div>
-
-          <div class="video-info">
+        <div class="image-overlay">
+          <div class="overlay-main">
             <h3 class="title">{{ row.title || "" }}</h3>
             <p class="sub">
               {{ row.author ? "@" + row.author : "" }}
-              <span v-if="getDuration(row)">· {{ getDuration(row) }}</span>
-              <span v-else-if="row.rating">· 评分 {{ row.rating }}</span>
             </p>
+          </div>
 
-            <div class="actions" @click.stop>
-              <button class="action" type="button" @click="openDetail(row.id)">
-                详情
-              </button>
-              <a
-                class="action"
-                :href="getStoreUrl(row)"
-                download
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                下载
-              </a>
-              <button class="action" type="button" @click="openEdit(row.id)">
-                编辑
-              </button>
-              <button
-                class="action danger"
-                type="button"
-                @click="$emit('remove', row.id)"
-              >
-                删除
-              </button>
-            </div>
+          <div class="overlay-actions">
+            <button
+              class="action"
+              type="button"
+              @click.stop="openDetail(row.id)"
+            >
+              详情
+            </button>
+            <a
+              class="action"
+              :href="getStoreUrl(row)"
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              @click.stop
+            >
+              下载
+            </a>
+            <button class="action" type="button" @click.stop="openEdit(row.id)">
+              编辑
+            </button>
+            <button
+              class="action danger"
+              type="button"
+              @click.stop="$emit('remove', row.id)"
+            >
+              删除
+            </button>
           </div>
         </div>
       </article>
     </div>
 
     <el-dialog
-      v-model="playerVisible"
-      width="min(960px, 92vw)"
+      v-model="previewVisible"
+      width="min(820px, 84vw)"
+      class="preview-dialog"
+      :lock-scroll="true"
       destroy-on-close
+      @closed="onPreviewClosed"
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ playerItem?.title || "视频播放" }}</span>
+          <span>{{ previewItem?.title || "图片预览" }}</span>
           <span class="dialog-sub">{{
-            playerItem?.author ? "@" + playerItem.author : ""
+            previewItem?.author ? "@" + previewItem.author : ""
           }}</span>
         </div>
       </template>
-      <div class="player-body" v-if="playerItem">
-        <video
-          class="video-player"
-          :src="getStoreUrl(playerItem)"
-          controls
-          autoplay
-          playsinline
-        />
+      <div class="preview-body" v-if="previewItem">
+        <div class="preview-toolbar">
+          <button class="preview-tool" type="button" @click="zoomOut">-</button>
+          <span class="preview-scale"
+            >{{ Math.round(previewScale * 100) }}%</span
+          >
+          <button class="preview-tool" type="button" @click="zoomIn">+</button>
+        </div>
+        <div
+          ref="previewCanvasRef"
+          class="preview-canvas"
+          @wheel="onPreviewWheel"
+        >
+          <div class="preview-stage" :style="previewStageStyle">
+            <img
+              class="preview-image"
+              :src="getStoreUrl(previewItem)"
+              :alt="previewItem.title || 'preview'"
+              @load="onPreviewImageLoad"
+              @click="togglePreviewQuickZoom"
+            />
+          </div>
+        </div>
       </div>
     </el-dialog>
 
@@ -110,11 +124,14 @@
         <el-descriptions-item label="评分">{{
           detailItem.rating ?? "-"
         }}</el-descriptions-item>
-        <el-descriptions-item label="简介" :span="2">{{
-          detailItem.summary || "-"
+        <el-descriptions-item label="大小">{{
+          formatSize(detailItem.sizeBytes ?? 0)
         }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{
           detailItem.notes || "-"
+        }}</el-descriptions-item>
+        <el-descriptions-item label="总结" :span="2">{{
+          detailItem.summary || "-"
         }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -166,16 +183,6 @@
           <el-form-item label="作者">
             <el-input v-model="editForm.author" />
           </el-form-item>
-          <el-form-item label="追踪状态">
-            <el-select v-model="editForm.trackingType" clearable>
-              <el-option
-                v-for="opt in trackingTypeOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item label="评分">
             <el-input-number
               v-model="editForm.rating"
@@ -213,9 +220,16 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+} from "vue";
 import { ElMessage } from "element-plus";
-import { getItemDetailApi, updateItemApi } from "../../api/item";
+import { getItemDetailApi, updateItemApi } from "../api/item";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -237,14 +251,6 @@ const mediaTypeOptions = [
   { value: 6, label: "链接" },
 ];
 
-const trackingTypeOptions = [
-  { value: 1, label: "未看" },
-  { value: 2, label: "在看" },
-  { value: 3, label: "追平" },
-  { value: 4, label: "看过" },
-  { value: 5, label: "归档" },
-];
-
 defineProps({
   rows: {
     type: Array,
@@ -258,8 +264,14 @@ defineProps({
 
 const emit = defineEmits(["detail", "edit", "remove", "updated"]);
 
-const playerVisible = ref(false);
-const playerItem = ref(null);
+const previewVisible = ref(false);
+const previewItem = ref(null);
+const previewScale = ref(1);
+const previewCanvasRef = ref(null);
+const previewImageRatio = ref(0);
+const previewCanvasWidth = ref(0);
+const previewCanvasHeight = ref(0);
+const previewQuickZoomed = ref(false);
 const detailVisible = ref(false);
 const detailLoading = ref(false);
 const detailItem = ref(null);
@@ -292,9 +304,6 @@ const editForm = reactive({
 
 const getStoreUrl = (row) => row?.storeUrl || "";
 
-const getDuration = (row) =>
-  row?.duration || row?.videoDuration || "";
-
 const normalizeDetail = (data = {}) => ({
   ...data,
   id: data?.id,
@@ -305,6 +314,9 @@ const normalizeDetail = (data = {}) => ({
   storeUrl: data?.storeUrl ?? "",
   sourceUrl: data?.sourceUrl ?? "",
   trackingType: data?.trackingType,
+  mediaForm: {
+    liveUrl: data?.mediaForm?.liveUrl ?? "",
+  },
   tags: (data?.tags || data?.tagVOS || [])
     .map((item) => item?.name || item?.tagName || item)
     .filter(Boolean),
@@ -313,11 +325,144 @@ const normalizeDetail = (data = {}) => ({
     .filter(Boolean),
 });
 
-const openPlayer = (row) => {
+const openPreview = (row) => {
   if (!getStoreUrl(row)) return;
-  playerItem.value = row;
-  playerVisible.value = true;
+  previewScale.value = 1;
+  previewImageRatio.value = 0;
+  previewQuickZoomed.value = false;
+  previewItem.value = row;
+  previewVisible.value = true;
+  nextTick(() => {
+    updatePreviewCanvasSize();
+  });
 };
+
+const PREVIEW_MIN_SCALE = 0.5;
+const PREVIEW_MAX_SCALE = 10;
+
+const setPreviewScale = (next) => {
+  const clamped = Math.min(
+    PREVIEW_MAX_SCALE,
+    Math.max(PREVIEW_MIN_SCALE, next),
+  );
+  previewScale.value = Number(clamped.toFixed(4));
+};
+
+const zoomIn = () => {
+  setPreviewScale(previewScale.value + 0.2);
+  previewQuickZoomed.value = false;
+};
+
+const zoomOut = () => {
+  setPreviewScale(previewScale.value - 0.2);
+  previewQuickZoomed.value = false;
+};
+
+const resetZoom = () => {
+  previewScale.value = 1;
+  previewQuickZoomed.value = false;
+};
+
+const onPreviewImageLoad = (event) => {
+  const img = event?.target;
+  const naturalWidth = img?.naturalWidth || 0;
+  const naturalHeight = img?.naturalHeight || 0;
+  if (!naturalWidth || !naturalHeight) return;
+  previewImageRatio.value = naturalWidth / naturalHeight;
+  updatePreviewCanvasSize();
+};
+
+const updatePreviewCanvasSize = () => {
+  const canvasEl = previewCanvasRef.value;
+  if (!canvasEl) return;
+  previewCanvasWidth.value = canvasEl.clientWidth;
+  previewCanvasHeight.value = canvasEl.clientHeight;
+};
+
+const getBasePreviewSize = () => {
+  const imageRatio = previewImageRatio.value;
+  const canvasWidth = previewCanvasWidth.value;
+  const canvasHeight = previewCanvasHeight.value;
+  if (!imageRatio || !canvasWidth || !canvasHeight) return null;
+
+  const canvasRatio = canvasWidth / canvasHeight;
+  if (imageRatio >= canvasRatio) {
+    return {
+      width: canvasWidth,
+      height: canvasWidth / imageRatio,
+    };
+  }
+
+  return {
+    width: canvasHeight * imageRatio,
+    height: canvasHeight,
+  };
+};
+
+const fitShortSide = () => {
+  updatePreviewCanvasSize();
+  const baseSize = getBasePreviewSize();
+  if (!baseSize) return false;
+  const fitShortScale = Math.max(
+    previewCanvasWidth.value / baseSize.width,
+    previewCanvasHeight.value / baseSize.height,
+  );
+  setPreviewScale(fitShortScale * 0.95);
+  previewQuickZoomed.value = true;
+  return true;
+};
+
+const togglePreviewQuickZoom = () => {
+  if (previewQuickZoomed.value) {
+    resetZoom();
+    return;
+  }
+  fitShortSide();
+};
+
+const WHEEL_ZOOM_STEP = 0.004; // 越大越灵敏
+
+const onPreviewWheel = (event) => {
+  const shouldZoom = event.metaKey || event.ctrlKey;
+  if (!shouldZoom) return;
+  event.preventDefault();
+  previewQuickZoomed.value = false;
+
+  const next = previewScale.value - event.deltaY * WHEEL_ZOOM_STEP;
+  setPreviewScale(next);
+};
+
+const onPreviewClosed = () => {
+  previewItem.value = null;
+  previewScale.value = 1;
+  previewImageRatio.value = 0;
+  previewCanvasWidth.value = 0;
+  previewCanvasHeight.value = 0;
+  previewQuickZoomed.value = false;
+};
+
+const previewStageStyle = computed(() => {
+  const baseSize = getBasePreviewSize();
+  if (!baseSize) {
+    return {
+      width: "100%",
+      height: "100%",
+    };
+  }
+  const scale = previewScale.value;
+  return {
+    width: `${baseSize.width * scale}px`,
+    height: `${baseSize.height * scale}px`,
+  };
+});
+
+onMounted(() => {
+  window.addEventListener("resize", updatePreviewCanvasSize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updatePreviewCanvasSize);
+});
 
 const openDetail = async (itemId) => {
   if (!itemId) return;
@@ -357,7 +502,7 @@ const openEdit = async (itemId) => {
     editForm.tags = data.tags || [];
     editForm.plts = data.plts || [];
     editForm.fanficForm = data.fanficForm ?? null;
-    editForm.mediaForm = data.mediaForm ?? null;
+    editForm.mediaForm = data.mediaForm ?? { liveUrl: "" };
   } finally {
     editLoading.value = false;
   }
@@ -415,6 +560,13 @@ const submitEdit = async () => {
     editSubmitting.value = false;
   }
 };
+
+const formatSize = (size = 0) => {
+  if (!size) return "0 B";
+  if (size < 1000) return `${size} B`;
+  if (size < 1000 * 1000) return `${(size / 1000).toFixed(1)} KB`;
+  return `${(size / (1000 * 1000)).toFixed(1)} MB`;
+};
 </script>
 
 <style scoped>
@@ -429,101 +581,51 @@ const submitEdit = async () => {
   gap: 14px;
 }
 
-.video-card {
+.image-card {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  background: transparent;
+  background: var(--bg-panel-strong);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   aspect-ratio: 4 / 3;
   cursor: pointer;
 }
 
-.video-bg {
+.image-main {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: saturate(0.92);
 }
 
-.video-hover-layer {
+.image-overlay {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px;
+  color: #fff;
+  background: linear-gradient(
+    to top,
+    rgba(38, 38, 38, 0.72) 0%,
+    rgba(38, 38, 38, 0.36) 45%,
+    rgba(38, 38, 38, 0.05) 100%
+  );
   opacity: 0;
   transition: opacity 0.2s ease;
 }
 
-.video-mask {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(38, 38, 38, 0.78) 0%,
-    rgba(38, 38, 38, 0.45) 46%,
-    rgba(38, 38, 38, 0.14) 100%
-  );
-}
-
-.play-btn {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 0;
-  background: var(--xhs-yellow);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  opacity: 1;
-  transition:
-    opacity 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.video-card:hover .play-btn {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.video-card:hover .video-hover-layer {
+.image-card:hover .image-overlay {
   opacity: 1;
 }
 
 @media (hover: none) {
-  .video-hover-layer {
+  .image-overlay {
     opacity: 1;
   }
-
-  .play-btn {
-    box-shadow: 0 8px 24px rgba(38, 38, 38, 0.3);
-  }
-}
-
-.play-triangle {
-  width: 0;
-  height: 0;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-  border-left: 12px solid var(--white);
-  margin-left: 2px;
-}
-
-.video-info {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  color: #fff;
-  padding: 12px 14px;
 }
 
 .title {
@@ -539,10 +641,9 @@ const submitEdit = async () => {
   opacity: 0.92;
 }
 
-.actions {
+.overlay-actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
   flex-wrap: wrap;
 }
 
@@ -583,19 +684,97 @@ const submitEdit = async () => {
 }
 
 .dialog-sub {
-  color: var(--grey);
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
-.player-body {
-  max-height: 72vh;
+.preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 70vh;
+  max-height: 70vh;
+  overflow: hidden;
 }
 
-.video-player {
-  width: 100%;
-  max-height: 72vh;
+.preview-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-tool {
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #000;
+  background: #fff;
+  color: var(--xhs-black);
+  min-width: 32px;
+  height: 30px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.preview-scale {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--grey);
+}
+
+.preview-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.55) transparent;
+}
+
+.preview-canvas::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.preview-canvas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-canvas::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.55);
+  border-radius: 999px;
+}
+
+.preview-canvas::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.preview-stage {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  transition: none;
+  cursor: pointer;
+}
+
+:deep(.preview-dialog .el-dialog__body) {
+  padding-top: 8px;
+  overflow: hidden;
 }
 
 .edit-form {

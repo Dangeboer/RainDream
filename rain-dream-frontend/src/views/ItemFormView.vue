@@ -44,7 +44,7 @@
 <script setup>
 import { onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import ItemFormFields from "../components/item/ItemFormFields.vue";
+import ItemFormFields from "../components/ItemFormFields.vue";
 import { useItemForm } from "../composables/useItemForm";
 
 const route = useRoute();

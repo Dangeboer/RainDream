@@ -162,7 +162,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { getItemDetailApi } from "../../api/item";
+import { getItemDetailApi } from "../api/item";
 
 defineProps({
   rows: {
