@@ -110,6 +110,24 @@ const imageAllCache = reactive({
   rawExhausted: false,
   records: [],
 });
+const imageDualCache = reactive({
+  key: "",
+  records: [],
+});
+const imageDualTypeState = reactive({
+  2: {
+    nextRawPage: 1,
+    rawTotal: 0,
+    rawLoadedCount: 0,
+    rawExhausted: false,
+  },
+  3: {
+    nextRawPage: 1,
+    rawTotal: 0,
+    rawLoadedCount: 0,
+    rawExhausted: false,
+  },
+});
 const videoCache = reactive({
   key: "",
   nextRawPage: 1,
@@ -119,6 +137,7 @@ const videoCache = reactive({
   records: [],
 });
 let imageAllCacheLoadingPromise = null;
+let imageDualCacheLoadingPromise = null;
 let videoCacheLoadingPromise = null;
 const panelRef = ref(null);
 let panelResizeObserver = null;
@@ -127,6 +146,7 @@ let resizeTimer = null;
 const DEFAULT_PAGE_SIZE = 8;
 const MAX_PAGE_SIZE = 100;
 const IMAGE_ALL_FETCH_BATCH_SIZE = 24;
+const IMAGE_DUAL_FETCH_BATCH_SIZE = 12;
 const VIDEO_FETCH_BATCH_SIZE = 12;
 const VIDEO_AUTO_PAGE_SIZE_CAP = 12;
 const GRID_CARD_MIN_WIDTH = 260;
@@ -272,6 +292,18 @@ const resetImageAllCache = () => {
   imageAllCacheLoadingPromise = null;
 };
 
+const resetImageDualCache = () => {
+  imageDualCache.key = "";
+  imageDualCache.records = [];
+  for (const mediaType of IMAGE_MEDIA_TYPES) {
+    imageDualTypeState[mediaType].nextRawPage = 1;
+    imageDualTypeState[mediaType].rawTotal = 0;
+    imageDualTypeState[mediaType].rawLoadedCount = 0;
+    imageDualTypeState[mediaType].rawExhausted = false;
+  }
+  imageDualCacheLoadingPromise = null;
+};
+
 const resetVideoCache = () => {
   videoCache.key = "";
   videoCache.nextRawPage = 1;
@@ -287,6 +319,11 @@ const buildImageAllCacheKey = (contentType) => {
   return `${query.mode}|${contentSegment}`;
 };
 
+const buildImageDualCacheKey = (contentType) => {
+  const contentSegment = contentType ? String(contentType) : "all";
+  return `${query.mode}|${contentSegment}|2+3`;
+};
+
 const buildVideoCacheKey = (contentType, mediaType) => {
   const contentSegment = contentType ? String(contentType) : "all";
   const mediaSegment = mediaType ? String(mediaType) : "video";
@@ -295,6 +332,12 @@ const buildVideoCacheKey = (contentType, mediaType) => {
 
 const hasMoreRawPagesForImageAll = () => {
   return !imageAllCache.rawExhausted;
+};
+
+const hasMoreRawPagesForImageDual = () => {
+  return IMAGE_MEDIA_TYPES.some(
+    (mediaType) => !imageDualTypeState[mediaType].rawExhausted,
+  );
 };
 
 const hasMoreRawPagesForVideo = () => {
@@ -313,6 +356,17 @@ const appendUniqueImageRecords = (records) => {
     addedCount += 1;
   }
   return addedCount;
+};
+
+const appendUniqueDualImageRecords = (records) => {
+  if (!Array.isArray(records) || records.length === 0) return;
+  const exists = new Set(imageDualCache.records.map((item) => item.id));
+  for (const record of records) {
+    const key = record?.id;
+    if (!key || exists.has(key)) continue;
+    imageDualCache.records.push(record);
+    exists.add(key);
+  }
 };
 
 const appendUniqueVideoRecords = (records) => {
@@ -362,6 +416,44 @@ const fetchNextImageAllRawPage = async (contentType) => {
   }
   if (addedCount === 0) {
     imageAllCache.rawExhausted = true;
+  }
+};
+
+const fetchNextImageDualRawPage = async (contentType) => {
+  const requests = IMAGE_MEDIA_TYPES.filter(
+    (mediaType) => !imageDualTypeState[mediaType].rawExhausted,
+  ).map(async (mediaType) => {
+    const state = imageDualTypeState[mediaType];
+    const raw = await getItemListApi({
+      page: state.nextRawPage,
+      size: IMAGE_DUAL_FETCH_BATCH_SIZE,
+      contentType,
+      mediaType,
+    });
+    return { mediaType, raw };
+  });
+
+  if (requests.length === 0) return;
+  const responses = await Promise.all(requests);
+
+  for (const { mediaType, raw } of responses) {
+    const state = imageDualTypeState[mediaType];
+    const normalizedList = extractListPayload(raw).map(normalizeItem);
+    appendUniqueDualImageRecords(normalizedList);
+
+    state.rawTotal = Number(raw?.total || state.rawTotal || 0);
+    state.rawLoadedCount += normalizedList.length;
+    state.nextRawPage += 1;
+
+    if (state.rawTotal > 0 && state.rawLoadedCount >= state.rawTotal) {
+      state.rawExhausted = true;
+    }
+    if (normalizedList.length === 0) {
+      state.rawExhausted = true;
+    }
+    if (normalizedList.length < IMAGE_DUAL_FETCH_BATCH_SIZE) {
+      state.rawExhausted = true;
+    }
   }
 };
 
@@ -416,6 +508,28 @@ const ensureImageAllCacheRecords = async ({ contentType, requiredCount }) => {
       );
     }
     await imageAllCacheLoadingPromise;
+  }
+};
+
+const ensureImageDualCacheRecords = async ({ contentType, requiredCount }) => {
+  const cacheKey = buildImageDualCacheKey(contentType);
+  if (imageDualCache.key !== cacheKey) {
+    resetImageDualCache();
+    imageDualCache.key = cacheKey;
+  }
+
+  while (
+    imageDualCache.records.length < requiredCount &&
+    hasMoreRawPagesForImageDual()
+  ) {
+    if (!imageDualCacheLoadingPromise) {
+      imageDualCacheLoadingPromise = fetchNextImageDualRawPage(contentType).finally(
+        () => {
+          imageDualCacheLoadingPromise = null;
+        },
+      );
+    }
+    await imageDualCacheLoadingPromise;
   }
 };
 
@@ -534,6 +648,12 @@ const canUseImageSubType = ({ mode, contentType, mediaGroup }) => {
   if (mediaGroup !== "image") return false;
   if (mode !== "content") return true;
   return IMAGE_SUBTYPE_ENABLED_CONTENT_TYPES.includes(Number(contentType));
+};
+
+const shouldUseDualImageRequests = ({ mode, contentType, mediaGroup }) => {
+  if (mode !== "content") return false;
+  if (mediaGroup !== "image") return false;
+  return PILL_STYLE_CONTENT_TYPES.includes(Number(contentType));
 };
 
 const showMediaTabs = computed(
@@ -829,6 +949,28 @@ const syncQueryFromRoute = async () => {
 };
 
 const fetchImageFromCacheAndPaginate = async ({ contentType, imageSubType }) => {
+  if (
+    shouldUseDualImageRequests({
+      mode: query.mode,
+      contentType,
+      mediaGroup: currentMediaGroup.value,
+    })
+  ) {
+    const requiredCount = query.page * query.size;
+    await ensureImageDualCacheRecords({ contentType, requiredCount });
+
+    const filteredRecords = filterByImageSubType(imageDualCache.records, imageSubType);
+    const start = (query.page - 1) * query.size;
+    rows.value = filteredRecords.slice(start, start + query.size);
+
+    if (hasMoreRawPagesForImageDual()) {
+      total.value = filteredRecords.length + query.size;
+      return;
+    }
+    total.value = filteredRecords.length;
+    return;
+  }
+
   const requiredCount = query.page * query.size;
   await ensureImageFilteredCacheRecords({
     contentType,
@@ -910,6 +1052,7 @@ const fetchData = async () => {
 
 const onPanelUpdated = async () => {
   resetImageAllCache();
+  resetImageDualCache();
   resetVideoCache();
   await fetchData();
 };
@@ -996,6 +1139,7 @@ const remove = async (id) => {
           await deleteItemApi(id);
           ElMessage.success("删除成功");
           resetImageAllCache();
+          resetImageDualCache();
           resetVideoCache();
           await fetchData();
           done();
