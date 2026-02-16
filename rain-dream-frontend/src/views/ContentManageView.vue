@@ -240,13 +240,13 @@ const parsePageSize = (value) => {
 
 const normalizeItem = (item = {}) => ({
   ...item,
-  id: item.id ?? item.item_id,
-  contentType: item.contentType ?? item.content_type,
-  mediaType: item.mediaType ?? item.media_type,
-  storeUrl: item.storeUrl ?? item.store_url ?? "",
-  sourceUrl: item.sourceUrl ?? item.source_url ?? "",
-  trackingType: item.trackingType ?? item.tracking_type,
-  trackingTypeLabel: item.trackingTypeLabel ?? item.tracking_type_label,
+  id: item.id,
+  contentType: item.contentType,
+  mediaType: item.mediaType,
+  storeUrl: item.storeUrl ?? "",
+  sourceUrl: item.sourceUrl ?? "",
+  trackingType: item.trackingType,
+  trackingTypeLabel: item.trackingTypeLabel,
 });
 
 const extractListPayload = (payload) => {
@@ -478,7 +478,7 @@ const inferMediaTypeFromStoreUrl = (storeUrl = "") => {
 const resolveItemMediaType = (item) => {
   const fromPayload = Number(item?.mediaType);
   if (IMAGE_MEDIA_TYPES.includes(fromPayload)) return fromPayload;
-  return inferMediaTypeFromStoreUrl(item?.storeUrl || item?.store_url || "");
+  return inferMediaTypeFromStoreUrl(item?.storeUrl || "");
 };
 
 const filterByImageSubType = (list, imageSubType) => {

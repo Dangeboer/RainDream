@@ -111,22 +111,22 @@ const fetchData = async () => {
   const list = Array.isArray(resp?.data) ? resp.data : [];
   rows.value = list.map((item) => ({
     id: item.id,
-    storeUrl: item.store_url ?? "",
+    storeUrl: item.storeUrl ?? "",
     content: item.content ?? "",
     title: item.title ?? "",
     cp: item.cp,
     author: item.author ?? "",
-    sourceUrl: item.source_url ?? "",
-    trackingTypeLabel: item.tracking_type_label ?? "",
+    sourceUrl: item.sourceUrl ?? "",
+    trackingTypeLabel: item.trackingTypeLabel ?? "",
     rating: item.rating ?? "",
-    itemId: item.fanfic_vo?.item_id ?? "",
-    eraLabel: item.fanfic_vo?.era_label ?? "",
-    charSetting: item.fanfic_vo?.char_setting ?? "",
-    lengthTypeLabel: item.fanfic_vo?.length_type_label ?? "",
-    workTypeLabel: item.fanfic_vo?.work_type_label ?? "",
-    updateDate: item.fanfic_vo?.update_date ?? "-",
-    endingTypeLabel: item.fanfic_vo?.ending_type_label ?? "",
-    readCount: item.fanfic_vo?.read_count ?? 0,
+    itemId: item.fanficVO?.itemId ?? "",
+    eraLabel: item.fanficVO?.eraLabel ?? "",
+    charSetting: item.fanficVO?.charSetting ?? "",
+    lengthTypeLabel: item.fanficVO?.lengthTypeLabel ?? "",
+    workTypeLabel: item.fanficVO?.workTypeLabel ?? "",
+    updateDate: item.fanficVO?.updateDate ?? "-",
+    endingTypeLabel: item.fanficVO?.endingTypeLabel ?? "",
+    readCount: item.fanficVO?.readCount ?? 0,
   }));
 
   total.value = Number(resp?.total ?? rows.value.length);

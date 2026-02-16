@@ -13,8 +13,8 @@
       <el-descriptions-item label="Source URL" :span="2">{{ detail.sourceUrl }}</el-descriptions-item>
       <el-descriptions-item label="资源链接" :span="2">
         <el-link
-          v-if="detail.storeUrl || detail.store_url"
-          :href="detail.storeUrl || detail.store_url"
+          v-if="detail.storeUrl"
+          :href="detail.storeUrl"
           target="_blank"
           rel="noopener noreferrer"
         >

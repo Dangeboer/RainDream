@@ -4,8 +4,6 @@ spring:
     username: user
     password: secret
     driver-class-name: com.mysql.cj.jdbc.Driver
-  jackson:
-    property-naming-strategy: SNAKE_CASE
 
 mybatis-plus:
   configuration:

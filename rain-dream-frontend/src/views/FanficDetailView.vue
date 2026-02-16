@@ -18,45 +18,45 @@
         show(detail.cp)
       }}</el-descriptions-item>
       <el-descriptions-item label="内容类型">{{
-        show(detail.content_type_label)
+        show(detail.contentTypeLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="媒介类型">{{
-        show(detail.media_type_label)
+        show(detail.mediaTypeLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="追踪状态">{{
-        show(detail.tracking_type_label)
+        show(detail.trackingTypeLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="评分">{{
         show(detail.rating)
       }}</el-descriptions-item>
       <el-descriptions-item label="发布年份">{{
-        show(detail.release_year)
+        show(detail.releaseYear)
       }}</el-descriptions-item>
       <el-descriptions-item label="阅读次数">{{
-        show(detail.fanfic_vo?.read_count)
+        show(detail.fanficVO?.readCount)
       }}</el-descriptions-item>
       <el-descriptions-item label="年代">{{
-        show(detail.fanfic_vo?.era_label)
+        show(detail.fanficVO?.eraLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="篇幅">{{
-        show(detail.fanfic_vo?.length_type_label)
+        show(detail.fanficVO?.lengthTypeLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="作品状态">{{
-        show(detail.fanfic_vo?.work_type_label)
+        show(detail.fanficVO?.workTypeLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="结局">{{
-        show(detail.fanfic_vo?.ending_type_label)
+        show(detail.fanficVO?.endingTypeLabel)
       }}</el-descriptions-item>
       <el-descriptions-item label="设定">{{
-        show(detail.fanfic_vo?.char_setting)
+        show(detail.fanficVO?.charSetting)
       }}</el-descriptions-item>
       <el-descriptions-item label="上次更新日期">{{
-        show(detail.fanfic_vo?.update_date)
+        show(detail.fanficVO?.updateDate)
       }}</el-descriptions-item>
       <el-descriptions-item label="下载链接">
         <el-link
-          v-if="detail.store_url"
-          :href="detail.store_url"
+          v-if="detail.storeUrl"
+          :href="detail.storeUrl"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -65,7 +65,7 @@
         <span v-else>-</span>
       </el-descriptions-item>
       <el-descriptions-item label="文件大小">{{
-        formatFileSize(detail.size_bytes)
+        formatFileSize(detail.sizeBytes)
       }}</el-descriptions-item>
       <el-descriptions-item label="平台" :span="2">{{
         platformText
@@ -81,12 +81,12 @@
       }}</el-descriptions-item>
       <el-descriptions-item label="来源" :span="2">
         <el-link
-          v-if="detail.source_url"
-          :href="detail.source_url"
+          v-if="detail.sourceUrl"
+          :href="detail.sourceUrl"
           target="_blank"
           rel="noopener noreferrer"
         >
-          {{ detail.source_url }}
+          {{ detail.sourceUrl }}
         </el-link>
         <span v-else>-</span>
       </el-descriptions-item>
@@ -120,22 +120,22 @@ const formatFileSize = (bytes) => {
 };
 
 const tagText = computed(() => {
-  const tags = detail.value.tag_vos;
+  const tags = detail.value.tagVOS;
   if (!Array.isArray(tags) || tags.length === 0) return "-";
   return (
     tags
-      .map((tag) => tag.tag_name)
+      .map((tag) => tag.tagName)
       .filter(Boolean)
       .join(" / ") || "-"
   );
 });
 
 const platformText = computed(() => {
-  const platforms = detail.value.plt_vos;
+  const platforms = detail.value.pltVOS;
   if (!Array.isArray(platforms) || platforms.length === 0) return "-";
   return (
     platforms
-      .map((platform) => platform.plt_name)
+      .map((platform) => platform.pltName)
       .filter(Boolean)
       .join(" / ") || "-"
   );

@@ -195,14 +195,14 @@ watch(
 const uploadFileToOss = async (file) => {
   const contentType = file?.type || "application/octet-stream";
   const presign = await presignOssUploadApi({
-    file_name: file?.name || "file.bin",
-    content_type: contentType,
+    fileName: file?.name || "file.bin",
+    contentType: contentType,
     size: file?.size || 0,
-    media_type: Number(form.mediaType),
+    mediaType: Number(form.mediaType),
   });
 
-  const uploadUrl = presign?.uploadUrl ?? presign?.upload_url;
-  const fileUrl = presign?.fileUrl ?? presign?.file_url;
+  const uploadUrl = presign?.uploadUrl;
+  const fileUrl = presign?.fileUrl;
   if (!uploadUrl || !fileUrl) {
     throw new Error("签名返回值不完整");
   }
@@ -243,13 +243,13 @@ const submit = async () => {
     );
 
     const payload = {
-      media_type: Number(form.mediaType),
-      content_type: Number(form.contentType),
+      mediaType: Number(form.mediaType),
+      contentType: Number(form.contentType),
       fandom: String(form.fandom).trim(),
       cp: String(form.cp).trim(),
-      tracking_type: 5,
-      size_bytes_list: sizeBytesList,
-      store_urls: uploadedStoreUrls,
+      trackingType: 5,
+      sizeBytesList: sizeBytesList,
+      storeUrls: uploadedStoreUrls,
     };
 
     const createdIds = await createBatchItemApi(payload);

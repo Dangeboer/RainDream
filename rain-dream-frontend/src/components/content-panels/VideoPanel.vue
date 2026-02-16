@@ -290,26 +290,26 @@ const editForm = reactive({
   mediaForm: null,
 });
 
-const getStoreUrl = (row) => row?.storeUrl || row?.store_url || "";
+const getStoreUrl = (row) => row?.storeUrl || "";
 
 const getDuration = (row) =>
-  row?.duration || row?.videoDuration || row?.video_duration || "";
+  row?.duration || row?.videoDuration || "";
 
 const normalizeDetail = (data = {}) => ({
   ...data,
   id: data?.id,
-  mediaType: data?.mediaType ?? data?.media_type,
-  mediaTypeLabel: data?.mediaTypeLabel ?? data?.media_type_label,
-  contentType: data?.contentType ?? data?.content_type,
-  contentTypeLabel: data?.contentTypeLabel ?? data?.content_type_label,
-  storeUrl: data?.storeUrl ?? data?.store_url ?? "",
-  sourceUrl: data?.sourceUrl ?? data?.source_url ?? "",
-  trackingType: data?.trackingType ?? data?.tracking_type,
-  tags: (data?.tags || data?.tag_vos || [])
-    .map((item) => item?.name || item?.tag_name || item)
+  mediaType: data?.mediaType,
+  mediaTypeLabel: data?.mediaTypeLabel,
+  contentType: data?.contentType,
+  contentTypeLabel: data?.contentTypeLabel,
+  storeUrl: data?.storeUrl ?? "",
+  sourceUrl: data?.sourceUrl ?? "",
+  trackingType: data?.trackingType,
+  tags: (data?.tags || data?.tagVOS || [])
+    .map((item) => item?.name || item?.tagName || item)
     .filter(Boolean),
-  plts: (data?.plts || data?.plt_vos || [])
-    .map((item) => item?.name || item?.plt_name || item)
+  plts: (data?.plts || data?.pltVOS || [])
+    .map((item) => item?.name || item?.pltName || item)
     .filter(Boolean),
 });
 
@@ -348,16 +348,16 @@ const openEdit = async (itemId) => {
     editForm.cp = data.cp ?? "";
     editForm.author = data.author ?? "";
     editForm.sourceUrl = data.sourceUrl ?? "";
-    editForm.releaseYear = data.releaseYear ?? data.release_year ?? null;
-    editForm.sizeBytes = data.sizeBytes ?? data.size_bytes ?? null;
+    editForm.releaseYear = data.releaseYear ?? null;
+    editForm.sizeBytes = data.sizeBytes ?? null;
     editForm.trackingType = data.trackingType ?? null;
     editForm.rating = data.rating ?? null;
     editForm.notes = data.notes ?? "";
     editForm.summary = data.summary ?? "";
     editForm.tags = data.tags || [];
     editForm.plts = data.plts || [];
-    editForm.fanficForm = data.fanficForm ?? data.fanfic_form ?? null;
-    editForm.mediaForm = data.mediaForm ?? data.media_form ?? null;
+    editForm.fanficForm = data.fanficForm ?? null;
+    editForm.mediaForm = data.mediaForm ?? null;
   } finally {
     editLoading.value = false;
   }
@@ -383,26 +383,26 @@ const submitEdit = async () => {
   editSubmitting.value = true;
   try {
     const payload = {
-      media_type: editForm.mediaType,
-      content_type: editForm.contentType,
-      store_url: toNullableString(editForm.storeUrl),
+      mediaType: editForm.mediaType,
+      contentType: editForm.contentType,
+      storeUrl: toNullableString(editForm.storeUrl),
       content:
         editForm.mediaType === 1 ? toNullableString(editForm.content) : null,
       title: toNullableString(editForm.title),
       fandom: toNullableString(editForm.fandom),
       cp: toNullableString(editForm.cp),
       author: toNullableString(editForm.author),
-      source_url: toNullableString(editForm.sourceUrl),
-      release_year: editForm.releaseYear,
-      size_bytes: editForm.sizeBytes,
-      tracking_type: editForm.trackingType,
+      sourceUrl: toNullableString(editForm.sourceUrl),
+      releaseYear: editForm.releaseYear,
+      sizeBytes: editForm.sizeBytes,
+      trackingType: editForm.trackingType,
       rating: editForm.rating,
       notes: toNullableString(editForm.notes),
       summary: toNullableString(editForm.summary),
-      fanfic_form: editForm.contentType === 1 ? editForm.fanficForm : null,
-      media_form:
+      fanficForm: editForm.contentType === 1 ? editForm.fanficForm : null,
+      mediaForm:
         editForm.mediaType === 4
-          ? editForm.mediaForm || { live_url: null }
+          ? editForm.mediaForm || { liveUrl: null }
           : null,
       tags: editForm.tags || [],
       plts: editForm.plts || [],

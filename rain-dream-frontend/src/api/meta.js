@@ -13,7 +13,7 @@ const normalizeMetaList = (list, key) => {
 
 export const getTagApi = async () => {
   const data = await http.get('/api/tag')
-  return normalizeMetaList(data, 'tag_name')
+  return normalizeMetaList(data, 'tagName')
 }
 export const createTagApi = (payload) => http.post('/api/tag/create', payload)
 export const updateTagApi = (tagId, payload, options = {}) =>
@@ -25,7 +25,7 @@ export const deleteTagApi = (tagId) => http.delete(`/api/tag/delete/${tagId}`)
 
 export const getPltApi = async () => {
   const data = await http.get('/api/plt')
-  return normalizeMetaList(data, 'plt_name')
+  return normalizeMetaList(data, 'pltName')
 }
 export const createPltApi = (payload) => http.post('/api/plt/create', payload)
 export const updatePltApi = (pltId, payload, options = {}) =>

@@ -197,10 +197,10 @@ const defaultDetailFields = [
   { key: "title", label: "标题" },
   { key: "author", label: "作者" },
   { key: "contentTypeLabel", label: "类型" },
-  { keys: ["releaseYear", "release_year"], label: "年份" },
+  { key: "releaseYear", label: "年份" },
   {
     label: "源链接",
-    keys: ["sourceUrl", "source_url"],
+    key: "sourceUrl",
     span: 2,
     type: "link",
     linkText: "打开链接",
@@ -211,7 +211,7 @@ const defaultDetailFields = [
 
 const normalizedDetailFields = computed(() => defaultDetailFields);
 
-const getSourceUrl = (row) => row?.sourceUrl || row?.source_url || "";
+const getSourceUrl = (row) => row?.sourceUrl || "";
 
 const pickFirstNonEmptyString = (values) => {
   for (const value of values) {
@@ -242,14 +242,14 @@ const openPreview = (row) => {
 const normalizeDetail = (data = {}) => ({
   ...data,
   id: data?.id,
-  mediaType: data?.mediaType ?? data?.media_type,
-  mediaTypeLabel: data?.mediaTypeLabel ?? data?.media_type_label,
-  contentType: data?.contentType ?? data?.content_type,
-  contentTypeLabel: data?.contentTypeLabel ?? data?.content_type_label,
-  releaseYear: data?.releaseYear ?? data?.release_year ?? null,
-  storeUrl: data?.storeUrl ?? data?.store_url ?? "",
-  sourceUrl: data?.sourceUrl ?? data?.source_url ?? "",
-  trackingType: data?.trackingType ?? data?.tracking_type,
+  mediaType: data?.mediaType,
+  mediaTypeLabel: data?.mediaTypeLabel,
+  contentType: data?.contentType,
+  contentTypeLabel: data?.contentTypeLabel,
+  releaseYear: data?.releaseYear ?? null,
+  storeUrl: data?.storeUrl ?? "",
+  sourceUrl: data?.sourceUrl ?? "",
+  trackingType: data?.trackingType,
 });
 
 const openDetail = async (itemId) => {
@@ -270,7 +270,7 @@ const isFieldVisible = (key) => {
 };
 
 const resolveReleaseYear = (row) => {
-  const year = row?.releaseYear ?? row?.release_year;
+  const year = row?.releaseYear;
   if (year === null || year === undefined || String(year).trim() === "") return "";
   return String(year);
 };

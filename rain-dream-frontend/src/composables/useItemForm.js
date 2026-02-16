@@ -142,13 +142,13 @@ const isMediaUploadType = (mediaType) =>
 const uploadFileToOss = async (file, mediaType) => {
   const contentType = file?.type || "application/octet-stream";
   const presign = await presignOssUploadApi({
-    file_name: file?.name || "file.bin",
-    content_type: contentType,
+    fileName: file?.name || "file.bin",
+    contentType: contentType,
     size: file?.size || 0,
-    media_type: mediaType,
+    mediaType: mediaType,
   });
-  const uploadUrl = presign?.uploadUrl ?? presign?.upload_url;
-  const fileUrl = presign?.fileUrl ?? presign?.file_url;
+  const uploadUrl = presign?.uploadUrl;
+  const fileUrl = presign?.fileUrl;
   if (!uploadUrl || !fileUrl) {
     throw new Error("签名返回值不完整");
   }
@@ -243,40 +243,40 @@ export const useItemForm = ({ route, router }) => {
   const loadDetail = async () => {
     if (!isEdit.value) return;
     const data = await getItemDetailApi(route.params.id);
-    const fanfic = data?.fanficForm || data?.fanfic_form || {};
-    form.mediaType = data?.mediaType ?? data?.media_type ?? null;
-    form.contentType = data?.contentType ?? data?.content_type ?? null;
-    form.storeUrl = data?.storeUrl ?? data?.store_url ?? null;
-    form.sizeBytes = data?.sizeBytes ?? data?.size_bytes ?? null;
+    const fanfic = data?.fanficForm || {};
+    form.mediaType = data?.mediaType ?? null;
+    form.contentType = data?.contentType ?? null;
+    form.storeUrl = data?.storeUrl ?? null;
+    form.sizeBytes = data?.sizeBytes ?? null;
     form.content = data?.content ?? null;
     form.title = data?.title ?? null;
     form.fandom = data?.fandom ?? "风声";
     form.cp = data?.cp ?? "玉梦";
     form.author = data?.author ?? null;
-    form.sourceUrl = data?.sourceUrl ?? data?.source_url ?? null;
-    form.releaseYear = data?.releaseYear ?? data?.release_year ?? null;
-    form.trackingType = data?.trackingType ?? data?.tracking_type ?? 5;
+    form.sourceUrl = data?.sourceUrl ?? null;
+    form.releaseYear = data?.releaseYear ?? null;
+    form.trackingType = data?.trackingType ?? 5;
     form.rating = data?.rating ?? null;
     form.notes = data?.notes ?? null;
     form.summary = data?.summary ?? null;
     form.fanficForm = {
       era: fanfic?.era ?? null,
-      charSetting: fanfic?.charSetting ?? fanfic?.char_setting ?? null,
-      lengthType: fanfic?.lengthType ?? fanfic?.length_type ?? null,
-      workType: fanfic?.workType ?? fanfic?.work_type ?? null,
-      updateDate: fanfic?.updateDate ?? fanfic?.update_date ?? null,
-      endingType: fanfic?.endingType ?? fanfic?.ending_type ?? null,
-      readCount: fanfic?.readCount ?? fanfic?.read_count ?? null,
+      charSetting: fanfic?.charSetting ?? null,
+      lengthType: fanfic?.lengthType ?? null,
+      workType: fanfic?.workType ?? null,
+      updateDate: fanfic?.updateDate ?? null,
+      endingType: fanfic?.endingType ?? null,
+      readCount: fanfic?.readCount ?? null,
     };
-    const media = data?.mediaForm ?? data?.media_form ?? {};
+    const media = data?.mediaForm ?? {};
     form.mediaForm = {
-      liveUrl: media?.liveUrl ?? media?.live_url ?? "",
+      liveUrl: media?.liveUrl ?? "",
     };
-    form.tags = (data?.tags || data?.tag_vos || [])
-      .map((item) => item?.name || item?.tag_name || item)
+    form.tags = (data?.tags || data?.tagVOS || [])
+      .map((item) => item?.name || item?.tagName || item)
       .filter(Boolean);
-    form.plts = (data?.plts || data?.plt_vos || [])
-      .map((item) => item?.name || item?.plt_name || item)
+    form.plts = (data?.plts || data?.pltVOS || [])
+      .map((item) => item?.name || item?.pltName || item)
       .filter(Boolean);
     contentInputMode.value =
       typeof form.content === "string" && form.content.startsWith("data:")
@@ -385,9 +385,9 @@ export const useItemForm = ({ route, router }) => {
   };
 
   const buildPayload = () => ({
-    media_type: form.mediaType,
-    content_type: form.contentType,
-    store_url: isMediaUploadType(form.mediaType)
+    mediaType: form.mediaType,
+    contentType: form.contentType,
+    storeUrl: isMediaUploadType(form.mediaType)
       ? toNullableString(form.storeUrl)
       : null,
     content:
@@ -398,28 +398,28 @@ export const useItemForm = ({ route, router }) => {
     fandom: toNullableString(form.fandom) ?? "风声",
     cp: toNullableString(form.cp) ?? "玉梦",
     author: toNullableString(form.author),
-    source_url: toNullableString(form.sourceUrl),
-    release_year: form.releaseYear,
-    size_bytes: form.sizeBytes,
-    tracking_type: form.trackingType ?? 5,
+    sourceUrl: toNullableString(form.sourceUrl),
+    releaseYear: form.releaseYear,
+    sizeBytes: form.sizeBytes,
+    trackingType: form.trackingType ?? 5,
     rating: form.rating,
     notes: toNullableString(form.notes),
     summary: toNullableString(form.summary),
-    fanfic_form: isFanficType.value
+    fanficForm: isFanficType.value
       ? {
           era: form.fanficForm.era,
-          char_setting: toNullableString(form.fanficForm.charSetting),
-          length_type: form.fanficForm.lengthType,
-          work_type: form.fanficForm.workType,
-          update_date: form.fanficForm.updateDate,
-          ending_type: form.fanficForm.endingType,
-          read_count: form.fanficForm.readCount ?? 1,
+          charSetting: toNullableString(form.fanficForm.charSetting),
+          lengthType: form.fanficForm.lengthType,
+          workType: form.fanficForm.workType,
+          updateDate: form.fanficForm.updateDate,
+          endingType: form.fanficForm.endingType,
+          readCount: form.fanficForm.readCount ?? 1,
         }
       : null,
-    media_form:
+    mediaForm:
       Number(form.mediaType) === 4
         ? {
-            live_url: toNullableString(form.mediaForm?.liveUrl),
+            liveUrl: toNullableString(form.mediaForm?.liveUrl),
           }
         : null,
     tags: [
