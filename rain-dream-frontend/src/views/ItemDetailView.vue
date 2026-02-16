@@ -1,10 +1,11 @@
 <template>
   <section class="card-panel panel">
     <div class="head">
-      <h2>{{ detail.title || '作品详情' }}</h2>
+      <h2>{{ loading ? '加载中...' : detail.title || '作品详情' }}</h2>
       <el-button text @click="$router.back()">返回</el-button>
     </div>
-    <el-descriptions :column="2" border>
+    <el-skeleton v-if="loading" :rows="6" animated />
+    <el-descriptions v-else :column="2" border>
       <el-descriptions-item label="标题">{{ detail.title }}</el-descriptions-item>
       <el-descriptions-item label="作者">{{ detail.author }}</el-descriptions-item>
       <el-descriptions-item label="Fandom">{{ detail.fandom }}</el-descriptions-item>
@@ -36,9 +37,15 @@ import { getItemDetailApi } from '../api/item'
 
 const route = useRoute()
 const detail = ref({})
+const loading = ref(false)
 
 onMounted(async () => {
-  detail.value = await getItemDetailApi(route.params.id)
+  loading.value = true
+  try {
+    detail.value = await getItemDetailApi(route.params.id)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
