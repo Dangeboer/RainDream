@@ -33,6 +33,9 @@
             </p>
 
             <div class="actions" @click.stop>
+              <button class="action" type="button" @click="openDetail(row.id)">
+                详情
+              </button>
               <a
                 class="action"
                 :href="getStoreUrl(row)"
@@ -42,11 +45,8 @@
               >
                 下载
               </a>
-              <button class="action" type="button" @click="openDetail(row.id)">
-                详情
-              </button>
               <button class="action" type="button" @click="openEdit(row.id)">
-                修改
+                编辑
               </button>
               <button
                 class="action danger"
@@ -513,7 +513,7 @@ const submitEdit = async () => {
   height: 0;
   border-top: 8px solid transparent;
   border-bottom: 8px solid transparent;
-  border-left: 12px solid var(--grey);
+  border-left: 12px solid var(--white);
   margin-left: 2px;
 }
 

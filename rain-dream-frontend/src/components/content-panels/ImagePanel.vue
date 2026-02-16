@@ -25,6 +25,13 @@
           </div>
 
           <div class="overlay-actions">
+            <button
+              class="action"
+              type="button"
+              @click.stop="openDetail(row.id)"
+            >
+              详情
+            </button>
             <a
               class="action"
               :href="getStoreUrl(row)"
@@ -35,15 +42,8 @@
             >
               下载
             </a>
-            <button
-              class="action"
-              type="button"
-              @click.stop="openDetail(row.id)"
-            >
-              详情
-            </button>
             <button class="action" type="button" @click.stop="openEdit(row.id)">
-              修改
+              编辑
             </button>
             <button
               class="action danger"
