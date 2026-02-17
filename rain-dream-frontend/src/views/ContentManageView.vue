@@ -2,7 +2,7 @@
   <section ref="panelRef" class="card-panel panel">
     <div class="head">
       <h2>{{ pageTitle }}</h2>
-      <el-button @click="goCreate">+ 新增资源</el-button>
+      <el-button @click="goCreate">+ 新增此资源</el-button>
     </div>
 
     <div v-if="showMediaTabs" class="media-tabs">
