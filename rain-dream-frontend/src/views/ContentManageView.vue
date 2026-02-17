@@ -36,7 +36,7 @@
 
     <template v-if="showGenericTable">
       <div class="table-wrap">
-        <el-table :data="rows" stripe>
+        <el-table :data="rows" stripe v-loading="isLoading">
           <el-table-column prop="id" label="ID" width="80" />
           <el-table-column prop="title" label="标题" min-width="180" />
           <el-table-column prop="author" label="作者" width="140" />
@@ -62,6 +62,7 @@
       <component
         :is="currentPanel"
         :rows="rows"
+        :loading="isLoading"
         :media-type-label-map="mediaTypeLabelMap"
         @detail="onDetail"
         @edit="onEdit"
@@ -106,6 +107,7 @@ const {
   showImageTypeTabs,
   showMediaTabs,
   total,
+  isLoading,
   usePillStyleForMediaTabs,
 } = useContentManageViewModel();
 </script>

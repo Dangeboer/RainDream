@@ -51,6 +51,7 @@ export const useContentManageViewModel = () => {
   const router = useRouter();
   const rows = ref([]);
   const total = ref(0);
+  const isLoading = ref(false);
   const panelRef = ref(null);
   let panelResizeObserver = null;
   let resizeTimer = null;
@@ -350,7 +351,7 @@ export const useContentManageViewModel = () => {
 
   const onPanelUpdated = async () => {
     resetCaches();
-    await fetchData();
+    await fetchData({ loadingRef: isLoading });
   };
 
   const onPageChange = async (page) => {
@@ -435,7 +436,7 @@ export const useContentManageViewModel = () => {
             await deleteItemApi(id);
             ElMessage.success("删除成功");
             resetCaches();
-            await fetchData();
+            await fetchData({ loadingRef: isLoading });
             done();
           } finally {
             instance.confirmButtonLoading = false;
@@ -457,7 +458,7 @@ export const useContentManageViewModel = () => {
       if (replaced) return;
       const sizeReplaced = await syncAdaptivePageSize();
       if (sizeReplaced) return;
-      await fetchData();
+      await fetchData({ loadingRef: isLoading });
     },
     { immediate: true },
   );
@@ -514,6 +515,7 @@ export const useContentManageViewModel = () => {
     showImageTypeTabs,
     showMediaTabs,
     total,
+    isLoading,
     usePillStyleForMediaTabs,
   };
 };

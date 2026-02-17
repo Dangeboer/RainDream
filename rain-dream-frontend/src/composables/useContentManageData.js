@@ -14,6 +14,8 @@ import {
 } from "./contentManageConfig";
 
 export const useContentManageData = ({ query, rows, total, currentMediaGroup }) => {
+  let latestRequestId = 0;
+
   const imageAllCache = reactive({
     key: "",
     nextRawPage: 1,
@@ -359,14 +361,18 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
 
       const filteredRecords = filterByImageSubType(imageDualCache.records, imageSubType);
       const start = (query.page - 1) * query.size;
-      rows.value = filteredRecords.slice(start, start + query.size);
+      const pagedRows = filteredRecords.slice(start, start + query.size);
 
       if (hasMoreRawPagesForImageDual()) {
-        total.value = filteredRecords.length + query.size;
-        return;
+        return {
+          rows: pagedRows,
+          total: filteredRecords.length + query.size,
+        };
       }
-      total.value = filteredRecords.length;
-      return;
+      return {
+        rows: pagedRows,
+        total: filteredRecords.length,
+      };
     }
 
     const requiredCount = query.page * query.size;
@@ -378,13 +384,18 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
 
     const filteredRecords = filterByImageSubType(imageAllCache.records, imageSubType);
     const start = (query.page - 1) * query.size;
-    rows.value = filteredRecords.slice(start, start + query.size);
+    const pagedRows = filteredRecords.slice(start, start + query.size);
 
     if (hasMoreRawPagesForImageAll()) {
-      total.value = filteredRecords.length + query.size;
-      return;
+      return {
+        rows: pagedRows,
+        total: filteredRecords.length + query.size,
+      };
     }
-    total.value = filteredRecords.length;
+    return {
+      rows: pagedRows,
+      total: filteredRecords.length,
+    };
   };
 
   const fetchVideoFromCacheAndPaginate = async ({ contentType, mediaType }) => {
@@ -392,60 +403,83 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     await ensureVideoCacheRecords({ contentType, mediaType, requiredCount });
 
     const start = (query.page - 1) * query.size;
-    rows.value = videoCache.records.slice(start, start + query.size);
+    const pagedRows = videoCache.records.slice(start, start + query.size);
 
     if (hasMoreRawPagesForVideo()) {
-      total.value = videoCache.records.length + query.size;
-      return;
+      return {
+        rows: pagedRows,
+        total: videoCache.records.length + query.size,
+      };
     }
-    total.value = videoCache.records.length;
+    return {
+      rows: pagedRows,
+      total: videoCache.records.length,
+    };
   };
 
-  const fetchData = async () => {
-    if (currentMediaGroup.value === "image") {
-      const effectiveImageSubType = canUseImageSubType({
-        mode: query.mode,
-        contentType: query.contentType,
-        mediaGroup: currentMediaGroup.value,
-      })
-        ? query.imageSubType
-        : "all";
-      await fetchImageFromCacheAndPaginate({
-        contentType: query.mode === "content" ? query.contentType : undefined,
-        imageSubType: effectiveImageSubType,
-      });
-      return;
-    }
-    if (currentMediaGroup.value === "video") {
-      await fetchVideoFromCacheAndPaginate({
-        contentType: query.mode === "content" ? query.contentType : undefined,
-        mediaType: query.mediaType || 5,
-      });
-      return;
+  const fetchData = async ({ loadingRef } = {}) => {
+    const requestId = ++latestRequestId;
+    if (loadingRef) {
+      loadingRef.value = true;
     }
 
-    const params = {};
-    params.page = query.page;
-    params.size = query.size;
+    const commitResult = (nextRows, nextTotal) => {
+      if (requestId !== latestRequestId) return;
+      rows.value = nextRows;
+      total.value = nextTotal;
+    };
 
-    if (query.mode === "content" && query.contentType) {
-      params.contentType = query.contentType;
-    }
-    if (query.mediaType) {
-      params.mediaType = query.mediaType;
-    }
+    try {
+      if (currentMediaGroup.value === "image") {
+        const effectiveImageSubType = canUseImageSubType({
+          mode: query.mode,
+          contentType: query.contentType,
+          mediaGroup: currentMediaGroup.value,
+        })
+          ? query.imageSubType
+          : "all";
+        const result = await fetchImageFromCacheAndPaginate({
+          contentType: query.mode === "content" ? query.contentType : undefined,
+          imageSubType: effectiveImageSubType,
+        });
+        commitResult(result.rows, result.total);
+        return;
+      }
+      if (currentMediaGroup.value === "video") {
+        const result = await fetchVideoFromCacheAndPaginate({
+          contentType: query.mode === "content" ? query.contentType : undefined,
+          mediaType: query.mediaType || 5,
+        });
+        commitResult(result.rows, result.total);
+        return;
+      }
 
-    const data = await getItemListApi(params);
-    let list = extractListPayload(data).map(normalizeItem);
-    list = filterByContentType(
-      list,
-      query.mode === "content" ? query.contentType : undefined,
-    );
-    if (currentMediaGroup.value === "image") {
-      list = filterByImageSubType(list, query.imageSubType);
+      const params = {};
+      params.page = query.page;
+      params.size = query.size;
+
+      if (query.mode === "content" && query.contentType) {
+        params.contentType = query.contentType;
+      }
+      if (query.mediaType) {
+        params.mediaType = query.mediaType;
+      }
+
+      const data = await getItemListApi(params);
+      let list = extractListPayload(data).map(normalizeItem);
+      list = filterByContentType(
+        list,
+        query.mode === "content" ? query.contentType : undefined,
+      );
+      if (currentMediaGroup.value === "image") {
+        list = filterByImageSubType(list, query.imageSubType);
+      }
+      commitResult(list, Number(data?.total ?? list.length));
+    } finally {
+      if (loadingRef && requestId === latestRequestId) {
+        loadingRef.value = false;
+      }
     }
-    rows.value = list;
-    total.value = Number(data?.total ?? list.length);
   };
 
   return {

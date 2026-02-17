@@ -1,6 +1,7 @@
 <template>
   <div class="text-panel-wrap">
-    <el-empty v-if="rows.length === 0" description="暂无文本" />
+    <el-skeleton v-if="loading" :rows="4" animated />
+    <el-empty v-else-if="rows.length === 0" description="暂无文本" />
 
     <div v-else class="text-card-list">
       <article
@@ -168,6 +169,10 @@ defineProps({
   rows: {
     type: Array,
     default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    default: false,
   },
 });
 
