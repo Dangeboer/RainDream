@@ -90,7 +90,9 @@
       v-model="imagePreviewVisible"
       width="min(820px, 84vw)"
       class="preview-dialog"
+      :lock-scroll="true"
       destroy-on-close
+      @closed="onPreviewClosed"
     >
       <template #header>
         <div class="dialog-head">
@@ -100,12 +102,27 @@
           }}</span>
         </div>
       </template>
-      <div v-if="imagePreviewItem" class="image-preview-body">
-        <img
-          class="image-preview"
-          :src="getStoreUrl(imagePreviewItem)"
-          :alt="imagePreviewItem.title || 'preview'"
-        />
+      <div class="preview-body" v-if="imagePreviewItem">
+        <div class="preview-toolbar">
+          <button class="preview-tool" type="button" @click="zoomOut">-</button>
+          <span class="preview-scale">{{ Math.round(previewScale * 100) }}%</span>
+          <button class="preview-tool" type="button" @click="zoomIn">+</button>
+        </div>
+        <div
+          ref="previewCanvasRef"
+          class="preview-canvas"
+          @wheel="onPreviewWheel"
+        >
+          <div class="preview-stage" :style="previewStageStyle">
+            <img
+              class="preview-image"
+              :src="getStoreUrl(imagePreviewItem)"
+              :alt="imagePreviewItem.title || 'preview'"
+              @load="onPreviewImageLoad"
+              @click="togglePreviewQuickZoom"
+            />
+          </div>
+        </div>
       </div>
     </el-dialog>
 
@@ -268,7 +285,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { getItemDetailApi } from "../api/item";
 import {
   inferMediaTypeFromStoreUrl,
@@ -298,6 +315,12 @@ const mediaGroupByType = {
 
 const imagePreviewVisible = ref(false);
 const imagePreviewItem = ref(null);
+const previewScale = ref(1);
+const previewCanvasRef = ref(null);
+const previewImageRatio = ref(0);
+const previewCanvasWidth = ref(0);
+const previewCanvasHeight = ref(0);
+const previewQuickZoomed = ref(false);
 const videoPlayerVisible = ref(false);
 const videoPlayerItem = ref(null);
 const textPreviewVisible = ref(false);
@@ -365,17 +388,28 @@ const resolveLinkHost = (row) => {
 
 const formatLinkForDisplay = (url) => {
   if (!url) return "暂无链接";
-  return url.length > 56 ? `${url.slice(0, 53)}...` : url;
+  // return url.length > 56 ? `${url.slice(0, 53)}...` : url;
+  return url;
 };
 
 const hasRating = (row) => row?.rating !== null && row?.rating !== undefined;
 const isImageCard = (row) => resolveMediaGroup(row) === "image";
+const PREVIEW_MIN_SCALE = 0.5;
+const PREVIEW_MAX_SCALE = 10;
+const WHEEL_ZOOM_STEP = 0.004;
 
 const handleCardClick = (row) => {
   const group = resolveMediaGroup(row);
   if (group === "image") {
+    if (!getStoreUrl(row)) return;
+    previewScale.value = 1;
+    previewImageRatio.value = 0;
+    previewQuickZoomed.value = false;
     imagePreviewItem.value = row;
     imagePreviewVisible.value = true;
+    nextTick(() => {
+      updatePreviewCanvasSize();
+    });
     return;
   }
   if (group === "video") {
@@ -388,6 +422,123 @@ const handleCardClick = (row) => {
     textPreviewVisible.value = true;
   }
 };
+
+const setPreviewScale = (next) => {
+  const clamped = Math.min(PREVIEW_MAX_SCALE, Math.max(PREVIEW_MIN_SCALE, next));
+  previewScale.value = Number(clamped.toFixed(4));
+};
+
+const zoomIn = () => {
+  setPreviewScale(previewScale.value + 0.2);
+  previewQuickZoomed.value = false;
+};
+
+const zoomOut = () => {
+  setPreviewScale(previewScale.value - 0.2);
+  previewQuickZoomed.value = false;
+};
+
+const resetZoom = () => {
+  previewScale.value = 1;
+  previewQuickZoomed.value = false;
+};
+
+const onPreviewImageLoad = (event) => {
+  const img = event?.target;
+  const naturalWidth = img?.naturalWidth || 0;
+  const naturalHeight = img?.naturalHeight || 0;
+  if (!naturalWidth || !naturalHeight) return;
+  previewImageRatio.value = naturalWidth / naturalHeight;
+  updatePreviewCanvasSize();
+};
+
+const updatePreviewCanvasSize = () => {
+  const canvasEl = previewCanvasRef.value;
+  if (!canvasEl) return;
+  previewCanvasWidth.value = canvasEl.clientWidth;
+  previewCanvasHeight.value = canvasEl.clientHeight;
+};
+
+const getBasePreviewSize = () => {
+  const imageRatio = previewImageRatio.value;
+  const canvasWidth = previewCanvasWidth.value;
+  const canvasHeight = previewCanvasHeight.value;
+  if (!imageRatio || !canvasWidth || !canvasHeight) return null;
+
+  const canvasRatio = canvasWidth / canvasHeight;
+  if (imageRatio >= canvasRatio) {
+    return {
+      width: canvasWidth,
+      height: canvasWidth / imageRatio,
+    };
+  }
+  return {
+    width: canvasHeight * imageRatio,
+    height: canvasHeight,
+  };
+};
+
+const fitShortSide = () => {
+  updatePreviewCanvasSize();
+  const baseSize = getBasePreviewSize();
+  if (!baseSize) return false;
+  const fitShortScale = Math.max(
+    previewCanvasWidth.value / baseSize.width,
+    previewCanvasHeight.value / baseSize.height,
+  );
+  setPreviewScale(fitShortScale * 0.95);
+  previewQuickZoomed.value = true;
+  return true;
+};
+
+const togglePreviewQuickZoom = () => {
+  if (previewQuickZoomed.value) {
+    resetZoom();
+    return;
+  }
+  fitShortSide();
+};
+
+const onPreviewWheel = (event) => {
+  const shouldZoom = event.metaKey || event.ctrlKey;
+  if (!shouldZoom) return;
+  event.preventDefault();
+  previewQuickZoomed.value = false;
+  const next = previewScale.value - event.deltaY * WHEEL_ZOOM_STEP;
+  setPreviewScale(next);
+};
+
+const onPreviewClosed = () => {
+  imagePreviewItem.value = null;
+  previewScale.value = 1;
+  previewImageRatio.value = 0;
+  previewCanvasWidth.value = 0;
+  previewCanvasHeight.value = 0;
+  previewQuickZoomed.value = false;
+};
+
+const previewStageStyle = computed(() => {
+  const baseSize = getBasePreviewSize();
+  if (!baseSize) {
+    return {
+      width: "100%",
+      height: "100%",
+    };
+  }
+  const scale = previewScale.value;
+  return {
+    width: `${baseSize.width * scale}px`,
+    height: `${baseSize.height * scale}px`,
+  };
+});
+
+onMounted(() => {
+  window.addEventListener("resize", updatePreviewCanvasSize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updatePreviewCanvasSize);
+});
 
 const normalizeDetail = (data = {}) => ({
   ...data,
@@ -598,15 +749,97 @@ const formatSize = (bytes) => {
   font-size: 13px;
 }
 
-.image-preview-body {
+.preview-body {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  height: 70vh;
+  max-height: 70vh;
+  overflow: hidden;
 }
 
-.image-preview {
+.preview-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-tool {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--xhs-black);
+  min-width: 32px;
+  height: 30px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.preview-tool:hover {
+  border-color: var(--line);
+}
+
+.preview-scale {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--grey);
+}
+
+.preview-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.55) transparent;
+}
+
+.preview-canvas::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.preview-canvas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-canvas::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.55);
+  border-radius: 999px;
+}
+
+.preview-canvas::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.preview-stage {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
-  max-height: min(72vh, 720px);
+  max-height: 100%;
+  border-radius: 8px;
   object-fit: contain;
+  transition: none;
+  cursor: pointer;
+}
+
+:deep(.preview-dialog .el-dialog__body) {
+  padding-top: 8px;
+  overflow: hidden;
 }
 
 .video-player-body {
