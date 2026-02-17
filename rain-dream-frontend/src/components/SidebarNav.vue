@@ -1,7 +1,7 @@
 <template>
   <el-scrollbar class="sidebar-scroll">
     <div class="sidebar-inner">
-      <div class="logo">RainDream</div>
+      <div class="logo">小雨蒙蒙</div>
       <div class="quick-upload" role="group" aria-label="资源上传入口">
         <button
           type="button"
