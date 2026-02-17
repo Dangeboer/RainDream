@@ -66,12 +66,18 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ 精确写前端地址（不要用 * + allowCredentials(true) 组合）
-        config.setAllowedOrigins(List.of(
+        // 开发环境：允许本机 + 局域网前端（Vite 常用 5173 / 3000）
+        config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
                 "http://localhost:5173",
-                "http://127.0.0.1:5173"
+                "http://127.0.0.1:5173",
+                "http://10.*.*.*:3000",
+                "http://10.*.*.*:5173",
+                "http://192.168.*.*:3000",
+                "http://192.168.*.*:5173",
+                "http://172.*.*.*:3000",
+                "http://172.*.*.*:5173"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
