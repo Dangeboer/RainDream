@@ -4,12 +4,15 @@ import {
   IMAGE_ALL_FETCH_BATCH_SIZE,
   IMAGE_DUAL_FETCH_BATCH_SIZE,
   IMAGE_MEDIA_TYPES,
+  MIXED_CONTENT_FETCH_BATCH_SIZE,
+  PILL_STYLE_CONTENT_TYPES,
   VIDEO_FETCH_BATCH_SIZE,
   canUseImageSubType,
   extractListPayload,
   filterByContentType,
   filterByImageSubType,
   normalizeItem,
+  resolveItemMediaType,
   shouldUseDualImageRequests,
 } from "./contentManageConfig";
 
@@ -50,10 +53,19 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     rawExhausted: false,
     records: [],
   });
+  const mixedContentCache = reactive({
+    key: "",
+    nextRawPage: 1,
+    rawTotal: 0,
+    rawLoadedCount: 0,
+    rawExhausted: false,
+    records: [],
+  });
 
   let imageAllCacheLoadingPromise = null;
   let imageDualCacheLoadingPromise = null;
   let videoCacheLoadingPromise = null;
+  let mixedContentCacheLoadingPromise = null;
 
   const resetImageAllCache = () => {
     imageAllCache.key = "";
@@ -86,11 +98,21 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     videoCache.records = [];
     videoCacheLoadingPromise = null;
   };
+  const resetMixedContentCache = () => {
+    mixedContentCache.key = "";
+    mixedContentCache.nextRawPage = 1;
+    mixedContentCache.rawTotal = 0;
+    mixedContentCache.rawLoadedCount = 0;
+    mixedContentCache.rawExhausted = false;
+    mixedContentCache.records = [];
+    mixedContentCacheLoadingPromise = null;
+  };
 
   const resetCaches = () => {
     resetImageAllCache();
     resetImageDualCache();
     resetVideoCache();
+    resetMixedContentCache();
   };
 
   const buildImageAllCacheKey = (contentType) => {
@@ -108,6 +130,10 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     const mediaSegment = mediaType ? String(mediaType) : "video";
     return `${query.mode}|${contentSegment}|${mediaSegment}`;
   };
+  const buildMixedContentCacheKey = (contentType) => {
+    const contentSegment = contentType ? String(contentType) : "all";
+    return `${query.mode}|${contentSegment}|mixed`;
+  };
 
   const hasMoreRawPagesForImageAll = () => !imageAllCache.rawExhausted;
 
@@ -117,6 +143,7 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     );
 
   const hasMoreRawPagesForVideo = () => !videoCache.rawExhausted;
+  const hasMoreRawPagesForMixedContent = () => !mixedContentCache.rawExhausted;
 
   const appendUniqueImageRecords = (records) => {
     if (!Array.isArray(records) || records.length === 0) return;
@@ -151,6 +178,19 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
       const key = record?.id;
       if (!key || exists.has(key)) continue;
       videoCache.records.push(record);
+      exists.add(key);
+      addedCount += 1;
+    }
+    return addedCount;
+  };
+  const appendUniqueMixedContentRecords = (records) => {
+    if (!Array.isArray(records) || records.length === 0) return;
+    const exists = new Set(mixedContentCache.records.map((item) => item.id));
+    let addedCount = 0;
+    for (const record of records) {
+      const key = record?.id;
+      if (!key || exists.has(key)) continue;
+      mixedContentCache.records.push(record);
       exists.add(key);
       addedCount += 1;
     }
@@ -262,6 +302,40 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
       videoCache.rawExhausted = true;
     }
   };
+  const fetchNextMixedContentRawPage = async (contentType) => {
+    const params = {
+      page: mixedContentCache.nextRawPage,
+      size: MIXED_CONTENT_FETCH_BATCH_SIZE,
+    };
+    if (contentType) {
+      params.contentType = contentType;
+    }
+
+    const raw = await getItemListApi(params);
+    const normalizedList = extractListPayload(raw).map(normalizeItem);
+    const filteredByContentType = filterByContentType(normalizedList, contentType);
+    const addedCount = appendUniqueMixedContentRecords(filteredByContentType) || 0;
+
+    mixedContentCache.rawTotal = Number(raw?.total || mixedContentCache.rawTotal || 0);
+    mixedContentCache.rawLoadedCount += normalizedList.length;
+    mixedContentCache.nextRawPage += 1;
+
+    if (
+      mixedContentCache.rawTotal > 0 &&
+      mixedContentCache.rawLoadedCount >= mixedContentCache.rawTotal
+    ) {
+      mixedContentCache.rawExhausted = true;
+    }
+    if (
+      normalizedList.length === 0 ||
+      normalizedList.length < MIXED_CONTENT_FETCH_BATCH_SIZE
+    ) {
+      mixedContentCache.rawExhausted = true;
+    }
+    if (addedCount === 0) {
+      mixedContentCache.rawExhausted = true;
+    }
+  };
 
   const ensureImageAllCacheRecords = async ({ contentType, requiredCount }) => {
     const cacheKey = buildImageAllCacheKey(contentType);
@@ -323,6 +397,44 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
         );
       }
       await videoCacheLoadingPromise;
+    }
+  };
+  const resolveMediaGroupForItem = (item) => {
+    const mediaType = Number(resolveItemMediaType(item));
+    if (mediaType === 2 || mediaType === 3 || mediaType === 4) return "image";
+    if (mediaType === 5) return "video";
+    if (mediaType === 6) return "link";
+    return "text";
+  };
+  const filterByMediaGroup = (list, mediaGroup) => {
+    if (mediaGroup === "all") return list;
+    return list.filter((item) => resolveMediaGroupForItem(item) === mediaGroup);
+  };
+  const ensureMixedContentCacheRecords = async ({
+    contentType,
+    mediaGroup,
+    requiredCount,
+  }) => {
+    const cacheKey = buildMixedContentCacheKey(contentType);
+    if (mixedContentCache.key !== cacheKey) {
+      resetMixedContentCache();
+      mixedContentCache.key = cacheKey;
+    }
+
+    while (hasMoreRawPagesForMixedContent()) {
+      const filteredCount = filterByMediaGroup(
+        mixedContentCache.records,
+        mediaGroup,
+      ).length;
+      if (filteredCount >= requiredCount) break;
+      if (!mixedContentCacheLoadingPromise) {
+        mixedContentCacheLoadingPromise = fetchNextMixedContentRawPage(contentType).finally(
+          () => {
+            mixedContentCacheLoadingPromise = null;
+          },
+        );
+      }
+      await mixedContentCacheLoadingPromise;
     }
   };
 
@@ -416,6 +528,32 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
       total: videoCache.records.length,
     };
   };
+  const fetchMixedContentFromCacheAndPaginate = async ({
+    contentType,
+    mediaGroup,
+  }) => {
+    const requiredCount = query.page * query.size;
+    await ensureMixedContentCacheRecords({
+      contentType,
+      mediaGroup,
+      requiredCount,
+    });
+
+    const filteredRecords = filterByMediaGroup(mixedContentCache.records, mediaGroup);
+    const start = (query.page - 1) * query.size;
+    const pagedRows = filteredRecords.slice(start, start + query.size);
+
+    if (hasMoreRawPagesForMixedContent()) {
+      return {
+        rows: pagedRows,
+        total: filteredRecords.length + query.size,
+      };
+    }
+    return {
+      rows: pagedRows,
+      total: filteredRecords.length,
+    };
+  };
 
   const fetchData = async ({ loadingRef } = {}) => {
     const requestId = ++latestRequestId;
@@ -430,6 +568,18 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     };
 
     try {
+      const shouldUseMixedContentCache =
+        query.mode === "content" &&
+        PILL_STYLE_CONTENT_TYPES.includes(Number(query.contentType));
+      if (shouldUseMixedContentCache) {
+        const result = await fetchMixedContentFromCacheAndPaginate({
+          contentType: query.contentType,
+          mediaGroup: currentMediaGroup.value || "all",
+        });
+        commitResult(result.rows, result.total);
+        return;
+      }
+
       if (currentMediaGroup.value === "image") {
         const effectiveImageSubType = canUseImageSubType({
           mode: query.mode,

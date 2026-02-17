@@ -114,6 +114,7 @@ export const useContentManageViewModel = () => {
   );
 
   const isAdaptiveSizeView = computed(() => {
+    if (showGenericTable.value && usePillStyleForMediaTabs.value) return true;
     if (currentMediaGroup.value === "video") return true;
     if (currentMediaGroup.value === "image") return true;
     return false;

@@ -1,5 +1,6 @@
 export const DEFAULT_PAGE_SIZE = 8;
 export const MAX_PAGE_SIZE = 100;
+export const MIXED_CONTENT_FETCH_BATCH_SIZE = 24;
 export const IMAGE_ALL_FETCH_BATCH_SIZE = 24;
 export const IMAGE_DUAL_FETCH_BATCH_SIZE = 12;
 export const VIDEO_FETCH_BATCH_SIZE = 12;
