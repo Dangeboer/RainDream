@@ -110,7 +110,7 @@
         <el-descriptions-item label="评分">{{
           detailItem.rating ?? "-"
         }}</el-descriptions-item>
-        <el-descriptions-item label="简介" :span="2">{{
+        <el-descriptions-item label="总结" :span="2">{{
           detailItem.summary || "-"
         }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{
@@ -292,8 +292,7 @@ const editForm = reactive({
 
 const getStoreUrl = (row) => row?.storeUrl || "";
 
-const getDuration = (row) =>
-  row?.duration || row?.videoDuration || "";
+const getDuration = (row) => row?.duration || row?.videoDuration || "";
 
 const normalizeDetail = (data = {}) => ({
   ...data,

@@ -59,8 +59,7 @@
           </span>
           <span
             v-if="
-              isFieldVisible('releaseYear') &&
-              resolveReleaseYear(row) !== ''
+              isFieldVisible('releaseYear') && resolveReleaseYear(row) !== ''
             "
             class="meta-year"
           >
@@ -210,7 +209,7 @@ const defaultDetailFields = [
     type: "link",
     linkText: "打开链接",
   },
-  { key: "summary", label: "简介", span: 2 },
+  { key: "summary", label: "总结", span: 2 },
   { key: "notes", label: "备注", span: 2 },
 ];
 
@@ -276,7 +275,8 @@ const isFieldVisible = (key) => {
 
 const resolveReleaseYear = (row) => {
   const year = row?.releaseYear;
-  if (year === null || year === undefined || String(year).trim() === "") return "";
+  if (year === null || year === undefined || String(year).trim() === "")
+    return "";
   return String(year);
 };
 
