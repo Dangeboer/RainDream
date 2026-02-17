@@ -38,7 +38,6 @@
       <AllMixedPanel
         :rows="rows"
         :loading="isLoading"
-        @detail="onDetail"
         @edit="onEdit"
         @remove="remove"
       />
