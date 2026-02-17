@@ -33,7 +33,7 @@
             >
               更新
             </el-button>
-            <el-button text size="small" type="danger" @click="removeTag(tag.id)">
+            <el-button size="small" type="danger" @click="removeTag(tag.id)">
               删除
             </el-button>
           </div>
@@ -74,7 +74,7 @@
             >
               更新
             </el-button>
-            <el-button text size="small" type="danger" @click="removePlt(plt.id)">
+            <el-button size="small" type="danger" @click="removePlt(plt.id)">
               删除
             </el-button>
           </div>
