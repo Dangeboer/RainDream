@@ -36,13 +36,22 @@
         </template>
 
         <template v-else-if="resolveMediaGroup(row) === 'video'">
-          <video
-            class="cover-media"
-            :src="getStoreUrl(row)"
-            muted
-            playsinline
-            preload="metadata"
-          />
+          <div class="video-cover-wrap">
+            <video
+              class="cover-media"
+              :src="getStoreUrl(row)"
+              muted
+              playsinline
+              preload="metadata"
+            />
+            <button
+              class="play-btn"
+              type="button"
+              @click.stop="handleCardClick(row)"
+            >
+              <span class="play-triangle"></span>
+            </button>
+          </div>
         </template>
 
         <template v-else-if="resolveMediaGroup(row) === 'text'">
@@ -69,11 +78,11 @@
             v-if="resolvePrimaryUrl(row)"
             class="action"
             :href="resolvePrimaryUrl(row)"
-            :download="isImageCard(row) ? '' : null"
+            :download="canDownloadCard(row) ? '' : null"
             target="_blank"
             rel="noopener noreferrer"
           >
-            {{ isImageCard(row) ? "下载" : "打开" }}
+            {{ canDownloadCard(row) ? "下载" : "打开" }}
           </a>
           <button
             class="action danger"
@@ -105,7 +114,9 @@
       <div class="preview-body" v-if="imagePreviewItem">
         <div class="preview-toolbar">
           <button class="preview-tool" type="button" @click="zoomOut">-</button>
-          <span class="preview-scale">{{ Math.round(previewScale * 100) }}%</span>
+          <span class="preview-scale"
+            >{{ Math.round(previewScale * 100) }}%</span
+          >
           <button class="preview-tool" type="button" @click="zoomIn">+</button>
         </div>
         <div
@@ -394,6 +405,10 @@ const formatLinkForDisplay = (url) => {
 
 const hasRating = (row) => row?.rating !== null && row?.rating !== undefined;
 const isImageCard = (row) => resolveMediaGroup(row) === "image";
+const canDownloadCard = (row) => {
+  const group = resolveMediaGroup(row);
+  return group === "image" || group === "video";
+};
 const PREVIEW_MIN_SCALE = 0.5;
 const PREVIEW_MAX_SCALE = 10;
 const WHEEL_ZOOM_STEP = 0.004;
@@ -424,7 +439,10 @@ const handleCardClick = (row) => {
 };
 
 const setPreviewScale = (next) => {
-  const clamped = Math.min(PREVIEW_MAX_SCALE, Math.max(PREVIEW_MIN_SCALE, next));
+  const clamped = Math.min(
+    PREVIEW_MAX_SCALE,
+    Math.max(PREVIEW_MIN_SCALE, next),
+  );
   previewScale.value = Number(clamped.toFixed(4));
 };
 
@@ -675,6 +693,39 @@ const formatSize = (bytes) => {
   object-fit: cover;
   border-radius: 10px;
   background: rgba(38, 38, 38, 0.05);
+}
+
+.video-cover-wrap {
+  position: relative;
+}
+
+.play-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 0;
+  background: rgba(38, 38, 38, 0.66);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.play-btn:hover {
+  background: rgba(38, 38, 38, 0.78);
+}
+
+.play-triangle {
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 13px solid #fff;
+  margin-left: 3px;
 }
 
 .text-excerpt {

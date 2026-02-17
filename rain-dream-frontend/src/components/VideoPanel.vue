@@ -476,7 +476,7 @@ const submitEdit = async () => {
   height: 48px;
   border-radius: 50%;
   border: 0;
-  background: var(--xhs-yellow);
+  background: rgba(38, 38, 38, 0.66);
   display: grid;
   place-items: center;
   cursor: pointer;
