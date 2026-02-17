@@ -35,28 +35,13 @@
     </div>
 
     <template v-if="showGenericTable">
-      <div class="table-wrap">
-        <el-table :data="rows" stripe v-loading="isLoading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="title" label="标题" min-width="180" />
-          <el-table-column prop="author" label="作者" width="140" />
-          <el-table-column prop="mediaType" label="格式" width="120">
-            <template #default="{ row }">
-              {{ mediaTypeLabelMap[row.mediaType] || `类型 ${row.mediaType}` }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="rating" label="评分" width="100" />
-          <el-table-column label="操作" width="220">
-            <template #default="{ row }">
-              <el-button text @click="onDetail(row.id)">详情</el-button>
-              <el-button text @click="onEdit(row.id)">编辑</el-button>
-              <el-button text type="danger" @click="remove(row.id)"
-                >删除</el-button
-              >
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+      <AllMixedPanel
+        :rows="rows"
+        :loading="isLoading"
+        @detail="onDetail"
+        @edit="onEdit"
+        @remove="remove"
+      />
     </template>
     <template v-else>
       <component
@@ -82,6 +67,7 @@
 </template>
 
 <script setup>
+import AllMixedPanel from "../components/AllMixedPanel.vue";
 import { useContentManageViewModel } from "../composables/useContentManageViewModel";
 
 const {
@@ -157,8 +143,4 @@ const {
   --el-button-text-color: var(--xhs-black);
 }
 
-.table-wrap {
-  min-width: 0;
-  margin-bottom: 12px;
-}
 </style>
