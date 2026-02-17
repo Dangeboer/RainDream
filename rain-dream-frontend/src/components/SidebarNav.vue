@@ -206,6 +206,7 @@ const isEntryActive = (entry) => {
 }
 
 .quick-upload {
+  --quick-upload-divider-width: 4px;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 0.6fr) minmax(0, 0.4fr);
@@ -222,7 +223,7 @@ const isEntryActive = (entry) => {
   top: -4px;
   bottom: -4px;
   left: 62%;
-  width: 2px;
+  width: var(--quick-upload-divider-width);
   transform: rotate(20deg);
   transform-origin: center;
   background: var(--xhs-white);
