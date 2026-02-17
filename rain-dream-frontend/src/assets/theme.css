@@ -272,6 +272,19 @@ body.font-hand .el-input__inner::placeholder {
   font-weight: 700;
 }
 
+/* 全局链接（Element Plus el-link） */
+.el-link {
+  --el-link-hover-text-color: var(--xhs-orange-hover) !important;
+}
+
+.el-link:hover {
+  color: var(--xhs-orange-hover) !important;
+}
+
+.el-link.is-underline:hover::after {
+  border-color: var(--xhs-orange-hover) !important;
+}
+
 /* =====================================================
    5) Button System
    Primary / Secondary / Text / Segmented(Radio Button)

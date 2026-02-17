@@ -1,16 +1,39 @@
 <template>
   <div class="table-wrap" @wheel.capture="onTableWheel">
     <el-table ref="tableRef" :data="rows" stripe>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="title" label="标题" min-width="200" />
+      <el-table-column
+        prop="title"
+        label="标题"
+        min-width="200"
+        show-overflow-tooltip
+      />
       <el-table-column prop="author" label="作者" width="140" />
-      <el-table-column prop="sourceUrl" label="链接地址" min-width="260" show-overflow-tooltip />
-      <el-table-column prop="rating" label="评分" width="100" />
-      <el-table-column label="操作" width="220">
+      <!-- <el-table-column prop="summary" label="总结" width="140">
+        <template #default="{ row }" show-overflow-tooltip>
+          <span>{{ row.summary ?? "-" }}</span>
+        </template>
+      </el-table-column> -->
+      <el-table-column label="来源" width="140">
         <template #default="{ row }">
-          <el-button text @click="$emit('detail', row.id)">详情</el-button>
-          <el-button text @click="$emit('edit', row.id)">编辑</el-button>
-          <el-button text type="danger" @click="$emit('remove', row.id)">删除</el-button>
+          <el-link
+            v-if="row.sourceUrl"
+            :href="row.sourceUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            >点击跳转</el-link
+          >
+        </template>
+      </el-table-column>
+
+      <el-table-column label="操作" width="240">
+        <template #default="{ row }">
+          <div class="action-cell">
+            <el-link @click="$emit('detail', row.id)">详情</el-link>
+            <el-link @click="$emit('edit', row.id)">编辑</el-link>
+            <el-link type="danger" @click="$emit('remove', row.id)"
+              >删除</el-link
+            >
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -49,5 +72,11 @@ const onTableWheel = (event) => {
 .table-wrap {
   min-width: 0;
   margin-bottom: 12px;
+}
+
+.action-cell {
+  display: flex;
+  justify-content: left;
+  gap: 18px;
 }
 </style>
