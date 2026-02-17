@@ -80,11 +80,15 @@ export const useContentManageViewModel = () => {
   const availableMediaGroups = computed(() => {
     if (query.mode !== "content") return globalMediaGroupOptions;
     const allowed = getAllowedContentGroups(query.contentType);
-    return contentMediaGroupOptions.filter((item) => allowed.includes(item.value));
+    return contentMediaGroupOptions.filter((item) =>
+      allowed.includes(item.value),
+    );
   });
 
   const availableImageTypeEntries = computed(() => {
-    const imageOptions = mediaTypeOptions.filter((item) => [2, 3].includes(item.value));
+    const imageOptions = mediaTypeOptions.filter((item) =>
+      [2, 3].includes(item.value),
+    );
     return [{ value: "all", label: "全部" }, ...imageOptions];
   });
 
@@ -144,7 +148,7 @@ export const useContentManageViewModel = () => {
     const mediaGroupLabel =
       globalMediaGroupLabelMap[currentMediaGroup.value] || "格式";
     if (currentMediaGroup.value === "image") {
-      if (query.imageSubType === "all") return "全部内容 / 图片 / 全部图片";
+      if (query.imageSubType === "all") return "全部内容 / 图片 / 全部";
       return `全部内容 / 图片 / ${mediaTypeLabelMap[query.mediaType] || "图片"}`;
     }
     return `全部内容 / ${mediaGroupLabel}`;
@@ -159,7 +163,9 @@ export const useContentManageViewModel = () => {
 
   const isImageSubActive = (value) => {
     if (value === "all") return query.imageSubType === "all";
-    return Number(query.mediaType) === Number(value) && query.imageSubType !== "all";
+    return (
+      Number(query.mediaType) === Number(value) && query.imageSubType !== "all"
+    );
   };
 
   const buildRouteQuery = (overrides = {}) => {
@@ -194,7 +200,9 @@ export const useContentManageViewModel = () => {
       contentType: mode === "content" ? contentType : undefined,
       mediaGroup,
       imageSubType:
-        mediaGroup === "image" && imageSubTypeEnabled ? imageSubType : undefined,
+        mediaGroup === "image" && imageSubTypeEnabled
+          ? imageSubType
+          : undefined,
       mediaType,
       page,
       size,
@@ -211,12 +219,19 @@ export const useContentManageViewModel = () => {
     const paginationEl = panelEl.querySelector(".el-pagination");
     if (!gridWrap || !paginationEl) return query.size || DEFAULT_PAGE_SIZE;
 
-    const availableWidth = Math.max(panelEl.clientWidth - 32, GRID_CARD_MIN_WIDTH);
+    const availableWidth = Math.max(
+      panelEl.clientWidth - 32,
+      GRID_CARD_MIN_WIDTH,
+    );
     const columns = Math.max(
       1,
-      Math.floor((availableWidth + GRID_CARD_GAP) / (GRID_CARD_MIN_WIDTH + GRID_CARD_GAP)),
+      Math.floor(
+        (availableWidth + GRID_CARD_GAP) /
+          (GRID_CARD_MIN_WIDTH + GRID_CARD_GAP),
+      ),
     );
-    const cardWidth = (availableWidth - (columns - 1) * GRID_CARD_GAP) / columns;
+    const cardWidth =
+      (availableWidth - (columns - 1) * GRID_CARD_GAP) / columns;
     const cardHeight = cardWidth * 0.75;
 
     const gridTop = gridWrap.getBoundingClientRect().top;
@@ -227,7 +242,9 @@ export const useContentManageViewModel = () => {
     );
     const rowsCount = Math.max(
       1,
-      Math.floor((availableHeight + GRID_CARD_GAP) / (cardHeight + GRID_CARD_GAP)),
+      Math.floor(
+        (availableHeight + GRID_CARD_GAP) / (cardHeight + GRID_CARD_GAP),
+      ),
     );
 
     const calculated = clampPageSize(columns * rowsCount);
@@ -280,7 +297,8 @@ export const useContentManageViewModel = () => {
         mediaGroup = allowedGroups[0];
       }
     } else {
-      mediaGroup = routeMediaGroup || mediaGroupByType[routeMediaType] || "text";
+      mediaGroup =
+        routeMediaGroup || mediaGroupByType[routeMediaType] || "text";
       if (!["text", "image", "video", "link"].includes(mediaGroup)) {
         mediaGroup = "text";
       }
@@ -312,8 +330,9 @@ export const useContentManageViewModel = () => {
       String((mode === "content" ? mediaGroup : mediaGroup) || "") !==
         String(route.query.mediaGroup || "") ||
       String(
-        (mediaGroup === "image" && imageSubTypeEnabled ? imageSubType : undefined) ||
-          "",
+        (mediaGroup === "image" && imageSubTypeEnabled
+          ? imageSubType
+          : undefined) || "",
       ) !== String(route.query.imageSubType || "") ||
       String(mediaType || "") !== String(route.query.mediaType || "") ||
       String(page) !== String(route.query.page || "") ||

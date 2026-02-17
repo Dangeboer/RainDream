@@ -116,7 +116,7 @@ export const extractListPayload = (payload) => {
 
 export const inferMediaTypeFromStoreUrl = (storeUrl = "") => {
   const clean = String(storeUrl).split("?")[0].toLowerCase();
-  if (!clean) return 2;
+  if (!clean) return undefined;
   if (clean.endsWith(".gif") || clean.endsWith(".webp")) return 3;
   if (
     clean.endsWith(".mp4") ||
@@ -131,7 +131,9 @@ export const inferMediaTypeFromStoreUrl = (storeUrl = "") => {
 
 export const resolveItemMediaType = (item) => {
   const fromPayload = Number(item?.mediaType);
-  if (IMAGE_MEDIA_TYPES.includes(fromPayload)) return fromPayload;
+  if (Number.isFinite(fromPayload) && fromPayload > 0) {
+    return fromPayload;
+  }
   return inferMediaTypeFromStoreUrl(item?.storeUrl || "");
 };
 
@@ -164,10 +166,9 @@ export const canUseImageSubType = ({ mode, contentType, mediaGroup }) => {
   return IMAGE_SUBTYPE_ENABLED_CONTENT_TYPES.includes(Number(contentType));
 };
 
-export const shouldUseDualImageRequests = ({ mode, contentType, mediaGroup }) => {
-  if (mode !== "content") return false;
+export const shouldUseDualImageRequests = ({ mediaGroup }) => {
   if (mediaGroup !== "image") return false;
-  return PILL_STYLE_CONTENT_TYPES.includes(Number(contentType));
+  return true;
 };
 
 export const resolveImageSubType = (
