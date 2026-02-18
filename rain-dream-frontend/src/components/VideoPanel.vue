@@ -15,6 +15,7 @@
           preload="metadata"
           muted
           playsinline
+          @loadedmetadata="onVideoMetadataLoaded($event, row)"
         />
 
         <button class="play-btn" type="button" @click.stop="openPlayer(row)">
@@ -25,9 +26,9 @@
           <div class="video-mask"></div>
 
           <div class="video-info">
-            <h3 class="title">{{ row.title || "" }}</h3>
+            <h3 class="title">{{ row.title || "未命名资源" }}</h3>
             <p class="sub">
-              {{ row.author ? "@" + row.author : "" }}
+              {{ row.author ? "@" + row.author : "未知作者" }}
               <span v-if="getDuration(row)">· {{ getDuration(row) }}</span>
               <span v-else-if="row.rating">· 评分 {{ row.rating }}</span>
             </p>
@@ -93,7 +94,7 @@
       <template #header>
         <div class="dialog-head">
           <span>{{ detailItem?.title || "资源详情" }}</span>
-          <span class="dialog-sub">{{ detailItem?.author || "" }}</span>
+          <span class="dialog-sub">{{ detailItem?.author || "未知作者" }}</span>
         </div>
       </template>
       <el-skeleton v-if="detailLoading" :rows="6" animated />
@@ -292,7 +293,61 @@ const editForm = reactive({
 
 const getStoreUrl = (row) => row?.storeUrl || "";
 
-const getDuration = (row) => row?.duration || row?.videoDuration || "";
+const durationCache = reactive({});
+
+const getDurationCacheKey = (row) => {
+  if (!row) return "";
+  if (row.id !== null && row.id !== undefined) return `id:${row.id}`;
+  const url = String(row.storeUrl || "").trim();
+  return url ? `url:${url}` : "";
+};
+
+const formatDuration = (value) => {
+  let seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  if (seconds > 24 * 60 * 60) seconds /= 1000;
+  const total = Math.max(1, Math.round(seconds));
+  const hour = Math.floor(total / 3600);
+  const minute = Math.floor((total % 3600) / 60);
+  const second = total % 60;
+  if (hour > 0) {
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(
+      2,
+      "0",
+    )}:${String(second).padStart(2, "0")}`;
+  }
+  return `${String(minute).padStart(2, "0")}:${String(second).padStart(
+    2,
+    "0",
+  )}`;
+};
+
+const normalizeDuration = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number") return formatDuration(value);
+  const raw = String(value).trim();
+  if (!raw) return "";
+  if (raw.includes(":")) return raw;
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric)) return formatDuration(numeric);
+  return raw;
+};
+
+const getDuration = (row) => {
+  const direct = normalizeDuration(row?.duration ?? row?.videoDuration);
+  if (direct) return direct;
+  const key = getDurationCacheKey(row);
+  if (!key) return "";
+  return normalizeDuration(durationCache[key]);
+};
+
+const onVideoMetadataLoaded = (event, row) => {
+  const seconds = event?.target?.duration;
+  if (!Number.isFinite(seconds) || seconds <= 0) return;
+  const key = getDurationCacheKey(row);
+  if (!key) return;
+  durationCache[key] = seconds;
+};
 
 const normalizeDetail = (data = {}) => ({
   ...data,
