@@ -18,9 +18,9 @@
 
         <div class="image-overlay">
           <div class="overlay-main">
-            <h3 class="title">{{ row.title || "" }}</h3>
+            <h3 class="title">{{ row.title || "未命名资源" }}</h3>
             <p class="sub">
-              {{ row.author ? "@" + row.author : "" }}
+              {{ row.author ? "@" + row.author : "未知作者" }}
             </p>
           </div>
 
@@ -589,7 +589,8 @@ const formatSize = (size = 0) => {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   aspect-ratio: 4 / 3;
-  cursor: pointer;
+  cursor: zoom-in;
+  cursor: -webkit-zoom-in;
 }
 
 .image-main {
