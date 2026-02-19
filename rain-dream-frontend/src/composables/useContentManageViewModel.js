@@ -53,6 +53,7 @@ export const useContentManageViewModel = () => {
   const total = ref(0);
   const isLoading = ref(false);
   const panelRef = ref(null);
+  const lastViewKey = ref("");
   let panelResizeObserver = null;
   let resizeTimer = null;
 
@@ -209,6 +210,15 @@ export const useContentManageViewModel = () => {
       size,
     };
   };
+
+  const buildViewKey = () =>
+    [
+      query.mode || "",
+      query.contentType || "",
+      currentMediaGroup.value || "",
+      query.imageSubType || "",
+      query.mediaType || "",
+    ].join("|");
 
   const calculateAutoPageSize = () => {
     if (!isAdaptiveSizeView.value) return DEFAULT_PAGE_SIZE;
@@ -478,7 +488,10 @@ export const useContentManageViewModel = () => {
       if (replaced) return;
       const sizeReplaced = await syncAdaptivePageSize();
       if (sizeReplaced) return;
-      await fetchData({ loadingRef: isLoading });
+      const nextViewKey = buildViewKey();
+      const shouldReset = lastViewKey.value !== nextViewKey;
+      await fetchData({ loadingRef: isLoading, reset: shouldReset });
+      lastViewKey.value = nextViewKey;
     },
     { immediate: true },
   );

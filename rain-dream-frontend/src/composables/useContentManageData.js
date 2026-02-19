@@ -555,8 +555,12 @@ export const useContentManageData = ({ query, rows, total, currentMediaGroup }) 
     };
   };
 
-  const fetchData = async ({ loadingRef } = {}) => {
+  const fetchData = async ({ loadingRef, reset = false } = {}) => {
     const requestId = ++latestRequestId;
+    if (reset) {
+      rows.value = [];
+      total.value = 0;
+    }
     if (loadingRef) {
       loadingRef.value = true;
     }

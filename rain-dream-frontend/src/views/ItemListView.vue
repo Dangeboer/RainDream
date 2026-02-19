@@ -41,6 +41,8 @@ const router = useRouter()
 const rows = ref([])
 const total = ref(0)
 const tableRef = ref(null)
+let requestSeq = 0
+let lastScopeKey = ''
 const query = reactive({
   page: 1,
   size: 10,
@@ -85,7 +87,12 @@ const syncQueryFromRoute = () => {
   query.mediaType = parsePositiveInt(route.query.mediaType)
 }
 
-const fetchData = async () => {
+const fetchData = async ({ reset = false } = {}) => {
+  const currentSeq = ++requestSeq
+  if (reset) {
+    rows.value = []
+    total.value = 0
+  }
   const params = {
     page: query.page,
     size: query.size
@@ -94,6 +101,7 @@ const fetchData = async () => {
   if (query.mediaType) params.mediaType = query.mediaType
 
   const data = await getItemListApi(params)
+  if (currentSeq !== requestSeq) return
   rows.value = data?.records || []
   total.value = Number(data?.total || 0)
 }
@@ -131,7 +139,10 @@ watch(
   () => route.query,
   () => {
     syncQueryFromRoute()
-    fetchData()
+    const nextScopeKey = `${query.contentType || ''}|${query.mediaType || ''}`
+    const shouldReset = nextScopeKey !== lastScopeKey
+    fetchData({ reset: shouldReset })
+    lastScopeKey = nextScopeKey
   },
   { immediate: true }
 )
