@@ -366,6 +366,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                         .set(Item::getSourceUrl, toUpdate.getSourceUrl())
                         .set(Item::getReleaseYear, toUpdate.getReleaseYear())
                         .set(Item::getSizeBytes, toUpdate.getSizeBytes())
+                        .set(Item::getFileName, toUpdate.getFileName())
                         .set(Item::getTrackingType, toUpdate.getTrackingType())
                         .set(Item::getRating, toUpdate.getRating())
                         .set(Item::getNotes, toUpdate.getNotes())
@@ -476,6 +477,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                 .toList();
 
         List<Long> sizes = form.getSizeBytesList();
+        List<String> fileNames = form.getFileNames();
 
         // 2) 决定本次要创建多少条 item - media：每个 storeUrl 一条
         int count = storeUrls.size();
@@ -505,6 +507,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             // ===== 每条 item 的差异字段：storeUrl =====
             item.setStoreUrl(storeUrls.get(i));
             item.setSizeBytes(sizes.get(i));
+            item.setFileName(fileNames == null || i >= fileNames.size() ? null : fileNames.get(i));
             items.add(item);
         }
 

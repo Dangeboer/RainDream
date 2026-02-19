@@ -10,4 +10,5 @@ import java.util.List;
 public class ItemBatchForm extends ItemForm {
     List<String> storeUrls;
     List<Long> sizeBytesList;
+    List<String> fileNames;
 }

@@ -32,6 +32,7 @@ public class ItemDetailVO implements Serializable {
     private String sourceUrl;
     private Integer releaseYear;
     private Long sizeBytes;
+    private String fileName;
 
     private Integer trackingType;
     private String trackingTypeLabel; // label

@@ -15,7 +15,7 @@
             id, user_id,
             media_type, content_type,
             store_url, content,
-            title, fandom, cp, author, source_url, release_year, size_bytes,
+            title, fandom, cp, author, source_url, release_year, size_bytes, file_name,
             tracking_type, rating, notes, summary
         )
         VALUES
@@ -24,7 +24,7 @@
                 #{item.id}, #{item.userId},
                 #{item.mediaType}, #{item.contentType},
                 #{item.storeUrl}, #{item.content},
-                #{item.title}, #{item.fandom}, #{item.cp}, #{item.author}, #{item.sourceUrl}, #{item.releaseYear}, #{item.sizeBytes},
+                #{item.title}, #{item.fandom}, #{item.cp}, #{item.author}, #{item.sourceUrl}, #{item.releaseYear}, #{item.sizeBytes}, #{item.fileName},
                 #{item.trackingType}, #{item.rating}, #{item.notes}, #{item.summary}
             )
         </foreach>

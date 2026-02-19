@@ -27,6 +27,7 @@ public class ItemListVO implements Serializable {
     private String cp;
     private String author;
     private String sourceUrl;
+    private String fileName;
 
     private Integer trackingType;
     private String trackingTypeLabel; // label

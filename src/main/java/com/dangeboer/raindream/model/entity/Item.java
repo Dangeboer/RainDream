@@ -24,6 +24,7 @@ public class Item extends BaseEntity {
     private String sourceUrl;
     private Integer releaseYear;
     private Long sizeBytes;
+    private String fileName;
 
     private Integer trackingType;
     private BigDecimal rating;

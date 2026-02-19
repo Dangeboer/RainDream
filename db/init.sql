@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS user
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
 
+# ALTER TABLE item ADD COLUMN file_name VARCHAR(255) NULL COMMENT '原始文件名' AFTER size_bytes;
 
 -- 项目表
 CREATE TABLE IF NOT EXISTS item
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS item
 
     release_year  YEAR,
     size_bytes    BIGINT,
+    file_name     VARCHAR(255) COMMENT '原始文件名',
 
     tracking_type TINYINT               DEFAULT 5 COMMENT '状态',
     rating        DECIMAL(3, 1),
@@ -140,10 +142,10 @@ CREATE TABLE IF NOT EXISTS fanfic
 -- 媒体信息补充表
 CREATE TABLE IF NOT EXISTS media
 (
-    item_id   BIGINT PRIMARY KEY,
+    item_id  BIGINT PRIMARY KEY,
 
 #     thumb_url VARCHAR(2048),
-    live_url  VARCHAR(2048),
+    live_url VARCHAR(2048),
 
     CONSTRAINT fk_media_item FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 ) ENGINE = InnoDB
@@ -180,4 +182,3 @@ CREATE TABLE IF NOT EXISTS item_plt
     INDEX idx_item_plt_plt (plt_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
-
