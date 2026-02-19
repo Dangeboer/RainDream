@@ -1,14 +1,34 @@
 <template>
   <section class="card-panel panel">
-    <h2>文章列表</h2>
-    <div class="table-wrap" @wheel.capture="onTableWheel">
+    <h2>文章 / {{ activeTabLabel }}</h2>
+
+    <div class="media-tabs">
+      <el-button
+        v-for="entry in tabs"
+        :key="entry.value"
+        size="small"
+        plain
+        :class="{ 'is-main-tab-active': activeTab === entry.value }"
+        @click="onTabChange(entry.value)"
+      >
+        {{ entry.label }}
+      </el-button>
+    </div>
+
+    <div
+      v-if="activeTab === 'list'"
+      class="table-wrap"
+      @wheel.capture="onTableWheel"
+    >
       <el-table
         ref="tableRef"
         :data="rows"
+        v-loading="loading"
         stripe
         fit
         table-layout="fixed"
         style="width: 100%"
+        @row-click="onRowClick"
       >
         <!-- <el-table-column prop="id" label="ID" width="80" /> -->
         <el-table-column
@@ -68,68 +88,118 @@
               :href="row.sourceUrl"
               target="_blank"
               rel="noopener noreferrer"
+              @click.stop
             >
               点击跳转
             </el-link>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" class-name="op-col" min-width="80">
+        <el-table-column label="操作" class-name="op-col" min-width="140">
           <template #default="{ row }">
-            <el-link @click="$router.push(`/fanfic/${row.id}`)">详情</el-link>
+            <div class="action-cell">
+              <el-link @click.stop="onEdit(row.id)">编辑</el-link>
+              <el-link type="danger" @click.stop="remove(row.id)">删除</el-link>
+            </div>
           </template>
         </el-table-column>
       </el-table>
     </div>
+    <div v-else v-loading="loading">
+      <ImagePanel :rows="rows" @remove="remove" @updated="fetchData" />
+    </div>
+
     <el-pagination
       layout="prev, pager, next"
       :total="total"
       :page-size="query.size"
       :current-page="query.page"
-      @current-change="
-        (p) => {
-          query.page = p;
-          fetchData();
-        }
-      "
+      @current-change="onPageChange"
     />
   </section>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue";
-import { getFanficListApi } from "../api/item";
+import { computed, onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import ImagePanel from "../components/ImagePanel.vue";
+import { deleteItemApi, getFanficListApi, getItemListApi } from "../api/item";
+import { resolveItemMediaType } from "../composables/contentManageConfig";
 
 const rows = ref([]);
 const total = ref(0);
+const loading = ref(false);
 const tableRef = ref(null);
-const query = reactive({});
+const router = useRouter();
+const activeTab = ref("list");
+const tabs = [
+  { value: "list", label: "列表" },
+  { value: "image", label: "图片" },
+];
+const query = reactive({
+  page: 1,
+  size: 10,
+});
+
+const activeTabLabel = computed(
+  () => tabs.find((item) => item.value === activeTab.value)?.label || "列表",
+);
 
 const fetchData = async () => {
-  const resp = await getFanficListApi(query); // 这里拿到的是后端外层 data（因为 http.js 已解包）
+  loading.value = true;
+  try {
+    if (activeTab.value === "list") {
+      const resp = await getFanficListApi(query);
+      const list = Array.isArray(resp?.data) ? resp.data : [];
+      rows.value = list.map((item) => ({
+        id: item.id,
+        storeUrl: item.storeUrl ?? "",
+        content: item.content ?? "",
+        title: item.title ?? "",
+        cp: item.cp,
+        author: item.author ?? "-",
+        sourceUrl: item.sourceUrl ?? "",
+        trackingTypeLabel: item.trackingTypeLabel ?? "",
+        rating: item.rating ?? "-",
+        itemId: item.fanficVO?.itemId ?? "",
+        eraLabel: item.fanficVO?.eraLabel ?? "",
+        charSetting: item.fanficVO?.charSetting ?? "",
+        lengthTypeLabel: item.fanficVO?.lengthTypeLabel ?? "",
+        workTypeLabel: item.fanficVO?.workTypeLabel ?? "",
+        updateDate: item.fanficVO?.updateDate ?? "-",
+        endingTypeLabel: item.fanficVO?.endingTypeLabel ?? "-",
+        readCount: item.fanficVO?.readCount ?? 0,
+      }));
+      total.value = Number(resp?.total ?? rows.value.length);
+      return;
+    }
 
-  const list = Array.isArray(resp?.data) ? resp.data : [];
-  rows.value = list.map((item) => ({
-    id: item.id,
-    storeUrl: item.storeUrl ?? "",
-    content: item.content ?? "",
-    title: item.title ?? "",
-    cp: item.cp,
-    author: item.author ?? "",
-    sourceUrl: item.sourceUrl ?? "",
-    trackingTypeLabel: item.trackingTypeLabel ?? "",
-    rating: item.rating ?? "",
-    itemId: item.fanficVO?.itemId ?? "",
-    eraLabel: item.fanficVO?.eraLabel ?? "",
-    charSetting: item.fanficVO?.charSetting ?? "",
-    lengthTypeLabel: item.fanficVO?.lengthTypeLabel ?? "",
-    workTypeLabel: item.fanficVO?.workTypeLabel ?? "",
-    updateDate: item.fanficVO?.updateDate ?? "-",
-    endingTypeLabel: item.fanficVO?.endingTypeLabel ?? "",
-    readCount: item.fanficVO?.readCount ?? 0,
-  }));
+    const requiredCount = query.page * query.size;
+    const baseParams = {
+      page: 1,
+      size: requiredCount,
+      contentType: 1,
+    };
 
-  total.value = Number(resp?.total ?? rows.value.length);
+    const [staticResp, gifResp] = await Promise.all([
+      getItemListApi({ ...baseParams, mediaType: 2 }),
+      getItemListApi({ ...baseParams, mediaType: 3 }),
+    ]);
+
+    const staticRows = Array.isArray(staticResp?.records)
+      ? staticResp.records
+      : [];
+    const gifRows = Array.isArray(gifResp?.records) ? gifResp.records : [];
+    const mergedRows = [...staticRows, ...gifRows]
+      .filter((item) => [2, 3].includes(Number(resolveItemMediaType(item))))
+      .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
+    const offset = (query.page - 1) * query.size;
+    rows.value = mergedRows.slice(offset, offset + query.size);
+    total.value = Number(staticResp?.total || 0) + Number(gifResp?.total || 0);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const onTableWheel = (event) => {
@@ -143,6 +213,36 @@ const onTableWheel = (event) => {
   const delta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
   bodyWrap.scrollLeft += delta;
   event.preventDefault();
+};
+
+const onRowClick = (row) => {
+  if (!row?.id) return;
+  router.push(`/fanfic/${row.id}`);
+};
+
+const onEdit = (id) => {
+  if (!id) return;
+  router.push(`/items/edit/${id}`);
+};
+
+const remove = async (id) => {
+  if (!id) return;
+  await ElMessageBox.confirm("确认删除该作品吗？", "提示", { type: "warning" });
+  await deleteItemApi(id);
+  ElMessage.success("删除成功");
+  fetchData();
+};
+
+const onPageChange = (page) => {
+  query.page = page;
+  fetchData();
+};
+
+const onTabChange = (tab) => {
+  if (activeTab.value === tab) return;
+  activeTab.value = tab;
+  query.page = 1;
+  fetchData();
 };
 
 onMounted(fetchData);
@@ -163,13 +263,30 @@ onMounted(fetchData);
   margin-top: 0;
 }
 
+.media-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.media-tabs .el-button.is-main-tab-active {
+  --el-button-bg-color: var(--xhs-yellow);
+  --el-button-border-color: var(--xhs-yellow);
+  --el-button-text-color: var(--xhs-black);
+}
+
+:deep(.el-table .el-table__body tr) {
+  cursor: pointer;
+}
+
 :deep(.el-table .op-col .cell) {
   padding-left: 0;
   padding-right: 0;
 }
 
-:deep(.el-table .op-col .el-button.is-text) {
-  padding: 0;
-  height: auto;
+.action-cell {
+  display: flex;
+  gap: 18px;
 }
 </style>

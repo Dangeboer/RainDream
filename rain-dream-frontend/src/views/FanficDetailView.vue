@@ -2,7 +2,7 @@
   <section class="card-panel panel">
     <div class="head">
       <h2>{{ detail.title || "Fanfic 详情" }}</h2>
-      <el-button text @click="$router.back()">返回</el-button>
+      <el-button @click="$router.back()">返回</el-button>
     </div>
     <el-descriptions :column="2" border>
       <el-descriptions-item label="标题">{{
