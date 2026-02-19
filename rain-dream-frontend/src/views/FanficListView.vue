@@ -1,5 +1,5 @@
 <template>
-  <section class="card-panel panel">
+  <section ref="panelRef" class="card-panel panel">
     <h2>文章 / {{ activeTabLabel }}</h2>
 
     <div class="media-tabs">
@@ -120,12 +120,24 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ImagePanel from "../components/ImagePanel.vue";
 import { deleteItemApi, getFanficListApi, getItemListApi } from "../api/item";
 import {
+  DEFAULT_PAGE_SIZE,
+  GRID_CARD_GAP,
+  GRID_CARD_MIN_WIDTH,
+  clampPageSize,
   extractListPayload,
   resolveItemMediaType,
 } from "../composables/contentManageConfig";
@@ -134,27 +146,152 @@ const rows = ref([]);
 const total = ref(0);
 const loading = ref(false);
 const tableRef = ref(null);
+const panelRef = ref(null);
 const router = useRouter();
 let requestSeq = 0;
+let panelResizeObserver = null;
+let resizeTimer = null;
 const activeTab = ref("list");
 const tabs = [
   { value: "list", label: "列表" },
   { value: "image", label: "图片" },
 ];
+const LIST_PAGE_SIZE = 10;
 const query = reactive({
   page: 1,
-  size: 10,
+  size: LIST_PAGE_SIZE,
 });
+const imageCache = reactive({
+  nextRawPage: 1,
+  rawTotal: 0,
+  rawLoadedCount: 0,
+  rawExhausted: false,
+  records: [],
+});
+let imageCacheLoadingPromise = null;
 
 const activeTabLabel = computed(
   () => tabs.find((item) => item.value === activeTab.value)?.label || "列表",
 );
+
+const resetImageCache = () => {
+  imageCache.nextRawPage = 1;
+  imageCache.rawTotal = 0;
+  imageCache.rawLoadedCount = 0;
+  imageCache.rawExhausted = false;
+  imageCache.records = [];
+  imageCacheLoadingPromise = null;
+};
+
+const appendUniqueImageRecords = (records) => {
+  if (!Array.isArray(records) || records.length === 0) return;
+  const exists = new Set(imageCache.records.map((item) => item.id));
+  for (const record of records) {
+    const key = record?.id;
+    if (!key || exists.has(key)) continue;
+    imageCache.records.push(record);
+    exists.add(key);
+  }
+};
+
+const hasMoreImageRawPages = () => !imageCache.rawExhausted;
+
+const fetchNextImageRawPage = async () => {
+  const raw = await getItemListApi({
+    page: imageCache.nextRawPage,
+    size: 24,
+    contentType: 1,
+  });
+  const normalizedList = extractListPayload(raw);
+  const imageRows = normalizedList.filter((item) =>
+    [2, 3].includes(Number(resolveItemMediaType(item))),
+  );
+
+  appendUniqueImageRecords(imageRows);
+  imageCache.rawTotal = Number(raw?.total || imageCache.rawTotal || 0);
+  imageCache.rawLoadedCount += normalizedList.length;
+  imageCache.nextRawPage += 1;
+
+  if (imageCache.rawTotal > 0 && imageCache.rawLoadedCount >= imageCache.rawTotal) {
+    imageCache.rawExhausted = true;
+  }
+  if (normalizedList.length === 0 || normalizedList.length < 24) {
+    imageCache.rawExhausted = true;
+  }
+};
+
+const ensureImageCacheCount = async (requiredCount) => {
+  while (imageCache.records.length < requiredCount && hasMoreImageRawPages()) {
+    if (!imageCacheLoadingPromise) {
+      imageCacheLoadingPromise = fetchNextImageRawPage().finally(() => {
+        imageCacheLoadingPromise = null;
+      });
+    }
+    await imageCacheLoadingPromise;
+  }
+};
+
+const calculateImageAutoPageSize = () => {
+  const panelEl = panelRef.value;
+  if (!panelEl) return query.size || DEFAULT_PAGE_SIZE;
+  const gridWrap = panelEl.querySelector(".media-grid-wrap");
+  const paginationEl = panelEl.querySelector(".el-pagination");
+  if (!gridWrap || !paginationEl) return query.size || DEFAULT_PAGE_SIZE;
+
+  const availableWidth = Math.max(panelEl.clientWidth - 32, GRID_CARD_MIN_WIDTH);
+  const columns = Math.max(
+    1,
+    Math.floor(
+      (availableWidth + GRID_CARD_GAP) / (GRID_CARD_MIN_WIDTH + GRID_CARD_GAP),
+    ),
+  );
+  const cardWidth = (availableWidth - (columns - 1) * GRID_CARD_GAP) / columns;
+  const cardHeight = cardWidth * 0.75;
+
+  const gridTop = gridWrap.getBoundingClientRect().top;
+  const paginationHeight = paginationEl.getBoundingClientRect().height || 32;
+  const availableHeight = Math.max(
+    120,
+    window.innerHeight - gridTop - paginationHeight - 24,
+  );
+  const rowsCount = Math.max(
+    1,
+    Math.floor((availableHeight + GRID_CARD_GAP) / (cardHeight + GRID_CARD_GAP)),
+  );
+
+  return clampPageSize(columns * rowsCount);
+};
+
+const syncAdaptivePageSize = async () => {
+  if (activeTab.value !== "image") return false;
+  await nextTick();
+  const targetSize = calculateImageAutoPageSize();
+  if (targetSize === query.size) return false;
+  query.size = targetSize;
+  query.page = 1;
+  return true;
+};
+
+const scheduleAdaptivePageSizeSync = () => {
+  if (resizeTimer) {
+    clearTimeout(resizeTimer);
+  }
+  resizeTimer = setTimeout(async () => {
+    const replaced = await syncAdaptivePageSize();
+    if (replaced) {
+      fetchData();
+    }
+  }, 120);
+};
 
 const fetchData = async ({ reset = false } = {}) => {
   const currentSeq = ++requestSeq;
   if (reset) {
     rows.value = [];
     total.value = 0;
+    if (activeTab.value === "image") {
+      resetImageCache();
+    }
   }
   loading.value = true;
   try {
@@ -191,26 +328,15 @@ const fetchData = async ({ reset = false } = {}) => {
     }
 
     const requiredCount = query.page * query.size;
-    const baseParams = {
-      page: 1,
-      size: requiredCount,
-      contentType: 1,
-    };
-
-    const [staticResp, gifResp] = await Promise.all([
-      getItemListApi({ ...baseParams, mediaType: 2 }),
-      getItemListApi({ ...baseParams, mediaType: 3 }),
-    ]);
-
-    const staticRows = extractListPayload(staticResp);
-    const gifRows = extractListPayload(gifResp);
-    const mergedRows = [...staticRows, ...gifRows]
-      .filter((item) => [2, 3].includes(Number(resolveItemMediaType(item))))
-      .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
+    await ensureImageCacheCount(requiredCount);
+    const mergedRows = [...imageCache.records].sort(
+      (a, b) => Number(b?.id || 0) - Number(a?.id || 0),
+    );
     const offset = (query.page - 1) * query.size;
     const nextRows = mergedRows.slice(offset, offset + query.size);
-    const nextTotal =
-      Number(staticResp?.total || 0) + Number(gifResp?.total || 0);
+    const nextTotal = imageCache.rawExhausted
+      ? mergedRows.length
+      : mergedRows.length + query.size;
     if (currentSeq !== requestSeq) return;
     rows.value = nextRows;
     total.value = nextTotal;
@@ -249,7 +375,7 @@ const remove = async (id) => {
   await ElMessageBox.confirm("确认删除该作品吗？", "提示", { type: "warning" });
   await deleteItemApi(id);
   ElMessage.success("删除成功");
-  fetchData();
+  fetchData({ reset: true });
 };
 
 const onPageChange = (page) => {
@@ -257,14 +383,52 @@ const onPageChange = (page) => {
   fetchData();
 };
 
-const onTabChange = (tab) => {
+const onTabChange = async (tab) => {
   if (activeTab.value === tab) return;
   activeTab.value = tab;
   query.page = 1;
+  if (tab !== "image") {
+    query.size = LIST_PAGE_SIZE;
+  } else {
+    await syncAdaptivePageSize();
+  }
   fetchData({ reset: true });
 };
 
-onMounted(fetchData);
+watch(
+  () => activeTab.value,
+  () => {
+    scheduleAdaptivePageSizeSync();
+  },
+);
+
+onMounted(async () => {
+  panelResizeObserver = new ResizeObserver(() => {
+    scheduleAdaptivePageSizeSync();
+  });
+  if (panelRef.value) {
+    panelResizeObserver.observe(panelRef.value);
+  }
+  window.addEventListener("resize", scheduleAdaptivePageSizeSync);
+  const replaced = await syncAdaptivePageSize();
+  if (replaced) {
+    await fetchData({ reset: true });
+    return;
+  }
+  await fetchData();
+});
+
+onBeforeUnmount(() => {
+  if (panelResizeObserver) {
+    panelResizeObserver.disconnect();
+    panelResizeObserver = null;
+  }
+  window.removeEventListener("resize", scheduleAdaptivePageSizeSync);
+  if (resizeTimer) {
+    clearTimeout(resizeTimer);
+    resizeTimer = null;
+  }
+});
 </script>
 
 <style scoped>
