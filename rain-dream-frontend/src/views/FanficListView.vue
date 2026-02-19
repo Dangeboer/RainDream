@@ -253,7 +253,6 @@ import {
   GRID_CARD_MIN_WIDTH,
   clampPageSize,
   extractListPayload,
-  resolveItemMediaType,
 } from "../composables/contentManageConfig";
 
 const rows = ref([]);
@@ -275,16 +274,18 @@ const tabs = [
   { value: "image", label: "图片" },
 ];
 const LIST_PAGE_SIZE = 10;
+const IMAGE_FETCH_BATCH_SIZE = 24;
 const query = reactive({
   page: 1,
   size: LIST_PAGE_SIZE,
 });
 const imageCache = reactive({
+  records: [],
+  total: 0,
   nextRawPage: 1,
   rawTotal: 0,
   rawLoadedCount: 0,
   rawExhausted: false,
-  records: [],
 });
 let imageCacheLoadingPromise = null;
 
@@ -327,11 +328,12 @@ const formatFileSize = (bytes) => {
 };
 
 const resetImageCache = () => {
+  imageCache.records = [];
+  imageCache.total = 0;
   imageCache.nextRawPage = 1;
   imageCache.rawTotal = 0;
   imageCache.rawLoadedCount = 0;
   imageCache.rawExhausted = false;
-  imageCache.records = [];
   imageCacheLoadingPromise = null;
 };
 
@@ -351,18 +353,17 @@ const hasMoreImageRawPages = () => !imageCache.rawExhausted;
 const fetchNextImageRawPage = async () => {
   const raw = await getItemListApi({
     page: imageCache.nextRawPage,
-    size: 24,
+    size: IMAGE_FETCH_BATCH_SIZE,
     contentType: 1,
+    mediaType: 2,
   });
   const normalizedList = extractListPayload(raw);
-  const imageRows = normalizedList.filter((item) =>
-    [2, 3].includes(Number(resolveItemMediaType(item))),
-  );
+  appendUniqueImageRecords(normalizedList);
 
-  appendUniqueImageRecords(imageRows);
   imageCache.rawTotal = Number(raw?.total || imageCache.rawTotal || 0);
   imageCache.rawLoadedCount += normalizedList.length;
   imageCache.nextRawPage += 1;
+  imageCache.total = imageCache.rawTotal;
 
   if (
     imageCache.rawTotal > 0 &&
@@ -370,7 +371,10 @@ const fetchNextImageRawPage = async () => {
   ) {
     imageCache.rawExhausted = true;
   }
-  if (normalizedList.length === 0 || normalizedList.length < 24) {
+  if (
+    normalizedList.length === 0 ||
+    normalizedList.length < IMAGE_FETCH_BATCH_SIZE
+  ) {
     imageCache.rawExhausted = true;
   }
 };
@@ -494,9 +498,7 @@ const fetchData = async ({ reset = false } = {}) => {
     );
     const offset = (query.page - 1) * query.size;
     const nextRows = mergedRows.slice(offset, offset + query.size);
-    const nextTotal = imageCache.rawExhausted
-      ? mergedRows.length
-      : mergedRows.length + query.size;
+    const nextTotal = imageCache.total || mergedRows.length;
     if (currentSeq !== requestSeq) return;
     rows.value = nextRows;
     total.value = nextTotal;
@@ -578,7 +580,7 @@ const remove = async (id) => {
           return;
         }
         instance.confirmButtonLoading = true;
-        instance.confirmButtonText = "确认...";
+        instance.confirmButtonText = "确认";
         try {
           await deleteItemApi(id);
           ElMessage.success("删除成功");
