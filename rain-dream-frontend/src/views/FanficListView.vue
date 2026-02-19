@@ -213,7 +213,10 @@ const fetchNextImageRawPage = async () => {
   imageCache.rawLoadedCount += normalizedList.length;
   imageCache.nextRawPage += 1;
 
-  if (imageCache.rawTotal > 0 && imageCache.rawLoadedCount >= imageCache.rawTotal) {
+  if (
+    imageCache.rawTotal > 0 &&
+    imageCache.rawLoadedCount >= imageCache.rawTotal
+  ) {
     imageCache.rawExhausted = true;
   }
   if (normalizedList.length === 0 || normalizedList.length < 24) {
@@ -239,7 +242,10 @@ const calculateImageAutoPageSize = () => {
   const paginationEl = panelEl.querySelector(".el-pagination");
   if (!gridWrap || !paginationEl) return query.size || DEFAULT_PAGE_SIZE;
 
-  const availableWidth = Math.max(panelEl.clientWidth - 32, GRID_CARD_MIN_WIDTH);
+  const availableWidth = Math.max(
+    panelEl.clientWidth - 32,
+    GRID_CARD_MIN_WIDTH,
+  );
   const columns = Math.max(
     1,
     Math.floor(
@@ -257,7 +263,9 @@ const calculateImageAutoPageSize = () => {
   );
   const rowsCount = Math.max(
     1,
-    Math.floor((availableHeight + GRID_CARD_GAP) / (cardHeight + GRID_CARD_GAP)),
+    Math.floor(
+      (availableHeight + GRID_CARD_GAP) / (cardHeight + GRID_CARD_GAP),
+    ),
   );
 
   return clampPageSize(columns * rowsCount);
@@ -373,10 +381,34 @@ const onEdit = (id) => {
 
 const remove = async (id) => {
   if (!id) return;
-  await ElMessageBox.confirm("确认删除该作品吗？", "提示", { type: "warning" });
-  await deleteItemApi(id);
-  ElMessage.success("删除成功");
-  fetchData({ reset: true });
+  try {
+    await ElMessageBox.confirm("确认删除该作品吗？", "提示", {
+      type: "warning",
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+      beforeClose: async (action, instance, done) => {
+        if (action !== "confirm") {
+          done();
+          return;
+        }
+        instance.confirmButtonLoading = true;
+        instance.confirmButtonText = "确认...";
+        try {
+          await deleteItemApi(id);
+          ElMessage.success("删除成功");
+          await fetchData({ reset: true });
+          done();
+        } finally {
+          instance.confirmButtonLoading = false;
+          instance.confirmButtonText = "确认";
+        }
+      },
+    });
+  } catch (error) {
+    if (error !== "cancel" && error !== "close") {
+      throw error;
+    }
+  }
 };
 
 const onPageChange = (page) => {

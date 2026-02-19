@@ -461,7 +461,7 @@ export const useContentManageViewModel = () => {
             return;
           }
           instance.confirmButtonLoading = true;
-          instance.confirmButtonText = "确认...";
+          instance.confirmButtonText = "确认";
           try {
             await deleteItemApi(id);
             ElMessage.success("删除成功");
