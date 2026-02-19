@@ -21,7 +21,7 @@
           >
         </div>
 
-        <h3 class="card-title">{{ row.title || "未命名资源" }}</h3>
+        <h3 class="card-title">{{ resolveDisplayTitle(row) }}</h3>
         <p class="card-author">
           {{ row.author ? "@" + row.author : "未知作者" }}
         </p>
@@ -106,7 +106,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ imagePreviewItem?.title || "图片预览" }}</span>
+          <span>{{ resolveDisplayTitle(imagePreviewItem, "图片预览") }}</span>
           <span class="dialog-sub">{{
             imagePreviewItem?.author ? "@" + imagePreviewItem.author : ""
           }}</span>
@@ -145,7 +145,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ videoPlayerItem?.title || "视频播放" }}</span>
+          <span>{{ resolveDisplayTitle(videoPlayerItem, "视频播放") }}</span>
           <span class="dialog-sub">{{
             videoPlayerItem?.author ? "@" + videoPlayerItem.author : ""
           }}</span>
@@ -201,7 +201,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ detailItem?.title || "资源详情" }}</span>
+          <span>{{ resolveDisplayTitle(detailItem, "资源详情") }}</span>
           <span class="dialog-sub">{{ detailItem?.author || "" }}</span>
         </div>
       </template>
@@ -383,6 +383,20 @@ const getStoreUrl = (row) => row?.storeUrl || "";
 const pickText = (value) => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
+};
+const stripFileExtension = (name) => {
+  const text = pickText(name);
+  if (!text) return "";
+  const match = text.match(/^(.*)\.([a-z0-9]{1,10})$/i);
+  if (!match || !match[1]) return text;
+  return match[1];
+};
+const resolveDisplayTitle = (row, fallback = "未命名资源") => {
+  const title = pickText(row?.title);
+  if (title) return title;
+  const fileName = stripFileExtension(row?.fileName);
+  if (fileName) return fileName;
+  return fallback;
 };
 const resolveDownloadName = (row) => {
   const title = pickText(row?.title);
@@ -721,7 +735,8 @@ const formatSize = (bytes) => {
 .card-title {
   margin: 0;
   font-size: 16px;
-  line-height: 1.3;
+  line-height: 1.35;
+  padding-right: 2px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

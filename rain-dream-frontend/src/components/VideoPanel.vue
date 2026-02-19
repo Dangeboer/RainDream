@@ -26,7 +26,7 @@
           <div class="video-mask"></div>
 
           <div class="video-info">
-            <h3 class="title">{{ row.title || "未命名资源" }}</h3>
+            <h3 class="title">{{ resolveDisplayTitle(row) }}</h3>
             <p class="sub">
               {{ row.author ? "@" + row.author : "未知作者" }}
               <span v-if="getDuration(row)">· {{ getDuration(row) }}</span>
@@ -69,7 +69,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ playerItem?.title || "视频播放" }}</span>
+          <span>{{ resolveDisplayTitle(playerItem, "视频播放") }}</span>
           <span class="dialog-sub">{{
             playerItem?.author ? "@" + playerItem.author : ""
           }}</span>
@@ -93,7 +93,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ detailItem?.title || "资源详情" }}</span>
+          <span>{{ resolveDisplayTitle(detailItem, "资源详情") }}</span>
           <span class="dialog-sub">{{ detailItem?.author || "未知作者" }}</span>
         </div>
       </template>
@@ -128,7 +128,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ editForm.title || "编辑资源" }}</span>
+          <span>{{ resolveDisplayTitle(editForm, "编辑资源") }}</span>
         </div>
       </template>
 
@@ -296,6 +296,20 @@ const getStoreUrl = (row) => row?.storeUrl || "";
 const pickText = (value) => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
+};
+const stripFileExtension = (name) => {
+  const text = pickText(name);
+  if (!text) return "";
+  const match = text.match(/^(.*)\.([a-z0-9]{1,10})$/i);
+  if (!match || !match[1]) return text;
+  return match[1];
+};
+const resolveDisplayTitle = (row, fallback = "未命名资源") => {
+  const title = pickText(row?.title);
+  if (title) return title;
+  const fileName = stripFileExtension(row?.fileName);
+  if (fileName) return fileName;
+  return fallback;
 };
 const resolveDownloadName = (row) => {
   const title = pickText(row?.title);
@@ -633,7 +647,8 @@ const submitEdit = async () => {
 .title {
   margin: 0;
   font-size: 15px;
-  line-height: 1.25;
+  line-height: 1.3;
+  padding-right: 2px;
   font-weight: 700;
 }
 
