@@ -270,6 +270,10 @@ onMounted(fetchData);
   flex-wrap: wrap;
 }
 
+.media-tabs .el-button {
+  font-size: 14px;
+}
+
 .media-tabs .el-button.is-main-tab-active {
   --el-button-bg-color: var(--xhs-yellow);
   --el-button-border-color: var(--xhs-yellow);
