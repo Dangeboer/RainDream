@@ -95,7 +95,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" class-name="op-col" min-width="140">
+        <el-table-column label="操作" class-name="op-col" width="120">
           <template #default="{ row }">
             <div class="action-cell">
               <el-link @click.stop="onEdit(row.id)">编辑</el-link>
@@ -357,16 +357,24 @@ const fetchData = async ({ reset = false } = {}) => {
 };
 
 const onTableWheel = (event) => {
-  if (!event.shiftKey) return;
   const tableEl = tableRef.value?.$el;
   if (!tableEl) return;
   const bodyWrap =
     tableEl.querySelector(".el-table__body-wrapper .el-scrollbar__wrap") ||
     tableEl.querySelector(".el-table__body-wrapper");
   if (!bodyWrap || bodyWrap.scrollWidth <= bodyWrap.clientWidth) return;
-  const delta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
-  bodyWrap.scrollLeft += delta;
-  event.preventDefault();
+
+  const hasHorizontalDelta = Math.abs(event.deltaX) > 0;
+  if (hasHorizontalDelta) {
+    bodyWrap.scrollLeft += event.deltaX;
+    event.preventDefault();
+    return;
+  }
+
+  if (event.shiftKey && Math.abs(event.deltaY) > 0) {
+    bodyWrap.scrollLeft += event.deltaY;
+    event.preventDefault();
+  }
 };
 
 const onRowClick = (row) => {
