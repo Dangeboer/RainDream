@@ -125,7 +125,10 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ImagePanel from "../components/ImagePanel.vue";
 import { deleteItemApi, getFanficListApi, getItemListApi } from "../api/item";
-import { resolveItemMediaType } from "../composables/contentManageConfig";
+import {
+  extractListPayload,
+  resolveItemMediaType,
+} from "../composables/contentManageConfig";
 
 const rows = ref([]);
 const total = ref(0);
@@ -157,7 +160,7 @@ const fetchData = async ({ reset = false } = {}) => {
   try {
     if (activeTab.value === "list") {
       const resp = await getFanficListApi(query);
-      const list = (Array.isArray(resp?.data) ? resp.data : []).filter(
+      const list = extractListPayload(resp).filter(
         (item) =>
           Number(item?.contentType) === 1 && Number(item?.mediaType) === 1,
       );
@@ -199,10 +202,8 @@ const fetchData = async ({ reset = false } = {}) => {
       getItemListApi({ ...baseParams, mediaType: 3 }),
     ]);
 
-    const staticRows = Array.isArray(staticResp?.records)
-      ? staticResp.records
-      : [];
-    const gifRows = Array.isArray(gifResp?.records) ? gifResp.records : [];
+    const staticRows = extractListPayload(staticResp);
+    const gifRows = extractListPayload(gifResp);
     const mergedRows = [...staticRows, ...gifRows]
       .filter((item) => [2, 3].includes(Number(resolveItemMediaType(item))))
       .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
