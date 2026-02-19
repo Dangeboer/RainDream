@@ -116,6 +116,110 @@
       :current-page="query.page"
       @current-change="onPageChange"
     />
+
+    <el-dialog
+      v-model="detailVisible"
+      width="min(880px, 94vw)"
+      destroy-on-close
+      @closed="onDetailClosed"
+    >
+      <template #header>
+        <div class="dialog-head">
+          <span>{{ detailItem?.title || "Fanfic 详情" }}</span>
+        </div>
+      </template>
+      <el-skeleton v-if="detailLoading" :rows="8" animated />
+      <el-descriptions v-else-if="detailItem" :column="2" border>
+        <el-descriptions-item label="标题">{{
+          showDetail(detailItem.title)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="作者">{{
+          showDetail(detailItem.author)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="原作">{{
+          showDetail(detailItem.fandom)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="CP">{{
+          showDetail(detailItem.cp)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="内容类型">{{
+          showDetail(detailItem.contentTypeLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="媒介类型">{{
+          showDetail(detailItem.mediaTypeLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="追踪状态">{{
+          showDetail(detailItem.trackingTypeLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="评分">{{
+          showDetail(detailItem.rating)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="发布年份">{{
+          showDetail(detailItem.releaseYear)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="阅读次数">{{
+          showDetail(detailItem.fanficVO?.readCount)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="年代">{{
+          showDetail(detailItem.fanficVO?.eraLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="篇幅">{{
+          showDetail(detailItem.fanficVO?.lengthTypeLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="作品状态">{{
+          showDetail(detailItem.fanficVO?.workTypeLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="结局">{{
+          showDetail(detailItem.fanficVO?.endingTypeLabel)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="设定">{{
+          showDetail(detailItem.fanficVO?.charSetting)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="上次更新日期">{{
+          showDetail(detailItem.fanficVO?.updateDate)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="下载链接">
+          <el-link
+            v-if="detailItem.storeUrl"
+            :href="detailItem.storeUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            点击下载
+          </el-link>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="文件大小">{{
+          formatFileSize(detailItem.sizeBytes)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="平台" :span="2">{{
+          detailPlatformText
+        }}</el-descriptions-item>
+        <el-descriptions-item label="标签" :span="2">{{
+          detailTagText
+        }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{
+          showDetail(detailItem.notes)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="总结" :span="2">{{
+          showDetail(detailItem.summary)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="来源" :span="2">
+          <el-link
+            v-if="detailItem.sourceUrl"
+            :href="detailItem.sourceUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ detailItem.sourceUrl }}
+          </el-link>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="内容" :span="2">{{
+          showDetail(detailItem.content)
+        }}</el-descriptions-item>
+      </el-descriptions>
+    </el-dialog>
   </section>
 </template>
 
@@ -132,7 +236,12 @@ import {
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ImagePanel from "../components/ImagePanel.vue";
-import { deleteItemApi, getFanficListApi, getItemListApi } from "../api/item";
+import {
+  deleteItemApi,
+  getFanficDetailApi,
+  getFanficListApi,
+  getItemListApi,
+} from "../api/item";
 import {
   DEFAULT_PAGE_SIZE,
   GRID_CARD_GAP,
@@ -145,6 +254,9 @@ import {
 const rows = ref([]);
 const total = ref(0);
 const loading = ref(false);
+const detailVisible = ref(false);
+const detailLoading = ref(false);
+const detailItem = ref(null);
 const tableRef = ref(null);
 const panelRef = ref(null);
 const route = useRoute();
@@ -174,6 +286,40 @@ let imageCacheLoadingPromise = null;
 const activeTabLabel = computed(
   () => tabs.find((item) => item.value === activeTab.value)?.label || "列表",
 );
+const detailTagText = computed(() => {
+  const tags = detailItem.value?.tagVOS;
+  if (!Array.isArray(tags) || tags.length === 0) return "-";
+  return (
+    tags
+      .map((tag) => tag.tagName)
+      .filter(Boolean)
+      .join(" / ") || "-"
+  );
+});
+const detailPlatformText = computed(() => {
+  const platforms = detailItem.value?.pltVOS;
+  if (!Array.isArray(platforms) || platforms.length === 0) return "-";
+  return (
+    platforms
+      .map((platform) => platform.pltName)
+      .filter(Boolean)
+      .join(" / ") || "-"
+  );
+});
+
+const showDetail = (value) =>
+  value === null || value === undefined || value === "" ? "-" : value;
+
+const formatFileSize = (bytes) => {
+  const size = Number(bytes);
+  if (!Number.isFinite(size) || size <= 0) return "-";
+  const KB = 1000;
+  const MB = 1000 * KB;
+  const GB = 1000 * MB;
+  if (size >= GB) return `${(size / GB).toFixed(2)} GB`;
+  if (size >= MB) return `${(size / MB).toFixed(2)} MB`;
+  return `${Math.max(size / KB, 0.01).toFixed(2)} KB`;
+};
 
 const resetImageCache = () => {
   imageCache.nextRawPage = 1;
@@ -377,9 +523,35 @@ const onTableWheel = (event) => {
   }
 };
 
-const onRowClick = (row) => {
+const onRowClick = async (row) => {
   if (!row?.id) return;
-  router.push(`/fanfic/${row.id}`);
+  await router.replace({
+    path: "/fanfic",
+    query: {
+      ...(String(route.query.tab || "") === "image" ? { tab: "image" } : {}),
+      detail: String(row.id),
+    },
+  });
+};
+
+const openDetailDialog = async (id) => {
+  if (!id) return;
+  detailVisible.value = true;
+  detailLoading.value = true;
+  detailItem.value = null;
+  try {
+    detailItem.value = await getFanficDetailApi(id);
+  } finally {
+    detailLoading.value = false;
+  }
+};
+
+const onDetailClosed = async () => {
+  if (!route.query.detail) return;
+  await router.replace({
+    path: "/fanfic",
+    query: String(route.query.tab || "") === "image" ? { tab: "image" } : undefined,
+  });
 };
 
 const onEdit = (id) => {
@@ -451,6 +623,17 @@ watch(
       await syncAdaptivePageSize();
     }
     await fetchData({ reset: true });
+  },
+  { immediate: true },
+);
+
+watch(
+  () => route.query.detail,
+  async (detailId) => {
+    if (!detailId) return;
+    const idText = String(detailId).trim();
+    if (!/^\d+$/.test(idText)) return;
+    await openDetailDialog(idText);
   },
   { immediate: true },
 );

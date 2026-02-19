@@ -11,7 +11,11 @@
           <strong>{{ item.title || '未命名作品' }}</strong>
           <div class="muted">{{ item.author || 'Unknown' }} · {{ item.fandom || '-' }} / {{ item.cp || '-' }}</div>
         </div>
-        <el-button text @click="$router.push(`/fanfic/${item.id}`)">查看</el-button>
+        <el-button
+          text
+          @click="$router.push({ path: '/fanfic', query: { detail: item.id } })"
+          >查看</el-button
+        >
       </div>
     </div>
 

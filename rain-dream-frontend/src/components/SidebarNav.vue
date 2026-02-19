@@ -149,7 +149,7 @@ const mediaMenu = mediaMenuBase.map((entry) => ({
 const isEntryActive = (entry) => {
   if (entry.group === "content") {
     if (entry.value === 1) {
-      return route.path === "/fanfic" || route.path.startsWith("/fanfic/");
+      return route.path === "/fanfic";
     }
     return (
       route.path === "/content" &&

@@ -14,8 +14,11 @@ const routes = [
       { path: 'items/batch/new', name: 'item-batch-new', component: () => import('../views/BatchItemFormView.vue') },
       { path: 'items/edit/:id', name: 'item-edit', component: () => import('../views/ItemFormView.vue') },
       { path: 'items/:id', name: 'item-detail', component: () => import('../views/ItemDetailView.vue') },
+      {
+        path: 'fanfic/:id',
+        redirect: (to) => ({ path: '/fanfic', query: { detail: to.params.id } })
+      },
       { path: 'fanfic', name: 'fanfic-list', component: () => import('../views/FanficListView.vue') },
-      { path: 'fanfic/:id', name: 'fanfic-detail', component: () => import('../views/FanficDetailView.vue') },
       { path: 'meta', name: 'meta', component: () => import('../views/TagPltManagerView.vue') },
       { path: 'tags', redirect: '/meta' },
       { path: 'plts', redirect: '/meta' }
