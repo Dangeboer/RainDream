@@ -1,6 +1,9 @@
 <template>
   <section ref="panelRef" class="card-panel panel">
-    <h2>文章 / {{ activeTabLabel }}</h2>
+    <div class="head">
+      <h2>文章 / {{ activeTabLabel }}</h2>
+      <el-button @click="goCreate">+ 新增此资源</el-button>
+    </div>
 
     <div class="media-tabs">
       <el-button
@@ -567,6 +570,17 @@ const onEdit = (id) => {
   router.push(`/items/edit/${id}`);
 };
 
+const goCreate = () => {
+  const mediaType = activeTab.value === "image" ? 2 : 1;
+  router.push({
+    path: "/items/new",
+    query: {
+      contentType: 1,
+      mediaType,
+    },
+  });
+};
+
 const remove = async (id) => {
   if (!id) return;
   try {
@@ -674,6 +688,12 @@ onBeforeUnmount(() => {
 .panel {
   --fanfic-table-pagination-gap: 10px;
   padding: 16px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .table-wrap {
