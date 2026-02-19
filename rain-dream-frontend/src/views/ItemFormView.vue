@@ -12,6 +12,7 @@
         :tags="tags"
         :plts="plts"
         :is-fanfic-type="isFanficType"
+        :is-file-only-media-type="isFileOnlyMediaType"
         :content-input-mode="contentInputMode"
         :content-file-name="contentFileName"
         :content-type-options="contentTypeOptions"
@@ -54,6 +55,7 @@ const {
   form,
   isEdit,
   isFanficType,
+  isFileOnlyMediaType,
   submitting,
   tags,
   plts,

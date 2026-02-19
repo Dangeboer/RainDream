@@ -42,12 +42,14 @@
   <el-form-item label="内容" class="span-2">
     <div class="content-input">
       <el-radio-group v-model="contentInputModeProxy" size="small">
-        <el-radio-button label="text">直接输入</el-radio-button>
+        <el-radio-button label="text" :disabled="isFileOnlyMediaType"
+          >直接输入</el-radio-button
+        >
         <el-radio-button label="file">上传文件</el-radio-button>
       </el-radio-group>
 
       <el-input
-        v-if="contentInputModeProxy === 'text'"
+        v-if="!isFileOnlyMediaType && contentInputModeProxy === 'text'"
         v-model="form.content"
         type="textarea"
         rows="5"
@@ -238,6 +240,7 @@ const props = defineProps({
   tags: { type: Array, default: () => [] },
   plts: { type: Array, default: () => [] },
   isFanficType: { type: Boolean, default: false },
+  isFileOnlyMediaType: { type: Boolean, default: false },
   contentInputMode: { type: String, default: "text" },
   contentFileName: { type: String, default: "" },
   contentTypeOptions: { type: Array, default: () => [] },
@@ -293,6 +296,25 @@ const contentInputModeProxy = computed({
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.content-input :deep(.el-radio-button.is-disabled) {
+  cursor: not-allowed;
+}
+
+.content-input :deep(.el-radio-button.is-disabled .el-radio-button__inner) {
+  cursor: not-allowed;
+  pointer-events: none;
+  color: var(--el-text-color-placeholder);
+  background-color: var(--el-disabled-bg-color);
+  border-color: var(--el-disabled-border-color);
+}
+
+.content-input
+  :deep(.el-radio-button.is-disabled .el-radio-button__inner:hover) {
+  color: var(--el-text-color-placeholder);
+  background-color: var(--el-disabled-bg-color);
+  border-color: var(--el-disabled-border-color);
 }
 
 .meta-picker {

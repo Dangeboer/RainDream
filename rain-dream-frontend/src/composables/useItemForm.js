@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { createItemApi, getItemDetailApi, updateItemApi } from "../api/item";
 import { createPltApi, createTagApi, getPltApi, getTagApi } from "../api/meta";
@@ -138,6 +138,7 @@ const toNullableString = (value) => {
 
 const isMediaUploadType = (mediaType) =>
   [1, 2, 3, 4, 5].includes(Number(mediaType));
+const FILE_ONLY_MEDIA_TYPES = [2, 3, 5];
 
 const uploadFileToOss = async (file, mediaType) => {
   const contentType = file?.type || "application/octet-stream";
@@ -199,6 +200,9 @@ export const useItemForm = ({ route, router }) => {
   const isEdit = computed(() => !!route.params.id);
   const isFanficType = computed(
     () => Number(form.contentType) === 1 && Number(form.mediaType) === 1,
+  );
+  const isFileOnlyMediaType = computed(() =>
+    FILE_ONLY_MEDIA_TYPES.includes(Number(form.mediaType)),
   );
 
   const applyQueryDefaults = () => {
@@ -461,6 +465,13 @@ export const useItemForm = ({ route, router }) => {
     if (!form.mediaType || !form.contentType || !form.fandom || !form.cp) {
       return ElMessage.warning("请先填写必填项");
     }
+    if (
+      isFileOnlyMediaType.value &&
+      !pendingUploadFile.value &&
+      !toNullableString(form.storeUrl)
+    ) {
+      return ElMessage.warning("请先上传媒体文件");
+    }
     submitting.value = true;
     try {
       const previousStoreUrl = form.storeUrl;
@@ -512,10 +523,22 @@ export const useItemForm = ({ route, router }) => {
     await loadDetail();
   };
 
+  watch(
+    () => form.mediaType,
+    (next) => {
+      const mediaType = Number(next);
+      if (FILE_ONLY_MEDIA_TYPES.includes(mediaType)) {
+        contentInputMode.value = "file";
+      }
+    },
+    { immediate: true },
+  );
+
   return {
     form,
     isEdit,
     isFanficType,
+    isFileOnlyMediaType,
     submitting,
     tags,
     plts,
