@@ -197,7 +197,9 @@ export const useItemForm = ({ route, router }) => {
   });
 
   const isEdit = computed(() => !!route.params.id);
-  const isFanficType = computed(() => Number(form.contentType) === 1);
+  const isFanficType = computed(
+    () => Number(form.contentType) === 1 && Number(form.mediaType) === 1,
+  );
 
   const applyQueryDefaults = () => {
     if (isEdit.value) return;

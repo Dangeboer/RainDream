@@ -157,7 +157,10 @@ const fetchData = async ({ reset = false } = {}) => {
   try {
     if (activeTab.value === "list") {
       const resp = await getFanficListApi(query);
-      const list = Array.isArray(resp?.data) ? resp.data : [];
+      const list = (Array.isArray(resp?.data) ? resp.data : []).filter(
+        (item) =>
+          Number(item?.contentType) === 1 && Number(item?.mediaType) === 1,
+      );
       const nextRows = list.map((item) => ({
         id: item.id,
         storeUrl: item.storeUrl ?? "",

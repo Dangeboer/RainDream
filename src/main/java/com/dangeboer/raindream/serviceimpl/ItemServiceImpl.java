@@ -158,6 +158,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
                 .eq(Item::getUserId, userId)
                 .eq(Item::getContentType, 1)
+                .eq(Item::getMediaType, 1)
                 .orderByDesc(Item::getCreatedAt);
 
         // 不分页：两个参数都没传才走全量
@@ -236,6 +237,8 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             throw new CanNotFoundException();
         } else if (!Objects.equals(item.getUserId(), userId)) {
             throw new ForbiddenException();
+        } else if (!Integer.valueOf(1).equals(item.getContentType()) || !Integer.valueOf(1).equals(item.getMediaType())) {
+            throw new BadRequestException("该条目不是文章");
         }
 
         FanficDetailVO fanficDetailVO = itemConverter.toFanficDetailVO(item, fanficMapper.selectById(itemId));
@@ -263,7 +266,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         if (itemForm == null) {
             throw new BadRequestException();
         }
-        boolean isFanfic = Integer.valueOf(1).equals(itemForm.getContentType());
+        boolean isFanfic = Integer.valueOf(1).equals(itemForm.getContentType()) && Integer.valueOf(1).equals(itemForm.getMediaType());
         boolean isMedia = Integer.valueOf(4).equals(itemForm.getMediaType());
 
         if (isFanfic && itemForm.getFanficForm() == null) {
@@ -336,7 +339,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
         if (itemForm == null) {
             throw new BadRequestException();
         }
-        boolean isFanfic = Integer.valueOf(1).equals(itemForm.getContentType());
+        boolean isFanfic = Integer.valueOf(1).equals(itemForm.getContentType()) && Integer.valueOf(1).equals(itemForm.getMediaType());
         boolean isMedia = Integer.valueOf(4).equals(itemForm.getMediaType());
 
         if (isFanfic && itemForm.getFanficForm() == null) {
@@ -446,7 +449,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     public List<Long> createBatchItem(Long userId, ItemBatchForm form) {
         if (form == null) throw new BadRequestException();
 
-        boolean isFanfic = Integer.valueOf(1).equals(form.getContentType());
+        boolean isFanfic = Integer.valueOf(1).equals(form.getContentType()) && Integer.valueOf(1).equals(form.getMediaType());
         if (isFanfic) {
             throw new BadRequestException("不允许批量上传文章");
         }

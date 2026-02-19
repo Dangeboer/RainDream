@@ -544,7 +544,10 @@ const submitEdit = async () => {
       rating: editForm.rating,
       notes: toNullableString(editForm.notes),
       summary: toNullableString(editForm.summary),
-      fanficForm: editForm.contentType === 1 ? editForm.fanficForm : null,
+      fanficForm:
+        editForm.contentType === 1 && editForm.mediaType === 1
+          ? editForm.fanficForm
+          : null,
       mediaForm:
         editForm.mediaType === 4
           ? editForm.mediaForm || { liveUrl: null }
