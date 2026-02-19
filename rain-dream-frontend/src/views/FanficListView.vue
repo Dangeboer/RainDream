@@ -129,7 +129,7 @@ import {
   ref,
   watch,
 } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ImagePanel from "../components/ImagePanel.vue";
 import { deleteItemApi, getFanficListApi, getItemListApi } from "../api/item";
@@ -147,6 +147,7 @@ const total = ref(0);
 const loading = ref(false);
 const tableRef = ref(null);
 const panelRef = ref(null);
+const route = useRoute();
 const router = useRouter();
 let requestSeq = 0;
 let panelResizeObserver = null;
@@ -385,14 +386,10 @@ const onPageChange = (page) => {
 
 const onTabChange = async (tab) => {
   if (activeTab.value === tab) return;
-  activeTab.value = tab;
-  query.page = 1;
-  if (tab !== "image") {
-    query.size = LIST_PAGE_SIZE;
-  } else {
-    await syncAdaptivePageSize();
-  }
-  fetchData({ reset: true });
+  await router.push({
+    path: "/fanfic",
+    query: tab === "image" ? { tab: "image" } : undefined,
+  });
 };
 
 watch(
@@ -400,6 +397,22 @@ watch(
   () => {
     scheduleAdaptivePageSizeSync();
   },
+);
+
+watch(
+  () => route.query.tab,
+  async (tabValue) => {
+    const nextTab = String(tabValue || "") === "image" ? "image" : "list";
+    activeTab.value = nextTab;
+    query.page = 1;
+    if (nextTab !== "image") {
+      query.size = LIST_PAGE_SIZE;
+    } else {
+      await syncAdaptivePageSize();
+    }
+    await fetchData({ reset: true });
+  },
+  { immediate: true },
 );
 
 onMounted(async () => {
@@ -410,12 +423,7 @@ onMounted(async () => {
     panelResizeObserver.observe(panelRef.value);
   }
   window.addEventListener("resize", scheduleAdaptivePageSizeSync);
-  const replaced = await syncAdaptivePageSize();
-  if (replaced) {
-    await fetchData({ reset: true });
-    return;
-  }
-  await fetchData();
+  scheduleAdaptivePageSizeSync();
 });
 
 onBeforeUnmount(() => {

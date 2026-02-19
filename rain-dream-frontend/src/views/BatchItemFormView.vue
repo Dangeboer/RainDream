@@ -256,14 +256,23 @@ const submit = async () => {
     const createdIds = await createBatchItemApi(payload);
     ElMessage.success(`批量创建成功，共 ${createdIds?.length || 0} 条`);
 
-    await router.push({
-      path: "/content",
-      query: {
-        mode: "content",
-        contentType: Number(form.contentType),
-        mediaType: Number(form.mediaType),
-      },
-    });
+    const contentType = Number(form.contentType);
+    const mediaType = Number(form.mediaType);
+    if (contentType === 1) {
+      await router.push({
+        path: "/fanfic",
+        query: mediaType === 1 ? undefined : { tab: "image" },
+      });
+    } else {
+      await router.push({
+        path: "/content",
+        query: {
+          mode: "content",
+          contentType: contentType,
+          mediaType: mediaType,
+        },
+      });
+    }
   } catch (error) {
     await Promise.all(
       uploadedStoreUrls.map((url) =>
