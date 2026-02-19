@@ -199,6 +199,14 @@ body.font-hand .el-input__inner::placeholder {
   border-color: var(--line) !important;
 }
 
+.el-loading-mask .el-loading-spinner .path {
+  stroke: var(--xhs-yellow) !important;
+}
+
+.el-loading-mask .el-loading-spinner .el-loading-text {
+  color: var(--xhs-yellow) !important;
+}
+
 .el-select-dropdown__item.is-selected {
   color: var(--xhs-orange) !important;
   font-weight: 700;
