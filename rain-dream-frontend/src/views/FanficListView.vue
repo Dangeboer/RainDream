@@ -132,6 +132,7 @@ const total = ref(0);
 const loading = ref(false);
 const tableRef = ref(null);
 const router = useRouter();
+let requestSeq = 0;
 const activeTab = ref("list");
 const tabs = [
   { value: "list", label: "列表" },
@@ -146,13 +147,18 @@ const activeTabLabel = computed(
   () => tabs.find((item) => item.value === activeTab.value)?.label || "列表",
 );
 
-const fetchData = async () => {
+const fetchData = async ({ reset = false } = {}) => {
+  const currentSeq = ++requestSeq;
+  if (reset) {
+    rows.value = [];
+    total.value = 0;
+  }
   loading.value = true;
   try {
     if (activeTab.value === "list") {
       const resp = await getFanficListApi(query);
       const list = Array.isArray(resp?.data) ? resp.data : [];
-      rows.value = list.map((item) => ({
+      const nextRows = list.map((item) => ({
         id: item.id,
         storeUrl: item.storeUrl ?? "",
         content: item.content ?? "",
@@ -171,7 +177,10 @@ const fetchData = async () => {
         endingTypeLabel: item.fanficVO?.endingTypeLabel ?? "-",
         readCount: item.fanficVO?.readCount ?? 0,
       }));
-      total.value = Number(resp?.total ?? rows.value.length);
+      const nextTotal = Number(resp?.total ?? nextRows.length);
+      if (currentSeq !== requestSeq) return;
+      rows.value = nextRows;
+      total.value = nextTotal;
       return;
     }
 
@@ -195,10 +204,16 @@ const fetchData = async () => {
       .filter((item) => [2, 3].includes(Number(resolveItemMediaType(item))))
       .sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
     const offset = (query.page - 1) * query.size;
-    rows.value = mergedRows.slice(offset, offset + query.size);
-    total.value = Number(staticResp?.total || 0) + Number(gifResp?.total || 0);
+    const nextRows = mergedRows.slice(offset, offset + query.size);
+    const nextTotal =
+      Number(staticResp?.total || 0) + Number(gifResp?.total || 0);
+    if (currentSeq !== requestSeq) return;
+    rows.value = nextRows;
+    total.value = nextTotal;
   } finally {
-    loading.value = false;
+    if (currentSeq === requestSeq) {
+      loading.value = false;
+    }
   }
 };
 
@@ -242,7 +257,7 @@ const onTabChange = (tab) => {
   if (activeTab.value === tab) return;
   activeTab.value = tab;
   query.page = 1;
-  fetchData();
+  fetchData({ reset: true });
 };
 
 onMounted(fetchData);
