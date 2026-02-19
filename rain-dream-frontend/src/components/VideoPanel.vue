@@ -274,6 +274,7 @@ const editForm = reactive({
   contentType: undefined,
   storeUrl: "",
   content: null,
+  fileName: "",
   title: "",
   fandom: "",
   cp: "",
@@ -441,6 +442,7 @@ const openEdit = async (itemId) => {
     editForm.contentType = data.contentType;
     editForm.storeUrl = data.storeUrl;
     editForm.content = data.content ?? null;
+    editForm.fileName = data.fileName ?? "";
     editForm.title = data.title ?? "";
     editForm.fandom = data.fandom ?? "";
     editForm.cp = data.cp ?? "";
@@ -493,6 +495,7 @@ const submitEdit = async () => {
       sourceUrl: toNullableString(editForm.sourceUrl),
       releaseYear: editForm.releaseYear,
       sizeBytes: editForm.sizeBytes,
+      fileName: toNullableString(editForm.fileName),
       trackingType: editForm.trackingType,
       rating: editForm.rating,
       notes: toNullableString(editForm.notes),

@@ -242,6 +242,7 @@ const submit = async () => {
     const sizeBytesList = selectedFiles.value.map((file) =>
       Number(file?.size || 0),
     );
+    const fileNames = selectedFiles.value.map((file) => file?.name || null);
 
     const payload = {
       mediaType: Number(form.mediaType),
@@ -250,6 +251,7 @@ const submit = async () => {
       cp: String(form.cp).trim(),
       trackingType: 5,
       sizeBytesList: sizeBytesList,
+      fileNames: fileNames,
       storeUrls: uploadedStoreUrls,
     };
 

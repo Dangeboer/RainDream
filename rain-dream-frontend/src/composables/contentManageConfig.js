@@ -104,6 +104,7 @@ export const normalizeItem = (item = {}) => ({
   contentType: item.contentType,
   mediaType: item.mediaType,
   storeUrl: item.storeUrl ?? "",
+  fileName: item.fileName ?? "",
   sourceUrl: item.sourceUrl ?? "",
   trackingType: item.trackingType,
   trackingTypeLabel: item.trackingTypeLabel,

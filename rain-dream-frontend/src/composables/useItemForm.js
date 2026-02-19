@@ -180,6 +180,7 @@ export const useItemForm = ({ route, router }) => {
     contentType: null,
     storeUrl: "",
     sizeBytes: null,
+    fileName: null,
     content: null,
     title: "",
     fandom: "风声",
@@ -225,6 +226,7 @@ export const useItemForm = ({ route, router }) => {
         pendingUploadFile.value = file;
         form.content = null;
         form.sizeBytes = file.size || null;
+        form.fileName = file.name || null;
         contentFileName.value = file.name || "";
         ElMessage.success("文件已选择，将在保存时上传");
         return;
@@ -232,6 +234,7 @@ export const useItemForm = ({ route, router }) => {
       const asText = looksLikeTextFile(file);
       form.content = await readFileAsTextOrDataUrl(file, asText);
       form.sizeBytes = file.size || null;
+      form.fileName = file.name || null;
       contentFileName.value = file.name || "";
     } catch (error) {
       ElMessage.error(error?.message || "上传失败，请稍后重试");
@@ -244,6 +247,7 @@ export const useItemForm = ({ route, router }) => {
     form.content = null;
     form.storeUrl = null;
     form.sizeBytes = null;
+    form.fileName = null;
   };
 
   const loadDetail = async () => {
@@ -254,6 +258,7 @@ export const useItemForm = ({ route, router }) => {
     form.contentType = data?.contentType ?? null;
     form.storeUrl = data?.storeUrl ?? null;
     form.sizeBytes = data?.sizeBytes ?? null;
+    form.fileName = data?.fileName ?? null;
     form.content = data?.content ?? null;
     form.title = data?.title ?? null;
     form.fandom = data?.fandom ?? "风声";
@@ -370,6 +375,7 @@ export const useItemForm = ({ route, router }) => {
     );
     form.storeUrl = uploadedUrl;
     form.sizeBytes = pendingUploadFile.value.size || form.sizeBytes;
+    form.fileName = pendingUploadFile.value.name || form.fileName;
     pendingUploadFile.value = null;
     return uploadedUrl;
   };
@@ -407,6 +413,7 @@ export const useItemForm = ({ route, router }) => {
     sourceUrl: toNullableString(form.sourceUrl),
     releaseYear: form.releaseYear,
     sizeBytes: form.sizeBytes,
+    fileName: toNullableString(form.fileName),
     trackingType: form.trackingType ?? 5,
     rating: form.rating,
     notes: toNullableString(form.notes),
