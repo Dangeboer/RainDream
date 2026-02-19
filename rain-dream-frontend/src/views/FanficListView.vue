@@ -129,7 +129,12 @@
         </div>
       </template>
       <el-skeleton v-if="detailLoading" :rows="8" animated />
-      <el-descriptions v-else-if="detailItem" :column="2" border>
+      <el-descriptions
+        v-else-if="detailItem"
+        :column="2"
+        border
+        :label-width="110"
+      >
         <el-descriptions-item label="标题">{{
           showDetail(detailItem.title)
         }}</el-descriptions-item>
@@ -550,7 +555,8 @@ const onDetailClosed = async () => {
   if (!route.query.detail) return;
   await router.replace({
     path: "/fanfic",
-    query: String(route.query.tab || "") === "image" ? { tab: "image" } : undefined,
+    query:
+      String(route.query.tab || "") === "image" ? { tab: "image" } : undefined,
   });
 };
 
