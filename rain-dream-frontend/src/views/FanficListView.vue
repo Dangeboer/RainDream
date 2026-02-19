@@ -190,8 +190,10 @@
           <el-link
             v-if="detailItem.storeUrl"
             :href="detailItem.storeUrl"
+            :download="resolveDownloadName(detailItem)"
             target="_blank"
             rel="noopener noreferrer"
+            @click.prevent="handleDetailDownload"
           >
             点击下载
           </el-link>
@@ -318,6 +320,51 @@ const detailPlatformText = computed(() => {
 
 const showDetail = (value) =>
   value === null || value === undefined || value === "" ? "-" : value;
+const pickText = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+const resolveDownloadName = (item) => {
+  const title = pickText(item?.title);
+  if (title) return title;
+  const fileName = pickText(item?.fileName);
+  if (fileName) return fileName;
+  const storeUrl = pickText(item?.storeUrl);
+  if (!storeUrl) return "download";
+  try {
+    const pathname = new URL(storeUrl).pathname || "";
+    const fromUrl = pathname.split("/").filter(Boolean).pop() || "";
+    return fromUrl || "download";
+  } catch {
+    return storeUrl.split("/").filter(Boolean).pop() || "download";
+  }
+};
+const triggerBrowserDownload = (href, fileName) => {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = fileName || "download";
+  anchor.rel = "noopener noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+};
+const handleDetailDownload = async () => {
+  const item = detailItem.value;
+  const storeUrl = pickText(item?.storeUrl);
+  if (!storeUrl) return;
+  const fileName = resolveDownloadName(item);
+  try {
+    const response = await fetch(storeUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    triggerBrowserDownload(blobUrl, fileName);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  } catch {
+    triggerBrowserDownload(storeUrl, fileName);
+    ElMessage.warning("未能直接命名下载，已回退原链接下载");
+  }
+};
 
 const formatFileSize = (bytes) => {
   const size = Number(bytes);

@@ -40,9 +40,9 @@
               <a
                 class="action"
                 :href="getStoreUrl(row)"
-                download
                 target="_blank"
                 rel="noopener noreferrer"
+                @click.prevent="handleDownload(row)"
               >
                 下载
               </a>
@@ -292,6 +292,50 @@ const editForm = reactive({
 });
 
 const getStoreUrl = (row) => row?.storeUrl || "";
+const pickText = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+const resolveDownloadName = (row) => {
+  const title = pickText(row?.title);
+  if (title) return title;
+  const fileName = pickText(row?.fileName);
+  if (fileName) return fileName;
+  const storeUrl = pickText(row?.storeUrl);
+  if (!storeUrl) return "download";
+  try {
+    const pathname = new URL(storeUrl).pathname || "";
+    const fromUrl = pathname.split("/").filter(Boolean).pop() || "";
+    return fromUrl || "download";
+  } catch {
+    return storeUrl.split("/").filter(Boolean).pop() || "download";
+  }
+};
+const triggerBrowserDownload = (href, fileName) => {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = fileName || "download";
+  anchor.rel = "noopener noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+};
+const handleDownload = async (row) => {
+  const storeUrl = getStoreUrl(row);
+  if (!storeUrl) return;
+  const fileName = resolveDownloadName(row);
+  try {
+    const response = await fetch(storeUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    triggerBrowserDownload(blobUrl, fileName);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  } catch {
+    triggerBrowserDownload(storeUrl, fileName);
+    ElMessage.warning("未能直接命名下载，已回退原链接下载");
+  }
+};
 
 const durationCache = reactive({});
 
