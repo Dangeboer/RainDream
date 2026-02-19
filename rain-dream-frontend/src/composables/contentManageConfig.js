@@ -9,6 +9,7 @@ export const GRID_CARD_MIN_WIDTH = 260;
 export const GRID_CARD_GAP = 14;
 
 export const contentTypeLabelMap = {
+  1: "文章",
   2: "图绘",
   3: "精修",
   4: "混剪",

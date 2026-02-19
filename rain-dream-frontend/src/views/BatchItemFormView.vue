@@ -120,6 +120,7 @@ const mediaTypeOptions = [
 ];
 
 const contentTypeOptions = [
+  { value: 1, label: "文章" },
   { value: 2, label: "图绘" },
   { value: 3, label: "精修" },
   { value: 4, label: "混剪" },
