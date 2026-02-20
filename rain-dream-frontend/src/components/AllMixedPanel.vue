@@ -299,6 +299,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { getItemDetailApi } from "../api/item";
+import { mediaGroupByType } from "../contentMeta";
 import {
   inferMediaTypeFromStoreUrl,
   mediaTypeLabelMap,
@@ -316,14 +317,6 @@ defineProps({
 });
 
 defineEmits(["edit", "remove"]);
-
-const mediaGroupByType = {
-  1: "text",
-  2: "image",
-  3: "image",
-  5: "video",
-  6: "link",
-};
 
 const imagePreviewVisible = ref(false);
 const imagePreviewItem = ref(null);

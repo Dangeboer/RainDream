@@ -35,6 +35,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { getItemListApi, deleteItemApi } from '../api/item'
+import { contentTypeLabelMap, mediaTypeLabelMap } from '../contentMeta'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,25 +50,6 @@ const query = reactive({
   contentType: undefined,
   mediaType: undefined
 })
-
-const contentTypeLabelMap = {
-  1: '文章',
-  2: '图绘',
-  3: '精修',
-  4: '混剪',
-  5: '解析',
-  6: '吐槽',
-  7: '主创说',
-  8: 'RPS',
-  9: '其他'
-}
-
-const mediaTypeLabelMap = {
-  1: '文本',
-  2: '图片',
-  3: '视频',
-  4: '链接'
-}
 
 const pageTitle = computed(() => {
   const parts = ['全部资源']

@@ -58,58 +58,63 @@
 
 <script setup>
 import { useRoute } from "vue-router";
+import {
+  contentTypeLabelMap,
+  mediaGroupByType,
+  mediaTypeByGroup,
+} from "../contentMeta";
 
 const contentMenu = [
   {
-    label: "文章",
+    label: contentTypeLabelMap[1],
     to: { path: "/fanfic" },
     group: "content",
     value: 1,
   },
   {
-    label: "图绘",
+    label: contentTypeLabelMap[2],
     to: { path: "/content", query: { mode: "content", contentType: 2 } },
     group: "content",
     value: 2,
   },
   {
-    label: "精修",
+    label: contentTypeLabelMap[3],
     to: { path: "/content", query: { mode: "content", contentType: 3 } },
     group: "content",
     value: 3,
   },
   {
-    label: "混剪",
+    label: contentTypeLabelMap[4],
     to: { path: "/content", query: { mode: "content", contentType: 4 } },
     group: "content",
     value: 4,
   },
   {
-    label: "解析",
+    label: contentTypeLabelMap[5],
     to: { path: "/content", query: { mode: "content", contentType: 5 } },
     group: "content",
     value: 5,
   },
   {
-    label: "吐槽",
+    label: contentTypeLabelMap[6],
     to: { path: "/content", query: { mode: "content", contentType: 6 } },
     group: "content",
     value: 6,
   },
   {
-    label: "主创说",
+    label: contentTypeLabelMap[7],
     to: { path: "/content", query: { mode: "content", contentType: 7 } },
     group: "content",
     value: 7,
   },
   {
-    label: "RPS",
+    label: contentTypeLabelMap[8],
     to: { path: "/content", query: { mode: "content", contentType: 8 } },
     group: "content",
     value: 8,
   },
   {
-    label: "其他",
+    label: contentTypeLabelMap[9],
     to: { path: "/content", query: { mode: "content", contentType: 9 } },
     group: "content",
     value: 9,
@@ -122,16 +127,6 @@ const mediaMenuBase = [
   { label: "视频", value: "video", group: "media" },
   { label: "链接", value: "link", group: "media" },
 ];
-
-const mediaGroupByType = {
-  1: "text",
-  2: "image",
-  3: "image",
-  4: "image",
-  5: "video",
-  6: "link",
-};
-const mediaTypeByGroup = { text: 1, image: 2, video: 5, link: 6 };
 
 const route = useRoute();
 const mediaMenu = mediaMenuBase.map((entry) => ({

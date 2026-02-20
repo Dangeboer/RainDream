@@ -1,3 +1,10 @@
+import {
+  contentTypeLabelMap,
+  mediaGroupByType,
+  mediaTypeLabelMap,
+  mediaTypeOptions,
+} from "../contentMeta";
+
 export const DEFAULT_PAGE_SIZE = 8;
 export const MAX_PAGE_SIZE = 100;
 export const MIXED_CONTENT_FETCH_BATCH_SIZE = 24;
@@ -8,25 +15,7 @@ export const VIDEO_AUTO_PAGE_SIZE_CAP = 12;
 export const GRID_CARD_MIN_WIDTH = 260;
 export const GRID_CARD_GAP = 14;
 
-export const contentTypeLabelMap = {
-  1: "文章",
-  2: "图绘",
-  3: "精修",
-  4: "混剪",
-  5: "解析",
-  6: "吐槽",
-  7: "主创说",
-  8: "RPS",
-  9: "其他",
-};
-
-export const mediaTypeOptions = [
-  { value: 1, label: "文本" },
-  { value: 2, label: "静图" },
-  { value: 3, label: "动图" },
-  { value: 5, label: "视频" },
-  { value: 6, label: "链接" },
-];
+export { contentTypeLabelMap, mediaTypeOptions };
 
 export const contentMediaGroupOptions = [
   { value: "all", label: "全部" },
@@ -43,9 +32,7 @@ export const globalMediaGroupOptions = [
   { value: "link", label: "链接" },
 ];
 
-export const mediaTypeLabelMap = Object.fromEntries(
-  mediaTypeOptions.map((item) => [item.value, item.label]),
-);
+export { mediaTypeLabelMap };
 export const contentMediaGroupLabelMap = Object.fromEntries(
   contentMediaGroupOptions.map((item) => [item.value, item.label]),
 );
@@ -53,14 +40,7 @@ export const globalMediaGroupLabelMap = Object.fromEntries(
   globalMediaGroupOptions.map((item) => [item.value, item.label]),
 );
 
-export const mediaGroupByType = {
-  1: "text",
-  2: "image",
-  3: "image",
-  4: "image",
-  5: "video",
-  6: "link",
-};
+export { mediaGroupByType };
 
 export const mediaTypesByGroup = {
   text: [1],
