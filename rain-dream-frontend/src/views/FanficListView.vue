@@ -128,7 +128,7 @@
     >
       <template #header>
         <div class="dialog-head">
-          <span>{{ detailItem?.title || "Fanfic 详情" }}</span>
+          <span>{{ detailItem?.title || "文章详情" }}</span>
         </div>
       </template>
       <el-skeleton v-if="detailLoading" :rows="8" animated />
