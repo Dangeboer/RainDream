@@ -272,8 +272,8 @@ const isEntryActive = (entry) => {
   margin-bottom: 14px;
 }
 .home-menu .menu-item {
-  padding: 12px 8px;
-  margin-bottom: 6px;
+  padding: 12px 20px;
+  /* margin-bottom: 6px; */
   color: var(--dark);
   font-size: 18px;
   font-weight: 700;
@@ -287,14 +287,14 @@ const isEntryActive = (entry) => {
   margin-top: 16px;
 }
 .menu-title {
-  padding: 0 8px;
-  margin-bottom: 6px;
+  padding: 12px 20px;
+  /* margin-bottom: 6px; */
   color: var(--dark);
   font-size: 18px;
   font-weight: 700;
 }
 .menu-item {
-  padding: 12px 24px;
+  padding: 12px 40px;
   border-radius: 10px;
   color: var(--grey);
   position: relative;
