@@ -14,5 +14,7 @@ export const createBatchItemApi = (payload) =>
   http.post("/api/item/create/batch", payload);
 export const updateItemApi = (itemId, payload) =>
   http.put(`/api/item/update/${itemId}`, payload);
+export const setItemFavoriteApi = (itemId, isFavorite) =>
+  http.put(`/api/item/favorite/${itemId}`, null, { params: { isFavorite } });
 export const deleteItemApi = (itemId) =>
   http.delete(`/api/item/delete/${itemId}`);
