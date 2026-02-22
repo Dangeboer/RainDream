@@ -27,9 +27,10 @@ public class ItemController {
             @RequestParam(required = false) Long page,
             @RequestParam(required = false) Long size,
             @RequestParam(required = false) Integer contentType,
-            @RequestParam(required = false) Integer mediaType
+            @RequestParam(required = false) Integer mediaType,
+            @RequestParam(required = false) Integer isFavorite
     ) {
-        return itemService.getItemList(user.getId(), page, size, contentType, mediaType);
+        return itemService.getItemList(user.getId(), page, size, contentType, mediaType, isFavorite);
     }
 
     @GetMapping("/detail/{itemId}")
@@ -64,6 +65,15 @@ public class ItemController {
     @PutMapping("/update/{itemId}")
     public Long updateItem(@AuthenticationPrincipal User user, @PathVariable Long itemId, @RequestBody ItemForm itemForm) {
         return itemService.updateItem(user.getId(), itemId, itemForm);
+    }
+
+    @PutMapping("/favorite/{itemId}")
+    public Long setFavorite(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long itemId,
+            @RequestParam Integer isFavorite
+    ) {
+        return itemService.setFavorite(user.getId(), itemId, isFavorite);
     }
 
     @PostMapping("/create/batch")

@@ -13,7 +13,7 @@ import com.dangeboer.raindream.model.vo.ItemListVO;
 import java.util.List;
 
 public interface ItemService extends IService<Item> {
-    PageResult<ItemListVO> getItemList(Long userId, Long page, Long size, Integer contentType, Integer mediaType);
+    PageResult<ItemListVO> getItemList(Long userId, Long page, Long size, Integer contentType, Integer mediaType, Integer isFavorite);
 
     ItemDetailVO getItemDetail(Long userId, Long itemId);
 
@@ -24,6 +24,7 @@ public interface ItemService extends IService<Item> {
 
     Long deleteItem(Long userId, Long itemId);
     Long updateItem(Long userId, Long itemId, ItemForm itemForm);
+    Long setFavorite(Long userId, Long itemId, Integer isFavorite);
 
     List<Long> createBatchItem(Long userId, ItemBatchForm itemBatchForm);
 }

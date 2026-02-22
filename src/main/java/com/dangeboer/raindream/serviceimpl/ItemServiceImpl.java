@@ -58,7 +58,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     private final OssService ossService;
 
     @Override
-    public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size, Integer contentType, Integer mediaType) {
+    public PageResult<ItemListVO> getItemList(Long userId, Long page, Long size, Integer contentType, Integer mediaType, Integer isFavorite) {
 
         // 查询条件
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<Item>()
@@ -73,6 +73,9 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         if (mediaType != null) {
             wrapper.eq(Item::getMediaType, mediaType);
+        }
+        if (isFavorite != null) {
+            wrapper.eq(Item::getIsFavorite, isFavorite);
         }
 
         // 1) 不分页：两个参数都没传才走全量
@@ -277,6 +280,9 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
 
         Item item = itemConverter.toItem(itemForm);
         item.setUserId(userId);
+        if (item.getIsFavorite() == null) {
+            item.setIsFavorite(0);
+        }
 
         // 1. 先插 item，拿到自增 id
         itemMapper.insert(item);
@@ -367,6 +373,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
                         .set(Item::getReleaseYear, toUpdate.getReleaseYear())
                         .set(Item::getSizeBytes, toUpdate.getSizeBytes())
                         .set(Item::getFileName, toUpdate.getFileName())
+                        .set(Item::getIsFavorite, toUpdate.getIsFavorite() == null ? dbItem.getIsFavorite() : toUpdate.getIsFavorite())
                         .set(Item::getTrackingType, toUpdate.getTrackingType())
                         .set(Item::getRating, toUpdate.getRating())
                         .set(Item::getNotes, toUpdate.getNotes())
@@ -446,6 +453,26 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
     }
 
     @Override
+    public Long setFavorite(Long userId, Long itemId, Integer isFavorite) {
+        Item item = itemMapper.selectById(itemId);
+        if (item == null) {
+            throw new CanNotFoundException();
+        } else if (!Objects.equals(item.getUserId(), userId)) {
+            throw new ForbiddenException();
+        } else if (!Integer.valueOf(0).equals(isFavorite) && !Integer.valueOf(1).equals(isFavorite)) {
+            throw new BadRequestException("isFavorite 仅支持 0 或 1");
+        }
+
+        return (long) itemMapper.update(
+                null,
+                new LambdaUpdateWrapper<Item>()
+                        .eq(Item::getId, itemId)
+                        .eq(Item::getUserId, userId)
+                        .set(Item::getIsFavorite, isFavorite)
+        );
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<Long> createBatchItem(Long userId, ItemBatchForm form) {
         if (form == null) throw new BadRequestException();
@@ -508,6 +535,7 @@ public class ItemServiceImpl extends ServiceImpl<ItemMapper, Item> implements It
             item.setStoreUrl(storeUrls.get(i));
             item.setSizeBytes(sizes.get(i));
             item.setFileName(fileNames == null || i >= fileNames.size() ? null : fileNames.get(i));
+            item.setIsFavorite(form.getIsFavorite() == null ? 0 : form.getIsFavorite());
             items.add(item);
         }
 

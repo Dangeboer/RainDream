@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS user
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
 
 # ALTER TABLE item ADD COLUMN file_name VARCHAR(255) NULL COMMENT '原始文件名' AFTER size_bytes;
+# ALTER TABLE item ADD COLUMN is_favorite TINYINT NOT NULL DEFAULT 0 COMMENT '是否收藏：0否1是' AFTER file_name;
 
 -- 项目表
 CREATE TABLE IF NOT EXISTS item
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS item
     release_year  YEAR,
     size_bytes    BIGINT,
     file_name     VARCHAR(255) COMMENT '原始文件名',
+    is_favorite   TINYINT      NOT NULL DEFAULT 0 COMMENT '是否收藏：0否1是',
 
     tracking_type TINYINT               DEFAULT 5 COMMENT '状态',
     rating        DECIMAL(3, 1),
@@ -77,6 +79,7 @@ CREATE TABLE IF NOT EXISTS item
     INDEX idx_item_media_type (media_type),
     INDEX idx_item_content_type (content_type),
     INDEX idx_item_author (author),
+    INDEX idx_item_is_favorite (is_favorite),
     INDEX idx_item_tracking (tracking_type),
     INDEX idx_item_rating (rating)
 ) ENGINE = InnoDB
