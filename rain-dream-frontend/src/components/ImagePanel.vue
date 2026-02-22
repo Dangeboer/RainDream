@@ -87,7 +87,12 @@
         >
           <div class="preview-stage" :style="previewStageStyle">
             <img
-              class="preview-image"
+              :class="[
+                'preview-image',
+                previewQuickZoomed
+                  ? 'preview-image--zoom-out'
+                  : 'preview-image--zoom-in',
+              ]"
               :src="getStoreUrl(previewItem)"
               :alt="previewItem.title || 'preview'"
               @load="onPreviewImageLoad"
@@ -834,7 +839,16 @@ const formatSize = (size = 0) => {
   border-radius: 8px;
   object-fit: contain;
   transition: none;
-  cursor: pointer;
+}
+
+.preview-image--zoom-in {
+  cursor: zoom-in;
+  cursor: -webkit-zoom-in;
+}
+
+.preview-image--zoom-out {
+  cursor: zoom-out;
+  cursor: -webkit-zoom-out;
 }
 
 :deep(.preview-dialog .el-dialog__body) {
