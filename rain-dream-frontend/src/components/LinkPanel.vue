@@ -1,6 +1,30 @@
 <template>
   <div class="table-wrap" @wheel.capture="onTableWheel">
-    <el-table ref="tableRef" :data="rows" stripe v-loading="loading">
+    <el-table
+      ref="tableRef"
+      :data="rows"
+      stripe
+      v-loading="loading"
+      @row-click="onRowClick"
+    >
+      <el-table-column label="收藏" class-name="favorite-col" width="80">
+        <template #default="{ row }">
+          <button
+            :class="[
+              'favorite-toggle',
+              Number(row?.isFavorite) === 1 ? 'is-favorite' : 'is-outline',
+            ]"
+            type="button"
+            :title="Number(row?.isFavorite) === 1 ? '取消收藏' : '收藏'"
+            @click.stop="toggleFavorite(row)"
+          >
+            <el-icon>
+              <StarFilled v-if="Number(row?.isFavorite) === 1" />
+              <Star v-else />
+            </el-icon>
+          </button>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="title"
         label="标题"
@@ -31,7 +55,6 @@
       <el-table-column label="操作" min-width="150">
         <template #default="{ row }">
           <div class="action-cell">
-            <el-link @click.stop="openDetail(row.id)">详情</el-link>
             <el-link @click.stop="$emit('edit', row.id)">编辑</el-link>
             <el-link type="danger" @click.stop="$emit('remove', row.id)"
               >删除</el-link
@@ -80,7 +103,9 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { getItemDetailApi } from "../api/item";
+import { ElMessage } from "element-plus";
+import { Star, StarFilled } from "@element-plus/icons-vue";
+import { getItemDetailApi, setItemFavoriteApi } from "../api/item";
 
 defineProps({
   rows: {
@@ -157,6 +182,21 @@ const openDetail = async (itemId) => {
   }
 };
 
+const onRowClick = async (row) => {
+  if (!row?.id) return;
+  await openDetail(row.id);
+};
+
+const toggleFavorite = async (row) => {
+  const id = row?.id;
+  if (!id) return;
+  const current = Number(row?.isFavorite) === 1 ? 1 : 0;
+  const next = current === 1 ? 0 : 1;
+  await setItemFavoriteApi(id, next);
+  row.isFavorite = next;
+  ElMessage.success(next === 1 ? "已收藏" : "已取消收藏");
+};
+
 const resolveReleaseYear = (row) => {
   const year = row?.releaseYear;
   if (year === null || year === undefined || String(year).trim() === "")
@@ -191,6 +231,48 @@ const resolveFieldValue = (row, field) => {
   display: flex;
   justify-content: left;
   gap: 18px;
+}
+
+:deep(.el-table .el-table__body tr) {
+  cursor: pointer;
+}
+
+:deep(.el-table .favorite-col .cell) {
+  display: flex;
+  justify-content: center;
+}
+
+.favorite-toggle {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--xhs-orange);
+  font-size: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.favorite-toggle :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-outline :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-favorite :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle:hover :deep(.el-icon) {
+  color: var(--xhs-orange-hover);
 }
 
 .dialog-head {
