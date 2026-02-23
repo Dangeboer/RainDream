@@ -100,7 +100,15 @@
           class="preview-canvas"
           @wheel="onPreviewWheel"
         >
-          <div class="preview-stage" :style="previewStageStyle">
+          <div
+            :class="[
+              'preview-stage',
+              previewQuickZoomed
+                ? 'preview-stage--zoom-out'
+                : 'preview-stage--zoom-in',
+            ]"
+            :style="previewStageStyle"
+          >
             <img
               :class="[
                 'preview-image',
@@ -915,6 +923,20 @@ const formatSize = (size = 0) => {
   justify-content: center;
   align-items: center;
   margin: 0 auto;
+}
+
+.preview-stage--zoom-in,
+.preview-stage--zoom-in .preview-image {
+  cursor: pointer !important;
+  cursor: -webkit-zoom-in !important;
+  cursor: zoom-in !important;
+}
+
+.preview-stage--zoom-out,
+.preview-stage--zoom-out .preview-image {
+  cursor: pointer !important;
+  cursor: -webkit-zoom-out !important;
+  cursor: zoom-out !important;
 }
 
 .preview-image {

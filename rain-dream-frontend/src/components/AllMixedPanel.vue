@@ -139,9 +139,22 @@
           class="preview-canvas"
           @wheel="onPreviewWheel"
         >
-          <div class="preview-stage" :style="previewStageStyle">
+          <div
+            :class="[
+              'preview-stage',
+              previewQuickZoomed
+                ? 'preview-stage--zoom-out'
+                : 'preview-stage--zoom-in',
+            ]"
+            :style="previewStageStyle"
+          >
             <img
-              class="preview-image"
+              :class="[
+                'preview-image',
+                previewQuickZoomed
+                  ? 'preview-image--zoom-out'
+                  : 'preview-image--zoom-in',
+              ]"
               :src="getStoreUrl(imagePreviewItem)"
               :alt="imagePreviewItem.title || 'preview'"
               @load="onPreviewImageLoad"
@@ -758,6 +771,20 @@ const formatSize = (bytes) => {
   box-shadow: 0 10px 20px rgba(38, 38, 38, 0.12);
 }
 
+.mixed-card.type-image,
+.mixed-card.type-image:hover {
+  cursor: pointer;
+  cursor: -webkit-zoom-in;
+  cursor: zoom-in;
+}
+
+.mixed-card.type-image .cover-media,
+.mixed-card.type-image:hover .cover-media {
+  cursor: pointer !important;
+  cursor: -webkit-zoom-in !important;
+  cursor: zoom-in !important;
+}
+
 .mixed-card.is-static-card {
   cursor: default;
 }
@@ -999,6 +1026,20 @@ const formatSize = (bytes) => {
   margin: 0 auto;
 }
 
+.preview-stage--zoom-in,
+.preview-stage--zoom-in .preview-image {
+  cursor: pointer !important;
+  cursor: -webkit-zoom-in !important;
+  cursor: zoom-in !important;
+}
+
+.preview-stage--zoom-out,
+.preview-stage--zoom-out .preview-image {
+  cursor: pointer !important;
+  cursor: -webkit-zoom-out !important;
+  cursor: zoom-out !important;
+}
+
 .preview-image {
   width: 100%;
   height: 100%;
@@ -1007,7 +1048,16 @@ const formatSize = (bytes) => {
   border-radius: 8px;
   object-fit: contain;
   transition: none;
-  cursor: pointer;
+}
+
+.preview-image--zoom-in {
+  cursor: zoom-in;
+  cursor: -webkit-zoom-in;
+}
+
+.preview-image--zoom-out {
+  cursor: zoom-out;
+  cursor: -webkit-zoom-out;
 }
 
 :deep(.preview-dialog .el-dialog__body) {
