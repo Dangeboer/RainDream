@@ -33,6 +33,24 @@
         style="width: 100%"
         @row-click="onRowClick"
       >
+        <el-table-column label="收藏" class-name="favorite-col" width="60">
+          <template #default="{ row }">
+            <button
+              :class="[
+                'favorite-toggle',
+                Number(row?.isFavorite) === 1 ? 'is-favorite' : 'is-outline',
+              ]"
+              type="button"
+              :title="Number(row?.isFavorite) === 1 ? '取消收藏' : '收藏'"
+              @click.stop="toggleFavorite(row)"
+            >
+              <el-icon>
+                <StarFilled v-if="Number(row?.isFavorite) === 1" />
+                <Star v-else />
+              </el-icon>
+            </button>
+          </template>
+        </el-table-column>
         <!-- <el-table-column prop="id" label="ID" width="80" /> -->
         <el-table-column
           prop="eraLabel"
@@ -84,7 +102,7 @@
           min-width="110"
           show-overflow-tooltip
         />
-        <el-table-column label="来源" min-width="110">
+        <el-table-column label="来源" min-width="90">
           <template #default="{ row }">
             <el-link
               v-if="row.sourceUrl"
@@ -98,12 +116,9 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" class-name="op-col" width="180">
+        <el-table-column label="操作" class-name="op-col" width="120">
           <template #default="{ row }">
             <div class="action-cell">
-              <el-link @click.stop="toggleFavorite(row)">
-                {{ Number(row?.isFavorite) === 1 ? "取消收藏" : "收藏" }}
-              </el-link>
               <el-link @click.stop="onEdit(row.id)">编辑</el-link>
               <el-link type="danger" @click.stop="remove(row.id)">删除</el-link>
             </div>
@@ -248,6 +263,7 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Star, StarFilled } from "@element-plus/icons-vue";
 import ImagePanel from "../components/ImagePanel.vue";
 import {
   deleteItemApi,
@@ -793,8 +809,46 @@ onBeforeUnmount(() => {
   padding-right: 0;
 }
 
+:deep(.el-table .favorite-col .cell) {
+  display: flex;
+  justify-content: center;
+}
+
 .action-cell {
   display: flex;
   gap: 18px;
+}
+
+.favorite-toggle {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--xhs-orange);
+  font-size: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.favorite-toggle :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-outline :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-favorite :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle:hover :deep(.el-icon) {
+  color: var(--xhs-orange-hover);
 }
 </style>

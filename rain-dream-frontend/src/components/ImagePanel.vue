@@ -249,7 +249,11 @@ import {
 } from "vue";
 import { ElMessage } from "element-plus";
 import { Star, StarFilled } from "@element-plus/icons-vue";
-import { getItemDetailApi, setItemFavoriteApi, updateItemApi } from "../api/item";
+import {
+  getItemDetailApi,
+  setItemFavoriteApi,
+  updateItemApi,
+} from "../api/item";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -709,7 +713,7 @@ const formatSize = (size = 0) => {
   border: 0;
   background: transparent;
   color: var(--xhs-orange);
-  font-size: 18px;
+  font-size: 24px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -723,23 +727,19 @@ const formatSize = (size = 0) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--xhs-orange);
 }
 
-.favorite-toggle.is-outline :deep(.el-icon svg) {
-  fill: transparent;
-  stroke: var(--xhs-yellow);
-  stroke-width: 1.8;
+.favorite-toggle.is-outline :deep(.el-icon) {
+  color: var(--xhs-orange);
 }
 
-.favorite-toggle.is-favorite :deep(.el-icon svg) {
-  fill: var(--xhs-yellow);
-  stroke: var(--xhs-yellow);
-  stroke-width: 1.2;
+.favorite-toggle.is-favorite :deep(.el-icon) {
+  color: var(--xhs-orange);
 }
 
-.favorite-toggle:hover :deep(.el-icon svg) {
-  fill: #ffe082;
-  stroke: #ffe082;
+.favorite-toggle:hover :deep(.el-icon) {
+  color: var(--xhs-orange-hover);
 }
 
 .image-card:hover .favorite-toggle {
