@@ -9,6 +9,21 @@
         class="image-card"
         @click="openPreview(row)"
       >
+        <button
+          v-if="showFavoriteToggle"
+          :class="[
+            'favorite-toggle',
+            Number(row?.isFavorite) === 1 ? 'is-favorite' : 'is-outline',
+          ]"
+          type="button"
+          :title="Number(row?.isFavorite) === 1 ? '取消收藏' : '收藏'"
+          @click.stop="toggleFavorite(row)"
+        >
+          <el-icon>
+            <StarFilled v-if="Number(row?.isFavorite) === 1" />
+            <Star v-else />
+          </el-icon>
+        </button>
         <img
           class="image-main"
           :src="getStoreUrl(row)"
@@ -233,6 +248,7 @@ import {
   ref,
 } from "vue";
 import { ElMessage } from "element-plus";
+import { Star, StarFilled } from "@element-plus/icons-vue";
 import { getItemDetailApi, updateItemApi } from "../api/item";
 
 const contentTypeOptions = [
@@ -264,9 +280,19 @@ defineProps({
     type: Object,
     default: () => ({}),
   },
+  showFavoriteToggle: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(["detail", "edit", "remove", "updated"]);
+const emit = defineEmits([
+  "detail",
+  "edit",
+  "remove",
+  "updated",
+  "toggle-favorite",
+]);
 
 const previewVisible = ref(false);
 const previewItem = ref(null);
@@ -398,6 +424,12 @@ const openPreview = (row) => {
   nextTick(() => {
     updatePreviewCanvasSize();
   });
+};
+
+const toggleFavorite = (row) => {
+  const current = Number(row?.isFavorite) === 1 ? 1 : 0;
+  const next = current === 1 ? 0 : 1;
+  emit("toggle-favorite", { row, next });
 };
 
 const PREVIEW_MIN_SCALE = 0.5;
@@ -659,6 +691,54 @@ const formatSize = (size = 0) => {
   aspect-ratio: 4 / 3;
   cursor: zoom-in;
   cursor: -webkit-zoom-in;
+}
+
+.favorite-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--xhs-orange);
+  font-size: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.favorite-toggle :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorite-toggle.is-outline :deep(.el-icon svg) {
+  fill: transparent;
+  stroke: var(--xhs-yellow);
+  stroke-width: 1.8;
+}
+
+.favorite-toggle.is-favorite :deep(.el-icon svg) {
+  fill: var(--xhs-yellow);
+  stroke: var(--xhs-yellow);
+  stroke-width: 1.2;
+}
+
+.favorite-toggle:hover :deep(.el-icon svg) {
+  fill: #ffe082;
+  stroke: #ffe082;
+}
+
+.image-card:hover .favorite-toggle {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .image-main {

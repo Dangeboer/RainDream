@@ -26,7 +26,7 @@
           <el-table-column
             prop="title"
             label="名称"
-            min-width="160"
+            min-width="120"
             show-overflow-tooltip
           />
           <el-table-column
@@ -80,11 +80,16 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" class-name="op-col" width="120">
+          <el-table-column label="操作" class-name="op-col" width="180">
             <template #default="{ row }">
               <div class="action-cell">
+                <el-link @click.stop="cancelFavoriteFanfic(row.id)"
+                  >取消收藏</el-link
+                >
                 <el-link @click.stop="onEdit(row.id)">编辑</el-link>
-                <el-link type="danger" @click.stop="remove(row.id)">删除</el-link>
+                <el-link type="danger" @click.stop="remove(row.id)"
+                  >删除</el-link
+                >
               </div>
             </template>
           </el-table-column>
@@ -215,7 +220,13 @@
         <h2>收藏图片</h2>
       </div>
 
-      <ImagePanel :rows="imageRows" @remove="remove" @updated="loadData" />
+      <ImagePanel
+        :rows="imageRows"
+        :show-favorite-toggle="true"
+        @remove="remove"
+        @updated="loadData"
+        @toggle-favorite="toggleFavoriteImage"
+      />
 
       <el-pagination
         layout="prev, pager, next"
@@ -238,6 +249,7 @@ import {
   getFanficDetailApi,
   getFanficListApi,
   getItemListApi,
+  setItemFavoriteApi,
 } from "../api/item";
 import { extractListPayload } from "../composables/contentManageConfig";
 
@@ -390,10 +402,16 @@ const loadData = async () => {
 
     allFavoriteImages.value = extractListPayload(imageResp);
 
-    const fanficMaxPage = Math.max(1, Math.ceil(fanficTotal.value / fanficQuery.size));
+    const fanficMaxPage = Math.max(
+      1,
+      Math.ceil(fanficTotal.value / fanficQuery.size),
+    );
     if (fanficQuery.page > fanficMaxPage) fanficQuery.page = fanficMaxPage;
 
-    const imageMaxPage = Math.max(1, Math.ceil(imageTotal.value / imageQuery.size));
+    const imageMaxPage = Math.max(
+      1,
+      Math.ceil(imageTotal.value / imageQuery.size),
+    );
     if (imageQuery.page > imageMaxPage) imageQuery.page = imageMaxPage;
   } finally {
     loading.value = false;
@@ -420,6 +438,20 @@ const onRowClick = async (row) => {
 const onEdit = (id) => {
   if (!id) return;
   router.push(`/items/edit/${id}`);
+};
+
+const cancelFavoriteFanfic = async (id) => {
+  if (!id) return;
+  await setItemFavoriteApi(id, 0);
+  allFavoriteFanfics.value = allFavoriteFanfics.value.filter(
+    (item) => item.id !== id,
+  );
+  const fanficMaxPage = Math.max(
+    1,
+    Math.ceil(fanficTotal.value / fanficQuery.size),
+  );
+  if (fanficQuery.page > fanficMaxPage) fanficQuery.page = fanficMaxPage;
+  ElMessage.success("已取消收藏");
 };
 
 const remove = async (id) => {
@@ -460,6 +492,30 @@ const onFanficPageChange = (page) => {
 
 const onImagePageChange = (page) => {
   imageQuery.page = page;
+};
+
+const toggleFavoriteImage = async ({ row, next }) => {
+  const id = row?.id;
+  if (!id) return;
+  await setItemFavoriteApi(id, next);
+
+  if (next === 0) {
+    allFavoriteImages.value = allFavoriteImages.value.filter(
+      (item) => item.id !== id,
+    );
+    const imageMaxPage = Math.max(
+      1,
+      Math.ceil(imageTotal.value / imageQuery.size),
+    );
+    if (imageQuery.page > imageMaxPage) imageQuery.page = imageMaxPage;
+    ElMessage.success("已取消收藏");
+    return;
+  }
+
+  allFavoriteImages.value = allFavoriteImages.value.map((item) =>
+    item.id === id ? { ...item, isFavorite: next } : item,
+  );
+  ElMessage.success("已收藏");
 };
 
 const onTableWheel = (event) => {
