@@ -14,6 +14,20 @@
         ]"
         @click="handleCardClick(row)"
       >
+        <button
+          :class="[
+            'favorite-toggle',
+            Number(row?.isFavorite) === 1 ? 'is-favorite' : 'is-outline',
+          ]"
+          type="button"
+          :title="Number(row?.isFavorite) === 1 ? '取消收藏' : '收藏'"
+          @click.stop="toggleFavorite(row)"
+        >
+          <el-icon>
+            <StarFilled v-if="Number(row?.isFavorite) === 1" />
+            <Star v-else />
+          </el-icon>
+        </button>
         <div class="card-top">
           <span class="media-chip">{{ resolveMediaLabel(row) }}</span>
           <span v-if="hasRating(row)" class="rating-chip"
@@ -298,7 +312,9 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
-import { getItemDetailApi } from "../api/item";
+import { ElMessage } from "element-plus";
+import { Star, StarFilled } from "@element-plus/icons-vue";
+import { getItemDetailApi, setItemFavoriteApi } from "../api/item";
 import { mediaGroupByType } from "../contentMeta";
 import {
   inferMediaTypeFromStoreUrl,
@@ -464,6 +480,16 @@ const onPrimaryActionClick = (event, row) => {
   if (!canDownloadCard(row)) return;
   event.preventDefault();
   handleDownload(row);
+};
+
+const toggleFavorite = async (row) => {
+  const id = row?.id;
+  if (!id) return;
+  const current = Number(row?.isFavorite) === 1 ? 1 : 0;
+  const next = current === 1 ? 0 : 1;
+  await setItemFavoriteApi(id, next);
+  row.isFavorite = next;
+  ElMessage.success(next === 1 ? "已收藏" : "已取消收藏");
 };
 const PREVIEW_MIN_SCALE = 0.5;
 const PREVIEW_MAX_SCALE = 10;
@@ -676,6 +702,7 @@ const formatSize = (bytes) => {
 }
 
 .mixed-card {
+  position: relative;
   min-height: 220px;
   padding: 12px;
   border-radius: 12px;
@@ -686,6 +713,43 @@ const formatSize = (bytes) => {
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+.favorite-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--xhs-orange);
+  font-size: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.favorite-toggle :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-outline :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-favorite :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle:hover :deep(.el-icon) {
+  color: var(--xhs-orange-hover);
 }
 
 .mixed-card:hover {

@@ -14,9 +14,25 @@
           v-if="isFieldVisible('title') || isFieldVisible('author')"
           class="card-head"
         >
-          <h3 v-if="isFieldVisible('title')" class="card-title">
-            {{ row.title || "未命名文本" }}
-          </h3>
+          <div v-if="isFieldVisible('title')" class="card-title-wrap">
+            <h3 class="card-title">
+              {{ row.title || "未命名文本" }}
+            </h3>
+            <button
+              :class="[
+                'favorite-toggle',
+                Number(row?.isFavorite) === 1 ? 'is-favorite' : 'is-outline',
+              ]"
+              type="button"
+              :title="Number(row?.isFavorite) === 1 ? '取消收藏' : '收藏'"
+              @click.stop="toggleFavorite(row)"
+            >
+              <el-icon>
+                <StarFilled v-if="Number(row?.isFavorite) === 1" />
+                <Star v-else />
+              </el-icon>
+            </button>
+          </div>
           <p v-if="isFieldVisible('author')" class="card-author">
             {{ row.author ? "@" + row.author : "未知作者" }}
           </p>
@@ -162,7 +178,9 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { getItemDetailApi } from "../api/item";
+import { ElMessage } from "element-plus";
+import { Star, StarFilled } from "@element-plus/icons-vue";
+import { getItemDetailApi, setItemFavoriteApi } from "../api/item";
 
 defineProps({
   rows: {
@@ -295,6 +313,16 @@ const resolveFieldValue = (row, field) => {
   }
   return "";
 };
+
+const toggleFavorite = async (row) => {
+  const id = row?.id;
+  if (!id) return;
+  const current = Number(row?.isFavorite) === 1 ? 1 : 0;
+  const next = current === 1 ? 0 : 1;
+  await setItemFavoriteApi(id, next);
+  row.isFavorite = next;
+  ElMessage.success(next === 1 ? "已收藏" : "已取消收藏");
+};
 </script>
 
 <style scoped>
@@ -334,6 +362,13 @@ const resolveFieldValue = (row, field) => {
   gap: 10px;
 }
 
+.card-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .card-title {
   margin: 0;
   font-size: 17px;
@@ -344,6 +379,40 @@ const resolveFieldValue = (row, field) => {
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.favorite-toggle {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--xhs-orange);
+  font-size: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.favorite-toggle :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-outline :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle.is-favorite :deep(.el-icon) {
+  color: var(--xhs-orange);
+}
+
+.favorite-toggle:hover :deep(.el-icon) {
+  color: var(--xhs-orange-hover);
 }
 
 .card-author {
