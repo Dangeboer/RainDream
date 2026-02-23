@@ -43,7 +43,7 @@
         <el-table-column
           prop="title"
           label="名称"
-          min-width="160"
+          min-width="120"
           show-overflow-tooltip
         />
         <!-- <el-table-column prop="cp" label="CP" width="80" /> -->
@@ -98,9 +98,12 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" class-name="op-col" width="120">
+        <el-table-column label="操作" class-name="op-col" width="180">
           <template #default="{ row }">
             <div class="action-cell">
+              <el-link @click.stop="toggleFavorite(row)">
+                {{ Number(row?.isFavorite) === 1 ? "取消收藏" : "收藏" }}
+              </el-link>
               <el-link @click.stop="onEdit(row.id)">编辑</el-link>
               <el-link type="danger" @click.stop="remove(row.id)">删除</el-link>
             </div>
@@ -251,6 +254,7 @@ import {
   getFanficDetailApi,
   getFanficListApi,
   getItemListApi,
+  setItemFavoriteApi,
 } from "../api/item";
 import {
   DEFAULT_PAGE_SIZE,
@@ -533,6 +537,7 @@ const fetchData = async ({ reset = false } = {}) => {
         updateDate: item.fanficVO?.updateDate ?? "-",
         endingTypeLabel: item.fanficVO?.endingTypeLabel ?? "-",
         readCount: item.fanficVO?.readCount ?? 0,
+        isFavorite: Number(item?.isFavorite) === 1 ? 1 : 0,
       }));
       const nextTotal = Number(resp?.total ?? nextRows.length);
       if (currentSeq !== requestSeq) return;
@@ -615,6 +620,16 @@ const onDetailClosed = async () => {
 const onEdit = (id) => {
   if (!id) return;
   router.push(`/items/edit/${id}`);
+};
+
+const toggleFavorite = async (row) => {
+  const id = row?.id;
+  if (!id) return;
+  const current = Number(row?.isFavorite) === 1 ? 1 : 0;
+  const next = current === 1 ? 0 : 1;
+  await setItemFavoriteApi(id, next);
+  row.isFavorite = next;
+  ElMessage.success(next === 1 ? "已收藏" : "已取消收藏");
 };
 
 const goCreate = () => {

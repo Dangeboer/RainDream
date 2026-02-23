@@ -249,7 +249,7 @@ import {
 } from "vue";
 import { ElMessage } from "element-plus";
 import { Star, StarFilled } from "@element-plus/icons-vue";
-import { getItemDetailApi, updateItemApi } from "../api/item";
+import { getItemDetailApi, setItemFavoriteApi, updateItemApi } from "../api/item";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -282,7 +282,7 @@ defineProps({
   },
   showFavoriteToggle: {
     type: Boolean,
-    default: false,
+    default: true,
   },
 });
 
@@ -426,9 +426,15 @@ const openPreview = (row) => {
   });
 };
 
-const toggleFavorite = (row) => {
+const toggleFavorite = async (row) => {
+  const id = row?.id;
+  if (!id) return;
   const current = Number(row?.isFavorite) === 1 ? 1 : 0;
   const next = current === 1 ? 0 : 1;
+  await setItemFavoriteApi(id, next);
+  row.isFavorite = next;
+  ElMessage.success(next === 1 ? "已收藏" : "已取消收藏");
+  emit("updated");
   emit("toggle-favorite", { row, next });
 };
 

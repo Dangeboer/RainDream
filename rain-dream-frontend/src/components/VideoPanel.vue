@@ -9,6 +9,21 @@
         class="video-card"
         @click="openPlayer(row)"
       >
+        <button
+          v-if="showFavoriteToggle"
+          :class="[
+            'favorite-toggle',
+            Number(row?.isFavorite) === 1 ? 'is-favorite' : 'is-outline',
+          ]"
+          type="button"
+          :title="Number(row?.isFavorite) === 1 ? '取消收藏' : '收藏'"
+          @click.stop="toggleFavorite(row)"
+        >
+          <el-icon>
+            <StarFilled v-if="Number(row?.isFavorite) === 1" />
+            <Star v-else />
+          </el-icon>
+        </button>
         <video
           class="video-bg"
           :src="getStoreUrl(row)"
@@ -216,7 +231,8 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
-import { getItemDetailApi, updateItemApi } from "../api/item";
+import { Star, StarFilled } from "@element-plus/icons-vue";
+import { getItemDetailApi, setItemFavoriteApi, updateItemApi } from "../api/item";
 
 const contentTypeOptions = [
   { value: 1, label: "文章" },
@@ -255,9 +271,19 @@ defineProps({
     type: Object,
     default: () => ({}),
   },
+  showFavoriteToggle: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-const emit = defineEmits(["detail", "edit", "remove", "updated"]);
+const emit = defineEmits([
+  "detail",
+  "edit",
+  "remove",
+  "updated",
+  "toggle-favorite",
+]);
 
 const playerVisible = ref(false);
 const playerItem = ref(null);
@@ -432,6 +458,18 @@ const openPlayer = (row) => {
   playerVisible.value = true;
 };
 
+const toggleFavorite = async (row) => {
+  const id = row?.id;
+  if (!id) return;
+  const current = Number(row?.isFavorite) === 1 ? 1 : 0;
+  const next = current === 1 ? 0 : 1;
+  await setItemFavoriteApi(id, next);
+  row.isFavorite = next;
+  ElMessage.success(next === 1 ? "已收藏" : "已取消收藏");
+  emit("updated");
+  emit("toggle-favorite", { row, next });
+};
+
 const openDetail = async (itemId) => {
   if (!itemId) return;
   detailVisible.value = true;
@@ -566,6 +604,50 @@ const submitEdit = async () => {
   filter: saturate(0.92);
 }
 
+.favorite-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--xhs-orange);
+  font-size: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.favorite-toggle :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorite-toggle.is-outline :deep(.el-icon svg) {
+  fill: transparent;
+  stroke: var(--xhs-yellow);
+  stroke-width: 1.8;
+}
+
+.favorite-toggle.is-favorite :deep(.el-icon svg) {
+  fill: var(--xhs-yellow);
+  stroke: var(--xhs-yellow);
+  stroke-width: 1.2;
+}
+
+.favorite-toggle:hover :deep(.el-icon svg) {
+  fill: #ffe082;
+  stroke: #ffe082;
+}
+
 .video-hover-layer {
   position: absolute;
   inset: 0;
@@ -612,11 +694,21 @@ const submitEdit = async () => {
   pointer-events: none;
 }
 
+.video-card:hover .favorite-toggle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .video-card:hover .video-hover-layer {
   opacity: 1;
 }
 
 @media (hover: none) {
+  .favorite-toggle {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .video-hover-layer {
     opacity: 1;
   }
