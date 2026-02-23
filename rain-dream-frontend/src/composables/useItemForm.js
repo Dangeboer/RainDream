@@ -1,6 +1,11 @@
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { createItemApi, getItemDetailApi, updateItemApi } from "../api/item";
+import {
+  createItemApi,
+  getFanficDetailApi,
+  getItemDetailApi,
+  updateItemApi,
+} from "../api/item";
 import { createPltApi, createTagApi, getPltApi, getTagApi } from "../api/meta";
 import { deleteOssObjectApi, presignOssUploadApi } from "../api/oss";
 
@@ -252,8 +257,13 @@ export const useItemForm = ({ route, router }) => {
 
   const loadDetail = async () => {
     if (!isEdit.value) return;
-    const data = await getItemDetailApi(route.params.id);
-    const fanfic = data?.fanficForm || {};
+    let data = await getItemDetailApi(route.params.id);
+    const isFanficItem =
+      Number(data?.contentType) === 1 && Number(data?.mediaType) === 1;
+    if (isFanficItem) {
+      data = await getFanficDetailApi(route.params.id);
+    }
+    const fanfic = data?.fanficVO || data?.fanficForm || {};
     form.mediaType = data?.mediaType ?? null;
     form.contentType = data?.contentType ?? null;
     form.storeUrl = data?.storeUrl ?? null;
@@ -471,6 +481,14 @@ export const useItemForm = ({ route, router }) => {
     if (submitting.value) return;
     if (!form.mediaType || !form.contentType || !form.fandom || !form.cp) {
       return ElMessage.warning("请先填写必填项");
+    }
+    if (
+      isFanficType.value &&
+      (!form.fanficForm.era ||
+        !form.fanficForm.lengthType ||
+        !form.fanficForm.workType)
+    ) {
+      return ElMessage.warning("请先填写文章必填项（年代、篇幅、状态）");
     }
     if (
       isFileOnlyMediaType.value &&

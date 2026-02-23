@@ -233,6 +233,7 @@ import { reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { Star, StarFilled } from "@element-plus/icons-vue";
 import {
+  getFanficDetailApi,
   getItemDetailApi,
   setItemFavoriteApi,
   updateItemApi,
@@ -493,7 +494,18 @@ const openEdit = async (itemId) => {
   editLoading.value = true;
   editingId.value = itemId;
   try {
-    const data = normalizeDetail(await getItemDetailApi(itemId));
+    const baseData = normalizeDetail(await getItemDetailApi(itemId));
+    const isFanficItem =
+      Number(baseData?.contentType) === 1 && Number(baseData?.mediaType) === 1;
+    let data = baseData;
+    if (isFanficItem) {
+      const fanficDetail = normalizeDetail(await getFanficDetailApi(itemId));
+      data = {
+        ...baseData,
+        ...fanficDetail,
+        fanficForm: fanficDetail?.fanficVO || fanficDetail?.fanficForm || null,
+      };
+    }
     editForm.mediaType = data.mediaType;
     editForm.contentType = data.contentType;
     editForm.storeUrl = data.storeUrl;
@@ -534,6 +546,16 @@ const submitEdit = async () => {
     !editForm.cp
   ) {
     ElMessage.warning("请先填写必填项");
+    return;
+  }
+  if (
+    Number(editForm.contentType) === 1 &&
+    Number(editForm.mediaType) === 1 &&
+    (!editForm.fanficForm?.era ||
+      !editForm.fanficForm?.lengthType ||
+      !editForm.fanficForm?.workType)
+  ) {
+    ElMessage.warning("请先填写文章必填项（年代、篇幅、状态）");
     return;
   }
   editSubmitting.value = true;
