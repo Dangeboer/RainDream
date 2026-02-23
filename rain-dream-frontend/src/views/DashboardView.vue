@@ -230,7 +230,7 @@
       </el-dialog>
     </section>
 
-    <section class="card-panel panel">
+    <section ref="imagePanelRef" class="card-panel panel">
       <div class="head">
         <h2>收藏图片</h2>
       </div>
@@ -249,7 +249,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+} from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Star, StarFilled } from "@element-plus/icons-vue";
@@ -261,10 +268,19 @@ import {
   getItemListApi,
   setItemFavoriteApi,
 } from "../api/item";
-import { extractListPayload } from "../composables/contentManageConfig";
+import {
+  DEFAULT_PAGE_SIZE,
+  GRID_CARD_GAP,
+  GRID_CARD_MIN_WIDTH,
+  clampPageSize,
+  extractListPayload,
+} from "../composables/contentManageConfig";
 
 const router = useRouter();
 const tableRef = ref(null);
+const imagePanelRef = ref(null);
+let imagePanelResizeObserver = null;
+let imageResizeTimer = null;
 
 const loading = ref(false);
 
@@ -277,12 +293,23 @@ const fanficRows = computed(() => {
 });
 
 const allFavoriteImages = ref([]);
-const imageQuery = reactive({ page: 1, size: 12 });
-const imageTotal = computed(() => allFavoriteImages.value.length);
+const imageQuery = reactive({ page: 1, size: DEFAULT_PAGE_SIZE });
+const imageTotal = ref(0);
+const DASHBOARD_IMAGE_MIN_PAGE_SIZE = 8;
 const imageRows = computed(() => {
   const start = (imageQuery.page - 1) * imageQuery.size;
   return allFavoriteImages.value.slice(start, start + imageQuery.size);
 });
+const IMAGE_FETCH_BATCH_SIZE = 24;
+const imageCache = reactive({
+  records: [],
+  total: 0,
+  nextRawPage: 1,
+  rawTotal: 0,
+  rawLoadedCount: 0,
+  rawExhausted: false,
+});
+let imageCacheLoadingPromise = null;
 
 const detailVisible = ref(false);
 const detailLoading = ref(false);
@@ -394,13 +421,151 @@ const normalizeFanficListRow = (item) => ({
   isFavorite: Number(item?.isFavorite) === 1 ? 1 : 0,
 });
 
+const resetImageCache = () => {
+  imageCache.records = [];
+  imageCache.total = 0;
+  imageCache.nextRawPage = 1;
+  imageCache.rawTotal = 0;
+  imageCache.rawLoadedCount = 0;
+  imageCache.rawExhausted = false;
+  imageCacheLoadingPromise = null;
+  allFavoriteImages.value = [];
+  imageTotal.value = 0;
+};
+
+const appendUniqueImageRecords = (records) => {
+  if (!Array.isArray(records) || records.length === 0) return;
+  const exists = new Set(imageCache.records.map((item) => item.id));
+  for (const record of records) {
+    const key = record?.id;
+    if (!key || exists.has(key)) continue;
+    imageCache.records.push(record);
+    exists.add(key);
+  }
+};
+
+const hasMoreImageRawPages = () => !imageCache.rawExhausted;
+
+const fetchNextImageRawPage = async () => {
+  const raw = await getItemListApi({
+    page: imageCache.nextRawPage,
+    size: IMAGE_FETCH_BATCH_SIZE,
+    mediaType: 2,
+    isFavorite: 1,
+  });
+  const normalizedList = extractListPayload(raw);
+  appendUniqueImageRecords(normalizedList);
+
+  imageCache.rawTotal = Number(raw?.total || imageCache.rawTotal || 0);
+  imageCache.rawLoadedCount += normalizedList.length;
+  imageCache.nextRawPage += 1;
+  imageCache.total = imageCache.rawTotal;
+
+  if (
+    imageCache.rawTotal > 0 &&
+    imageCache.rawLoadedCount >= imageCache.rawTotal
+  ) {
+    imageCache.rawExhausted = true;
+  }
+  if (
+    normalizedList.length === 0 ||
+    normalizedList.length < IMAGE_FETCH_BATCH_SIZE
+  ) {
+    imageCache.rawExhausted = true;
+  }
+};
+
+const ensureImageCacheCount = async (requiredCount) => {
+  while (imageCache.records.length < requiredCount && hasMoreImageRawPages()) {
+    if (!imageCacheLoadingPromise) {
+      imageCacheLoadingPromise = fetchNextImageRawPage().finally(() => {
+        imageCacheLoadingPromise = null;
+      });
+    }
+    await imageCacheLoadingPromise;
+  }
+};
+
+const loadImageData = async ({ reset = false } = {}) => {
+  if (reset) {
+    resetImageCache();
+  }
+  const requiredCount = imageQuery.page * imageQuery.size;
+  await ensureImageCacheCount(requiredCount);
+  const mergedRows = [...imageCache.records].sort(
+    (a, b) => Number(b?.id || 0) - Number(a?.id || 0),
+  );
+  allFavoriteImages.value = mergedRows;
+  imageTotal.value = imageCache.total || mergedRows.length;
+
+  const imageMaxPage = Math.max(1, Math.ceil(imageTotal.value / imageQuery.size));
+  if (imageQuery.page > imageMaxPage) {
+    imageQuery.page = imageMaxPage;
+  }
+};
+
+const calculateImageAutoPageSize = () => {
+  const panelEl = imagePanelRef.value;
+  if (!panelEl) return imageQuery.size || DEFAULT_PAGE_SIZE;
+  const gridWrap = panelEl.querySelector(".media-grid-wrap");
+  const paginationEl = panelEl.querySelector(".el-pagination");
+  if (!gridWrap || !paginationEl) return imageQuery.size || DEFAULT_PAGE_SIZE;
+
+  const availableWidth = Math.max(
+    panelEl.clientWidth - 32,
+    GRID_CARD_MIN_WIDTH,
+  );
+  const columns = Math.max(
+    1,
+    Math.floor(
+      (availableWidth + GRID_CARD_GAP) / (GRID_CARD_MIN_WIDTH + GRID_CARD_GAP),
+    ),
+  );
+  const cardWidth = (availableWidth - (columns - 1) * GRID_CARD_GAP) / columns;
+  const cardHeight = cardWidth * 0.75;
+
+  const gridTop = gridWrap.getBoundingClientRect().top;
+  const paginationHeight = paginationEl.getBoundingClientRect().height || 32;
+  const availableHeight = Math.max(
+    120,
+    window.innerHeight - gridTop - paginationHeight - 24,
+  );
+  const rowsCount = Math.max(
+    1,
+    Math.floor((availableHeight + GRID_CARD_GAP) / (cardHeight + GRID_CARD_GAP)),
+  );
+
+  return Math.max(
+    DASHBOARD_IMAGE_MIN_PAGE_SIZE,
+    clampPageSize(columns * rowsCount),
+  );
+};
+
+const syncAdaptiveImagePageSize = async () => {
+  await nextTick();
+  const targetSize = calculateImageAutoPageSize();
+  if (targetSize === imageQuery.size) return false;
+  imageQuery.size = targetSize;
+  imageQuery.page = 1;
+  return true;
+};
+
+const scheduleAdaptiveImagePageSizeSync = () => {
+  if (imageResizeTimer) {
+    clearTimeout(imageResizeTimer);
+  }
+  imageResizeTimer = setTimeout(async () => {
+    const replaced = await syncAdaptiveImagePageSize();
+    if (replaced) {
+      await loadImageData();
+    }
+  }, 120);
+};
+
 const loadData = async () => {
   loading.value = true;
   try {
-    const [fanficResp, imageResp] = await Promise.all([
-      getFanficListApi({}),
-      getItemListApi({ mediaType: 2, isFavorite: 1 }),
-    ]);
+    const fanficResp = await getFanficListApi({});
 
     allFavoriteFanfics.value = extractListPayload(fanficResp)
       .filter(
@@ -410,20 +575,13 @@ const loadData = async () => {
           Number(item?.isFavorite) === 1,
       )
       .map(normalizeFanficListRow);
-
-    allFavoriteImages.value = extractListPayload(imageResp);
+    await loadImageData({ reset: true });
 
     const fanficMaxPage = Math.max(
       1,
       Math.ceil(fanficTotal.value / fanficQuery.size),
     );
     if (fanficQuery.page > fanficMaxPage) fanficQuery.page = fanficMaxPage;
-
-    const imageMaxPage = Math.max(
-      1,
-      Math.ceil(imageTotal.value / imageQuery.size),
-    );
-    if (imageQuery.page > imageMaxPage) imageQuery.page = imageMaxPage;
   } finally {
     loading.value = false;
   }
@@ -507,8 +665,9 @@ const onFanficPageChange = (page) => {
   fanficQuery.page = page;
 };
 
-const onImagePageChange = (page) => {
+const onImagePageChange = async (page) => {
   imageQuery.page = page;
+  await loadImageData();
 };
 
 const onTableWheel = (event) => {
@@ -532,7 +691,31 @@ const onTableWheel = (event) => {
   }
 };
 
-onMounted(loadData);
+onMounted(async () => {
+  imagePanelResizeObserver = new ResizeObserver(() => {
+    scheduleAdaptiveImagePageSizeSync();
+  });
+  if (imagePanelRef.value) {
+    imagePanelResizeObserver.observe(imagePanelRef.value);
+  }
+  window.addEventListener("resize", scheduleAdaptiveImagePageSizeSync);
+
+  await syncAdaptiveImagePageSize();
+  await loadData();
+  scheduleAdaptiveImagePageSizeSync();
+});
+
+onBeforeUnmount(() => {
+  if (imagePanelResizeObserver) {
+    imagePanelResizeObserver.disconnect();
+    imagePanelResizeObserver = null;
+  }
+  window.removeEventListener("resize", scheduleAdaptiveImagePageSizeSync);
+  if (imageResizeTimer) {
+    clearTimeout(imageResizeTimer);
+    imageResizeTimer = null;
+  }
+});
 </script>
 
 <style scoped>
